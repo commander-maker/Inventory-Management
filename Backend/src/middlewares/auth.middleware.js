@@ -1,0 +1,1 @@
+// JWT authentication check middleware
