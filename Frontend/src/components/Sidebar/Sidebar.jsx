@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutDashboard, 
   Package, 
@@ -14,6 +15,7 @@ import {
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -25,8 +27,10 @@ export default function Sidebar() {
   ];
 
   const handleLogout = () => {
-    // Handle logout logic here
-    navigate('/');
+    if (window.confirm('Are you sure you want to logout?')) {
+      logout();
+      navigate('/login');
+    }
   };
 
   return (
