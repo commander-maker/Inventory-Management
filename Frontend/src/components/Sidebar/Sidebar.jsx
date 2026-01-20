@@ -21,7 +21,7 @@ export default function Sidebar() {
     { icon: Truck, label: 'Vehicles', path: '/vehicles' },
     { icon: Calculator, label: 'Finance', path: '/finance' },
     { icon: Users, label: 'Users', path: '/users' },
-    { icon: Settings, label: 'Setting', path: '/settings' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
   const handleLogout = () => {
