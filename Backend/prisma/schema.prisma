@@ -4,22 +4,56 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
-  name      String
-  email     String  @unique
-  password  String
-  role      String  // ADMIN or AGENT
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  password     String
+  role         String    // "admin" or "agent"
+  phone        String
+  vehicle      String?   // Optional, for agents
+  monthlySales Decimal?  @db.Decimal(10, 2) // Optional, for agents
+  joinedDate   DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  // Relations
+  drivenVehicles Vehicle[] @relation("VehicleDriver")
+}
+
+model Vehicle {
+  id          String        @id // Registration number (e.g., "GJ-01-AB-1234")
+  vehicleType String        // Type of vehicle (e.g., "Tata Ace")
+  capacity    String        // Capacity (e.g., "1 Ton", "1.5 Ton")
+  status      String        @default("Active") // "Active", "Loading", "Maintenance"
+  location    String        // Current location
+  fuelLevel   Int           @default(100) // 0-100
+  driverId    Int?          // Foreign key to User
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  // Relations
+  driver      User?         @relation("VehicleDriver", fields: [driverId], references: [id])
+  loads       VehicleLoad[]
+}
+
+model VehicleLoad {
+  id        Int      @id @default(autoincrement())
+  vehicleId String
+  item      String   // Item name (e.g., "Water 500ml")
+  quantity  String   // Quantity (e.g., "25 cases")
   createdAt DateTime @default(now())
+  
+  // Relations
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 }
 
 /*Later you will add:
 
 Inventory model
-
-Vehicle model
 
 Finance model
 
