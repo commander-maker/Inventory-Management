@@ -15,7 +15,7 @@ export default function Login() {
     e.preventDefault();
     // Mock login - set user to enable navigation
     setUser({ email, role });
-    navigate('/finance');
+    navigate('/dashboard');
   };
 
   return (

@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Login from '../pages/Auth/Login';
+import Dashboard from '../pages/Dashboard/Dashboard';
 import InventoryList from '../pages/Inventory/InventoryList';
 import FinanceDashboard from '../pages/Finance/Dashboard';
 import VehicleManagement from '../pages/Vehicle/Vehicle_management';
@@ -18,6 +19,14 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/inventory"
         element={
@@ -50,6 +59,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }
