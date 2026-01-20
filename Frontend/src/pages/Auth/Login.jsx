@@ -6,16 +6,17 @@ import { Eye, EyeOff, Droplet } from 'lucide-react';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Mock login - set user to enable navigation
     setUser({ email, role });
-    navigate('/dashboard');
+    navigate('/finance');
   };
 
   return (
@@ -38,6 +39,13 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className='space-y-5'>
+            {/* Error Message */}
+            {error && (
+              <div className='bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg'>
+                {error}
+              </div>
+            )}
+
             {/* Email Field */}
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-2'>
@@ -81,27 +89,13 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Role Dropdown */}
-            <div>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className='w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white'
-                required
-              >
-                <option value=''>Select Your Role</option>
-                <option value='admin'>Admin</option>
-                <option value='manager'>Manager</option>
-                <option value='staff'>Staff</option>
-              </select>
-            </div>
-
             {/* Sign In Button */}
             <button
               type='submit'
-              className='w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200'
+              disabled={loading}
+              className='w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed'
             >
-              Sign In
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
 

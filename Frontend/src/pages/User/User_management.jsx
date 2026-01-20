@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, UserPlus, Edit, Trash2, Phone, Calendar, Truck, TrendingUp, X, Users as UsersIcon, UserCheck, UserCog } from 'lucide-react';
+import { userAPI } from '../../utils/api';
 
 export default function UserManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -7,43 +8,9 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
-  
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: 'Admin User',
-      email: 'admin@aquatrack.com',
-      role: 'admin',
-      phone: '+91 98765 00000',
-      joinedDate: '3/15/2024',
-      avatar: 'AU',
-      avatarColor: 'bg-blue-500'
-    },
-    {
-      id: 2,
-      name: 'Rajesh Kumar',
-      email: 'rajesh@aquatrack.com',
-      role: 'agent',
-      phone: '+91 98765 43210',
-      joinedDate: '3/15/2024',
-      vehicle: 'GJ-01-AB-1234',
-      monthlySales: 'Rs 125,000',
-      avatar: 'RK',
-      avatarColor: 'bg-indigo-500'
-    },
-    {
-      id: 3,
-      name: 'Priya Sharma',
-      email: 'priya@aquatrack.com',
-      role: 'agent',
-      phone: '+91 98765 43212',
-      joinedDate: '5/20/2024',
-      vehicle: 'GJ-01-EF-9012',
-      monthlySales: 'Rs 98,000',
-      avatar: 'PS',
-      avatarColor: 'bg-purple-500'
-    },
-  ]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [users, setUsers] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -52,6 +19,40 @@ export default function UserManagement() {
     phone: '',
     vehicle: ''
   });
+
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await userAPI.getAll();
+      if (response.data.success) {
+        // Add avatar data for display
+        const usersWithAvatars = response.data.data.map(user => ({
+          ...user,
+          avatar: user.name.split(' ').map(n => n[0]).join('').toUpperCase(),
+          avatarColor: getRandomColor(),
+          joinedDate: new Date(user.joinedDate).toLocaleDateString(),
+          monthlySales: user.monthlySales ? `Rs ${user.monthlySales.toLocaleString()}` : null
+        }));
+        setUsers(usersWithAvatars);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch users');
+      console.error('Error fetching users:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRandomColor = () => {
+    const colors = ['bg-blue-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
 
   const stats = [
     { label: 'Total Users', value: users.length.toString(), icon: UsersIcon, color: 'text-blue-600', bgColor: 'bg-blue-50' },
@@ -89,38 +90,81 @@ export default function UserManagement() {
     setShowEditModal(true);
   };
 
-  const handleDeleteUser = (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(u => u.id !== userId));
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    
+    setLoading(true);
+    try {
+      const response = await userAPI.delete(userId);
+      
+      if (response.data.success) {
+        alert('User deleted successfully!');
+        await fetchUsers();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete user');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSubmitAdd = (e) => {
+  const handleSubmitAdd = async (e) => {
     e.preventDefault();
-    const initials = formData.name.split(' ').map(n => n[0]).join('').toUpperCase();
-    const colors = ['bg-blue-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500'];
-    
-    const newUser = {
-      id: users.length + 1,
-      ...formData,
-      joinedDate: new Date().toLocaleDateString(),
-      avatar: initials,
-      avatarColor: colors[Math.floor(Math.random() * colors.length)],
-      monthlySales: formData.role === 'agent' ? 'Rs 0' : undefined
-    };
-    
-    setUsers([...users, newUser]);
-    setShowAddModal(false);
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await userAPI.create(formData);
+      
+      if (response.data.success) {
+        // Show temporary password to admin
+        alert(
+          `User created successfully!\n\n` +
+          `Temporary Password: ${response.data.data.temporaryPassword}\n\n` +
+          `This password has been sent to ${formData.email}\n` +
+          `Please share this password with the user.`
+        );
+        
+        // Refresh user list
+        await fetchUsers();
+        setShowAddModal(false);
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          role: 'agent',
+          phone: '',
+          vehicle: ''
+        });
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create user');
+      alert(err.response?.data?.message || 'Failed to create user');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmitEdit = (e) => {
+  const handleSubmitEdit = async (e) => {
     e.preventDefault();
-    setUsers(users.map(u => 
-      u.id === selectedUser.id 
-        ? { ...u, ...formData }
-        : u
-    ));
-    setShowEditModal(false);
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await userAPI.update(selectedUser.id, formData);
+      
+      if (response.data.success) {
+        alert('User updated successfully!');
+        await fetchUsers();
+        setShowEditModal(false);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update user');
+      alert(err.response?.data?.message || 'Failed to update user');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -167,6 +211,11 @@ export default function UserManagement() {
 
       {/* Search and Filter Section */}
       <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6'>
+        {error && (
+          <div className='mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg'>
+            {error}
+          </div>
+        )}
         <div className='flex gap-4'>
           <div className='flex-1 relative'>
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
@@ -193,7 +242,18 @@ export default function UserManagement() {
       </div>
 
       {/* User Cards */}
-      <div className='grid grid-cols-3 gap-6'>
+      {loading ? (
+        <div className='text-center py-12'>
+          <div className='inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+          <p className='mt-4 text-gray-600'>Loading users...</p>
+        </div>
+      ) : filteredUsers.length === 0 ? (
+        <div className='text-center py-12 bg-white rounded-xl'>
+          <UsersIcon className='w-16 h-16 text-gray-300 mx-auto mb-4' />
+          <p className='text-gray-600'>No users found</p>
+        </div>
+      ) : (
+        <div className='grid grid-cols-3 gap-6'>
         {filteredUsers.map((user) => (
           <div key={user.id} className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
             {/* User Header */}
@@ -264,6 +324,7 @@ export default function UserManagement() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Footer */}
       <div className='text-center mt-8 text-sm text-gray-600'>
