@@ -14,9 +14,21 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Mock login - set user to enable navigation
-    setUser({ email, role });
-    navigate('/finance');
+    setError('');
+    setLoading(true);
+
+    try {
+      const result = await login({ email, password });
+      if (result.success) {
+        navigate('/finance');
+      } else {
+        setError(result.message || 'Login failed. Please try again.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
