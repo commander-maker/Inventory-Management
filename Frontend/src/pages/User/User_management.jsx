@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, UserPlus, Edit, Trash2, Phone, Calendar, Truck, TrendingUp, X, Users as UsersIcon, UserCheck, UserCog } from 'lucide-react';
 import { userAPI } from '../../utils/api';
+import { toast } from 'react-toastify';
 
 export default function UserManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -60,10 +61,20 @@ export default function UserManagement() {
     { label: 'Sales Agent', value: users.filter(u => u.role === 'agent').length.toString(), icon: UserCog, color: 'text-green-600', bgColor: 'bg-green-50' },
   ];
 
+  // Enhanced search and filter function
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    // Search matches name, email, phone, or vehicle
+    const searchLower = searchTerm.toLowerCase().trim();
+    const matchesSearch = searchTerm === '' || 
+      user.name.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower) ||
+      (user.phone && user.phone.includes(searchLower)) ||
+      (user.vehicle && user.vehicle.toLowerCase().includes(searchLower)) ||
+      user.role.toLowerCase().includes(searchLower);
+    
+    // Role filter
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    
     return matchesSearch && matchesRole;
   });
 
@@ -98,11 +109,11 @@ export default function UserManagement() {
       const response = await userAPI.delete(userId);
       
       if (response.data.success) {
-        alert('User deleted successfully!');
+        toast.success('User deleted successfully!');
         await fetchUsers();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete user');
+      toast.error(err.response?.data?.message || 'Failed to delete user');
     } finally {
       setLoading(false);
     }
@@ -118,6 +129,12 @@ export default function UserManagement() {
       
       if (response.data.success) {
         // Show temporary password to admin
+        toast.success(
+          `User created successfully! Temporary Password: ${response.data.data.temporaryPassword} - Sent to ${formData.email}`,
+          { autoClose: 8000 }
+        );
+        
+        // Also show alert for password
         alert(
           `User created successfully!\n\n` +
           `Temporary Password: ${response.data.data.temporaryPassword}\n\n` +
@@ -139,8 +156,9 @@ export default function UserManagement() {
         });
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create user');
-      alert(err.response?.data?.message || 'Failed to create user');
+      const errorMsg = err.response?.data?.message || 'Failed to create user';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -155,13 +173,14 @@ export default function UserManagement() {
       const response = await userAPI.update(selectedUser.id, formData);
       
       if (response.data.success) {
-        alert('User updated successfully!');
+        toast.success('User updated successfully!');
         await fetchUsers();
         setShowEditModal(false);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update user');
-      alert(err.response?.data?.message || 'Failed to update user');
+      const errorMsg = err.response?.data?.message || 'Failed to update user';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

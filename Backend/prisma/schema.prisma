@@ -51,9 +51,20 @@ model VehicleLoad {
   vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 }
 
-/*Later you will add:
+model Inventory {
+  id        Int      @id @default(autoincrement())
+  name      String
+  category  String   // "Soft Drinks", "Energy Drinks", "Juices", "Water", "Snacks"
+  stock     Int      // Quantity in stock
+  unit      String   // "cases", "boxes", "pieces", "bottles"
+  price     Decimal  @db.Decimal(10, 2) // Price per unit
+  supplier  String
+  status    String   @default("In Stock") // "In Stock", "Low Stock", "Out of Stock"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
-Inventory model
+/*Later you will add:
 
 Finance model
 

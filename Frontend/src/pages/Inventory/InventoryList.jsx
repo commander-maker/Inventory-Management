@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Search, Eye, Edit2, Plus, Download, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Eye, Edit2, Plus, Download, X, Trash2 } from 'lucide-react';
+import api, { inventoryAPI } from '../../utils/api'; // Import both
+import { toast } from 'react-toastify';
 
 export default function InventoryList() {
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
@@ -7,6 +9,9 @@ export default function InventoryList() {
   const [viewModal, setViewModal] = useState({ isOpen: false, product: null });
   const [editModal, setEditModal] = useState({ isOpen: false, product: null });
   const [addModal, setAddModal] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [editFormData, setEditFormData] = useState({});
   const [newProductForm, setNewProductForm] = useState({
     name: '',
@@ -18,93 +23,71 @@ export default function InventoryList() {
     status: 'In Stock'
   });
 
-  // Sample inventory data
-  const inventoryStats = [
-    { label: 'Total Products', value: '10', icon: '📦' },
-    { label: 'Total Value', value: '₹183,950', icon: '💹' },
-    { label: 'Low Stock Items', value: '2', icon: '⚠️' },
-    { label: 'Categories', value: '5', icon: '📂' }
-  ];
+  // Define all available categories
+  const allCategories = ['Soft Drinks', 'Energy Drinks', 'Juices', 'Packaged Water', 'Others'];
 
-  const products = [
-    {
-      id: 1,
-      name: 'Pepsi 300ml',
-      category: 'Soft Drinks',
-      stock: 8,
-      unit: 'cases',
-      price: 1500,
-      value: 12000,
-      supplier: 'PepsiCo Distributors',
-      status: 'Low Stock',
-      statusColor: 'bg-red-100 text-red-800'
-    },
-    {
-      id: 2,
-      name: 'Coca Cola 300ml',
-      category: 'Soft Drinks',
-      stock: 45,
-      unit: 'cases',
-      price: 820,
-      value: 36900,
-      supplier: 'Coca Cola Company',
-      status: 'In Stock',
-      statusColor: 'bg-gray-900 text-white'
-    },
-    {
-      id: 3,
-      name: 'Red Bull 250ml',
-      category: 'Energy Drinks',
-      stock: 30,
-      unit: 'cases',
-      price: 1200,
-      value: 36000,
-      supplier: 'Red Bull Distribution',
-      status: 'In Stock',
-      statusColor: 'bg-gray-900 text-white'
-    },
-    {
-      id: 4,
-      name: 'Tropicana Orange 1L',
-      category: 'Juices',
-      stock: 5,
-      unit: 'cases',
-      price: 800,
-      value: 4000,
-      supplier: 'PepsiCo Distributors',
-      status: 'Low Stock',
-      statusColor: 'bg-red-100 text-red-800'
-    },
-    {
-      id: 5,
-      name: 'Mountain Dew 500ml',
-      category: 'Soft Drinks',
-      stock: 25,
-      unit: 'cases',
-      price: 600,
-      value: 15000,
-      supplier: 'PepsiCo Distributors',
-      status: 'In Stock',
-      statusColor: 'bg-gray-900 text-white'
-    },
-    {
-      id: 6,
-      name: 'Sprite 300ml',
-      category: 'Soft Drinks',
-      stock: 12,
-      unit: 'cases',
-      price: 480,
-      value: 5760,
-      supplier: 'Coca Cola Company',
-      status: 'In Stock',
-      statusColor: 'bg-gray-900 text-white'
+  // Fetch inventory on mount
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const fetchInventory = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await inventoryAPI.getAll(); // Use inventoryAPI
+      setProducts(response.data.data || []);
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to fetch inventory';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error('Error fetching inventory:', err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Calculate stats from actual data
+  const totalValue = products.reduce((sum, p) => sum + (Number(p.price) * p.stock), 0);
+  const lowStockItems = products.filter(p => p.status === 'Low Stock').length;
+  const outOfStockItems = products.filter(p => p.status === 'Out of Stock').length;
+  const categories = [...new Set(products.map(p => p.category))];
+
+  const inventoryStats = [
+    { label: 'Total Products', value: products.length.toString(), icon: '📦' },
+    { label: 'Total Value', value: `₹${totalValue.toLocaleString()}`, icon: '💹' },
+    { label: 'Low Stock', value: lowStockItems.toString(), icon: '⚠️' },
+    { label: 'Out of Stock', value: outOfStockItems.toString(), icon: '❌' }
   ];
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.supplier.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Enhanced search and filter function
+  const filteredProducts = products.filter(product => {
+    // Search matches product name, supplier, or category
+    const searchLower = searchTerm.toLowerCase().trim();
+    const matchesSearch = searchTerm === '' || 
+      product.name.toLowerCase().includes(searchLower) ||
+      (product.supplier && product.supplier.toLowerCase().includes(searchLower)) ||
+      product.category.toLowerCase().includes(searchLower) ||
+      product.status.toLowerCase().includes(searchLower);
+    
+    // Category filter
+    const matchesCategory = selectedCategory === 'All Categories' || product.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'In Stock':
+        return 'bg-green-100 text-green-800';
+      case 'Low Stock':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Out of Stock':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   const handleViewClick = (product) => {
     setViewModal({ isOpen: true, product });
@@ -117,36 +100,83 @@ export default function InventoryList() {
 
   const handleEditInputChange = (e) => {
     const { name, value } = e.target;
-    setEditFormData(prev => ({ ...prev, [name]: isNaN(value) ? value : Number(value) }));
+    setEditFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveEdit = () => {
-    // Here you would send the updated data to your backend
-    console.log('Saving product:', editFormData);
-    setEditModal({ isOpen: false, product: null });
+  const handleSaveEdit = async () => {
+    try {
+      setLoading(true);
+      const response = await inventoryAPI.update(editFormData.id, editFormData);
+      await fetchInventory();
+      setEditModal({ isOpen: false, product: null });
+      toast.success('Product updated successfully!');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to update product';
+      toast.error(errorMessage);
+      console.error('Error updating product:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddProductChange = (e) => {
     const { name, value } = e.target;
-    setNewProductForm(prev => ({ 
-      ...prev, 
-      [name]: isNaN(value) ? value : Number(value) 
-    }));
+    setNewProductForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddProduct = () => {
-    // Here you would send the new product to your backend
-    console.log('Adding new product:', newProductForm);
-    setAddModal(false);
-    setNewProductForm({
-      name: '',
-      category: 'Soft Drinks',
-      stock: '',
-      unit: 'cases',
-      price: '',
-      supplier: '',
-      status: 'In Stock'
-    });
+  const handleAddProduct = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      // Validate required fields
+      if (!newProductForm.name || !newProductForm.stock || !newProductForm.price || !newProductForm.supplier) {
+        toast.error('Please fill in all required fields');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Adding product with data:', newProductForm);
+      const response = await inventoryAPI.create(newProductForm);
+      console.log('Product added successfully:', response.data);
+      
+      await fetchInventory();
+      setAddModal(false);
+      setNewProductForm({
+        name: '',
+        category: 'Soft Drinks',
+        stock: '',
+        unit: 'cases',
+        price: '',
+        supplier: '',
+        status: 'In Stock'
+      });
+      toast.success('Product added successfully!');
+    } catch (err) {
+      console.error('Error adding product:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to add product';
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProduct = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    
+    try {
+      setLoading(true);
+      await inventoryAPI.delete(id);
+      await fetchInventory();
+      toast.success('Product deleted successfully!');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to delete product';
+      toast.error(errorMessage);
+      console.error('Error deleting product:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -209,75 +239,102 @@ export default function InventoryList() {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-gray-700"
           >
-            <option>All Categories</option>
-            <option>Soft Drinks</option>
-            <option>Energy Drinks</option>
-            <option>Juices</option>
+            <option value="All Categories">All Categories</option>
+            {allCategories.map((category, index) => (
+              <option key={index} value={category}>{category}</option>
+            ))}
           </select>
         </div>
       </div>
 
       {/* Products Grid */}
       <div className="px-8 py-6">
-        <div className="grid grid-cols-3 gap-6">
-          {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
-              {/* Status Badge */}
-              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{product.name}</h3>
-                  <p className="text-sm text-gray-500">{product.category}</p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${product.statusColor}`}>
-                  {product.status}
-                </span>
-              </div>
-
-              {/* Product Details */}
-              <div className="px-6 py-4">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  {/* Stock */}
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Stock</p>
-                    <p className="text-lg font-semibold text-gray-900">{product.stock} <span className="text-xs font-normal text-gray-500">{product.unit}</span></p>
-                  </div>
-                  {/* Price */}
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Price</p>
-                    <p className="text-lg font-semibold text-gray-900">₹{product.price.toLocaleString()}</p>
-                  </div>
-                  {/* Value */}
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Value</p>
-                    <p className="text-lg font-semibold text-gray-900">₹{product.value.toLocaleString()}</p>
-                  </div>
-                  {/* Supplier */}
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Supplier</p>
-                    <p className="text-sm font-medium text-gray-900">{product.supplier}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-                <button 
-                  onClick={() => handleViewClick(product)}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded transition"
-                >
-                  <Eye size={16} />
-                  View
-                </button>
-                <button 
-                  onClick={() => handleEditClick(product)}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded transition"
-                >
-                  <Edit2 size={16} />
-                  Edit
-                </button>
-              </div>
+        {loading && <p className="text-center text-gray-600">Loading inventory...</p>}
+        {error && <p className="text-center text-red-600">{error}</p>}
+        
+        {!loading && !error && filteredProducts.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="w-32 h-32 mb-6 flex items-center justify-center">
+              <svg className="w-full h-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM4 20V4h16v16H4zm2-2h12v-2H6v2zm0-4h12v-2H6v2zm0-4h12V8H6v2z"/>
+              </svg>
             </div>
-          ))}
+            <p className="text-xl font-medium text-gray-600">No products found</p>
+            <p className="text-sm text-gray-400 mt-2">Try adjusting your search or filter criteria</p>
+            <p className="text-xs text-gray-400 mt-8">
+              Copyright © 2024 <span className="text-blue-600">AquaTrack</span> Design by Themesflat All rights reserved.
+            </p>
+          </div>
+        )}
+        
+        <div className="grid grid-cols-3 gap-6">
+          {filteredProducts.map((product) => {
+            const value = Number(product.price) * product.stock;
+            return (
+              <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                {/* Status Badge */}
+                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{product.name}</h3>
+                    <p className="text-sm text-gray-500">{product.category}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(product.status)}`}>
+                    {product.status}
+                  </span>
+                </div>
+
+                {/* Product Details */}
+                <div className="px-6 py-4">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    {/* Stock */}
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Stock</p>
+                      <p className="text-lg font-semibold text-gray-900">{product.stock} <span className="text-xs font-normal text-gray-500">{product.unit}</span></p>
+                    </div>
+                    {/* Price */}
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Price</p>
+                      <p className="text-lg font-semibold text-gray-900">₹{Number(product.price).toLocaleString()}</p>
+                    </div>
+                    {/* Value */}
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Value</p>
+                      <p className="text-lg font-semibold text-gray-900">₹{value.toLocaleString()}</p>
+                    </div>
+                    {/* Supplier */}
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Supplier</p>
+                      <p className="text-sm font-medium text-gray-900">{product.supplier}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+                  <button 
+                    onClick={() => handleViewClick(product)}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded transition"
+                  >
+                    <Eye size={16} />
+                    View
+                  </button>
+                  <button 
+                    onClick={() => handleEditClick(product)}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded transition"
+                  >
+                    <Edit2 size={16} />
+                    Edit
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="flex items-center justify-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded transition"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -313,17 +370,17 @@ export default function InventoryList() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                  <p className="text-gray-900">₹{viewModal.product.price.toLocaleString()}</p>
+                  <p className="text-gray-900">₹{Number(viewModal.product.price).toLocaleString()}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Total Value</label>
-                  <p className="text-gray-900">₹{viewModal.product.value.toLocaleString()}</p>
+                  <p className="text-gray-900">₹{(Number(viewModal.product.price) * viewModal.product.stock).toLocaleString()}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${viewModal.product.statusColor}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(viewModal.product.status)}`}>
                     {viewModal.product.status}
                   </span>
                 </div>
@@ -331,6 +388,10 @@ export default function InventoryList() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
                 <p className="text-gray-900">{viewModal.product.supplier}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
+                <p className="text-gray-900">{new Date(viewModal.product.createdAt).toLocaleDateString()}</p>
               </div>
             </div>
 
@@ -365,7 +426,7 @@ export default function InventoryList() {
             {/* Modal Body */}
             <div className="px-6 py-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
                 <input 
                   type="text" 
                   name="name"
@@ -375,7 +436,7 @@ export default function InventoryList() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
                 <input 
                   type="text" 
                   name="category"
@@ -386,20 +447,23 @@ export default function InventoryList() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock ({editFormData.unit || 'cases'})</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock * ({editFormData.unit || 'cases'})</label>
                   <input 
                     type="number" 
                     name="stock"
+                    min="0"
                     value={editFormData.stock || ''}
                     onChange={handleEditInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹) *</label>
                   <input 
                     type="number" 
                     name="price"
+                    min="0"
+                    step="0.01"
                     value={editFormData.price || ''}
                     onChange={handleEditInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
@@ -407,7 +471,17 @@ export default function InventoryList() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                <input 
+                  type="text" 
+                  name="unit"
+                  value={editFormData.unit || ''}
+                  onChange={handleEditInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
                 <input 
                   type="text" 
                   name="supplier"
@@ -441,9 +515,10 @@ export default function InventoryList() {
               </button>
               <button 
                 onClick={handleSaveEdit}
-                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition"
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
               >
-                Save Changes
+                {loading ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -501,6 +576,7 @@ export default function InventoryList() {
                   <input 
                     type="number" 
                     name="stock"
+                    min="0"
                     value={newProductForm.stock}
                     onChange={handleAddProductChange}
                     placeholder="0"
@@ -519,6 +595,8 @@ export default function InventoryList() {
                     <option value="bottles">Bottles</option>
                     <option value="cartons">Cartons</option>
                     <option value="units">Units</option>
+                    <option value="packs">Packs</option>
+                    <option value="boxes">Boxes</option>
                   </select>
                 </div>
               </div>
@@ -528,6 +606,8 @@ export default function InventoryList() {
                 <input 
                   type="number" 
                   name="price"
+                  min="0"
+                  step="0.01"
                   value={newProductForm.price}
                   onChange={handleAddProductChange}
                   placeholder="0"
@@ -572,9 +652,10 @@ export default function InventoryList() {
               </button>
               <button 
                 onClick={handleAddProduct}
-                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition"
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
               >
-                Add Product
+                {loading ? 'Adding...' : 'Add Product'}
               </button>
             </div>
           </div>

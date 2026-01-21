@@ -1,64 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Truck, Eye, Edit, Clock, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { vehicleAPI, userAPI } from '../../utils/api';
+import { toast } from 'react-toastify';
 
 export default function VehicleManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [vehicles, setVehicles] = useState([
-    {
-      id: 'GJ-01-AB-1234',
-      status: 'Active',
-      statusColor: 'bg-black text-white',
-      vehicle: 'Tata Ace',
-      capacity: '1 Ton',
-      location: 'Route A - Ahmedabad east',
-      fuelLevel: 85,
-      fuelColor: 'bg-green-500',
-      driver: 'Rajesh Kumar',
-      phone: '+91 98765 43210',
-      currentLoad: [
-        { item: 'Water 500ml', quantity: '25 cases' },
-        { item: 'Pepsi 300ml', quantity: '15 cases' },
-      ],
-    },
-    {
-      id: 'GJ-01-AB-1234',
-      status: 'Loading',
-      statusColor: 'bg-white text-black border border-gray-300',
-      vehicle: 'Tata Ace',
-      capacity: '1.5 Ton',
-      location: 'Main Warehouse',
-      fuelLevel: 92,
-      fuelColor: 'bg-green-500',
-      driver: 'Amit Singh',
-      phone: '+91 98765 43211',
-    },
-    {
-      id: 'GJ-01-AB-1234',
-      status: 'Maintenance',
-      statusColor: 'bg-red-500 text-white',
-      vehicle: 'Tata Ace',
-      capacity: '1.2 Ton',
-      location: 'Service Center',
-      fuelLevel: 15,
-      fuelColor: 'bg-red-500',
-      driver: 'Priya Sharma',
-      phone: '+91 98765 43212',
-    },
-  ]);
+  const [vehicles, setVehicles] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
     id: '',
     status: 'Active',
-    vehicle: '',
+    vehicleType: '',
     capacity: '',
     location: '',
     fuelLevel: 100,
-    driver: '',
-    phone: '',
+    driverId: '',
   });
+
+  // Fetch vehicles and drivers on mount
+  useEffect(() => {
+    fetchVehicles();
+    fetchDrivers();
+  }, []);
+
+  const fetchVehicles = async () => {
+    try {
+      setLoading(true);
+      const response = await vehicleAPI.getAll();
+      setVehicles(response.data.data);
+      setError('');
+    } catch (err) {
+      setError('Failed to fetch vehicles');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDrivers = async () => {
+    try {
+      const response = await userAPI.getAll();
+      // Filter only agent role users
+      const agentUsers = response.data.data.filter(user => user.role === 'agent');
+      setDrivers(agentUsers);
+    } catch (err) {
+      console.error('Failed to fetch drivers:', err);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'Active': return 'bg-black text-white';
+      case 'Loading': return 'bg-white text-black border border-gray-300';
+      case 'Maintenance': return 'bg-red-500 text-white';
+      default: return 'bg-gray-500 text-white';
+    }
+  };
+
+  const getFuelColor = (fuelLevel) => {
+    if (fuelLevel > 50) return 'bg-green-500';
+    if (fuelLevel > 20) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
 
   const stats = [
     { label: 'Total Vehicles', value: vehicles.length.toString(), icon: Truck, color: 'text-blue-600', bgColor: 'bg-blue-50' },
@@ -71,12 +80,11 @@ export default function VehicleManagement() {
     setFormData({
       id: '',
       status: 'Active',
-      vehicle: '',
+      vehicleType: '',
       capacity: '',
       location: '',
       fuelLevel: 100,
-      driver: '',
-      phone: '',
+      driverId: '',
     });
     setShowAddModal(true);
   };
@@ -88,42 +96,74 @@ export default function VehicleManagement() {
 
   const handleEditVehicle = (vehicle) => {
     setSelectedVehicle(vehicle);
-    setFormData(vehicle);
+    setFormData({
+      id: vehicle.id,
+      status: vehicle.status,
+      vehicleType: vehicle.vehicleType,
+      capacity: vehicle.capacity,
+      location: vehicle.location,
+      fuelLevel: vehicle.fuelLevel,
+      driverId: vehicle.driverId || '',
+    });
     setShowEditModal(true);
   };
 
-  const handleSubmitAdd = (e) => {
+  const handleSubmitAdd = async (e) => {
     e.preventDefault();
-    const statusColor = 
-      formData.status === 'Active' ? 'bg-black text-white' :
-      formData.status === 'Loading' ? 'bg-white text-black border border-gray-300' :
-      'bg-red-500 text-white';
-    
-    const fuelColor = 
-      formData.fuelLevel > 50 ? 'bg-green-500' :
-      formData.fuelLevel > 20 ? 'bg-yellow-500' :
-      'bg-red-500';
-
-    setVehicles([...vehicles, { ...formData, statusColor, fuelColor }]);
-    setShowAddModal(false);
+    try {
+      setLoading(true);
+      await vehicleAPI.create(formData);
+      await fetchVehicles();
+      setShowAddModal(false);
+      setError('');
+      toast.success('Vehicle added successfully!');
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Failed to create vehicle';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmitEdit = (e) => {
+  const handleSubmitEdit = async (e) => {
     e.preventDefault();
-    const statusColor = 
-      formData.status === 'Active' ? 'bg-black text-white' :
-      formData.status === 'Loading' ? 'bg-white text-black border border-gray-300' :
-      'bg-red-500 text-white';
-    
-    const fuelColor = 
-      formData.fuelLevel > 50 ? 'bg-green-500' :
-      formData.fuelLevel > 20 ? 'bg-yellow-500' :
-      'bg-red-500';
+    try {
+      setLoading(true);
+      const { id, ...updateData } = formData;
+      await vehicleAPI.update(selectedVehicle.id, updateData);
+      await fetchVehicles();
+      setShowEditModal(false);
+      setError('');
+      toast.success('Vehicle updated successfully!');
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Failed to update vehicle';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setVehicles(vehicles.map(v => 
-      v.id === selectedVehicle.id ? { ...formData, statusColor, fuelColor } : v
-    ));
-    setShowEditModal(false);
+  const handleDeleteVehicle = async (vehicleId) => {
+    if (!window.confirm('Are you sure you want to delete this vehicle?')) return;
+    
+    try {
+      setLoading(true);
+      await vehicleAPI.delete(vehicleId);
+      await fetchVehicles();
+      setError('');
+      toast.success('Vehicle deleted successfully!');
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Failed to delete vehicle';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -170,91 +210,115 @@ export default function VehicleManagement() {
         })}
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className='mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg'>
+          {error}
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && vehicles.length === 0 && (
+        <div className='text-center py-12'>
+          <p className='text-gray-600'>Loading vehicles...</p>
+        </div>
+      )}
+
       {/* Vehicle Cards */}
-      <div className='grid grid-cols-3 gap-6'>
-        {vehicles.map((vehicle, index) => (
-          <div key={index} className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
-            {/* Vehicle Header */}
-            <div className='flex items-start justify-between mb-4'>
-              <div>
-                <h3 className='text-lg font-bold text-gray-800'>{vehicle.id}</h3>
-                <p className='text-gray-600 text-sm'>{vehicle.vehicle}</p>
+      {!loading && vehicles.length === 0 ? (
+        <div className='text-center py-12'>
+          <p className='text-gray-600'>No vehicles found. Add a vehicle to get started.</p>
+        </div>
+      ) : (
+        <div className='grid grid-cols-3 gap-6'>
+          {vehicles.map((vehicle) => (
+            <div key={vehicle.id} className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
+              {/* Vehicle Header */}
+              <div className='flex items-start justify-between mb-4'>
+                <div>
+                  <h3 className='text-lg font-bold text-gray-800'>{vehicle.id}</h3>
+                  <p className='text-gray-600 text-sm'>{vehicle.vehicleType}</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(vehicle.status)}`}>
+                  {vehicle.status === 'Active' && <CheckCircle className='w-3 h-3' />}
+                  {vehicle.status === 'Loading' && <Clock className='w-3 h-3' />}
+                  {vehicle.status === 'Maintenance' && <AlertCircle className='w-3 h-3' />}
+                  {vehicle.status}
+                </span>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${vehicle.statusColor}`}>
-                {vehicle.status === 'Active' && <CheckCircle className='w-3 h-3' />}
-                {vehicle.status === 'Loading' && <Clock className='w-3 h-3' />}
-                {vehicle.status === 'Maintenance' && <AlertCircle className='w-3 h-3' />}
-                {vehicle.status}
-              </span>
-            </div>
 
-            {/* Vehicle Details */}
-            <div className='space-y-3 mb-4'>
-              <div className='flex items-center gap-2 text-sm'>
-                <Truck className='w-4 h-4 text-gray-400' />
-                <span className='text-gray-600'>Capacity:</span>
-                <span className='font-medium text-gray-800 ml-auto'>{vehicle.capacity}</span>
+              {/* Vehicle Details */}
+              <div className='space-y-3 mb-4'>
+                <div className='flex items-center gap-2 text-sm'>
+                  <Truck className='w-4 h-4 text-gray-400' />
+                  <span className='text-gray-600'>Capacity:</span>
+                  <span className='font-medium text-gray-800 ml-auto'>{vehicle.capacity}</span>
+                </div>
+                <div className='flex items-center gap-2 text-sm'>
+                  <MapPin className='w-4 h-4 text-gray-400' />
+                  <span className='text-gray-600'>Location:</span>
+                  <span className='font-medium text-gray-800 ml-auto'>{vehicle.location}</span>
+                </div>
+                <div className='flex items-center gap-2 text-sm'>
+                  <span className='text-gray-600'>Fuel Level:</span>
+                  <span className='font-medium text-gray-800 ml-auto'>{vehicle.fuelLevel}%</span>
+                </div>
+                {/* Fuel Level Progress Bar */}
+                <div className='w-full bg-gray-200 rounded-full h-2'>
+                  <div
+                    className={`h-2 rounded-full ${getFuelColor(vehicle.fuelLevel)}`}
+                    style={{ width: `${vehicle.fuelLevel}%` }}
+                  ></div>
+                </div>
               </div>
-              <div className='flex items-center gap-2 text-sm'>
-                <MapPin className='w-4 h-4 text-gray-400' />
-                <span className='text-gray-600'>Location:</span>
-                <span className='font-medium text-gray-800 ml-auto'>{vehicle.location}</span>
-              </div>
-              <div className='flex items-center gap-2 text-sm'>
-                <span className='text-gray-600'>Fuel Level:</span>
-                <span className='font-medium text-gray-800 ml-auto'>{vehicle.fuelLevel}%</span>
-              </div>
-              {/* Fuel Level Progress Bar */}
-              <div className='w-full bg-gray-200 rounded-full h-2'>
-                <div
-                  className={`h-2 rounded-full ${vehicle.fuelColor}`}
-                  style={{ width: `${vehicle.fuelLevel}%` }}
-                ></div>
-              </div>
-            </div>
 
-            {/* Driver Info */}
-            <div className='border-t border-gray-100 pt-4 mb-4'>
-              <p className='text-sm font-semibold text-gray-800 mb-1'>Driver: {vehicle.driver}</p>
-              <div className='flex items-center gap-2 text-sm text-gray-600'>
-                <Phone className='w-4 h-4' />
-                <span>{vehicle.phone}</span>
-              </div>
-            </div>
-
-            {/* Current Load (if exists) */}
-            {vehicle.currentLoad && (
+              {/* Driver Info */}
               <div className='border-t border-gray-100 pt-4 mb-4'>
-                <p className='text-sm font-semibold text-gray-800 mb-2'>Current load:</p>
-                {vehicle.currentLoad.map((load, idx) => (
-                  <div key={idx} className='flex justify-between text-sm text-gray-600 mb-1'>
-                    <span>{load.item}</span>
-                    <span className='font-medium text-gray-800'>{load.quantity}</span>
+                <p className='text-sm font-semibold text-gray-800 mb-1'>
+                  Driver: {vehicle.driver ? vehicle.driver.name : 'Not Assigned'}
+                </p>
+                {vehicle.driver && (
+                  <div className='flex items-center gap-2 text-sm text-gray-600'>
+                    <Phone className='w-4 h-4' />
+                    <span>{vehicle.driver.phone}</span>
                   </div>
-                ))}
+                )}
               </div>
-            )}
 
-            {/* Action Buttons */}
-            <div className='flex gap-2'>
-              <button 
-                onClick={() => handleViewDetails(vehicle)}
-                className='flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
-              >
-                <Eye className='w-4 h-4' />
-                <span className='text-sm font-medium'>Details</span>
-              </button>
-              <button 
-                onClick={() => handleEditVehicle(vehicle)}
-                className='flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
-              >
-                <Edit className='w-4 h-4' />
-                <span className='text-sm font-medium'>Edit</span>
-              </button>
+              {/* Current Load (if exists) */}
+              {vehicle.loads && vehicle.loads.length > 0 && (
+                <div className='border-t border-gray-100 pt-4 mb-4'>
+                  <p className='text-sm font-semibold text-gray-800 mb-2'>Current load:</p>
+                  {vehicle.loads.map((load) => (
+                    <div key={load.id} className='flex justify-between text-sm text-gray-600 mb-1'>
+                      <span>{load.item}</span>
+                      <span className='font-medium text-gray-800'>{load.quantity}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className='flex gap-2'>
+                <button 
+                  onClick={() => handleViewDetails(vehicle)}
+                  className='flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+                >
+                  <Eye className='w-4 h-4' />
+                  <span className='text-sm font-medium'>Details</span>
+                </button>
+                <button 
+                  onClick={() => handleEditVehicle(vehicle)}
+                  className='flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+                >
+                  <Edit className='w-4 h-4' />
+                  <span className='text-sm font-medium'>Edit</span>
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Vehicle Modal */}
       {showAddModal && (
@@ -267,13 +331,19 @@ export default function VehicleManagement() {
               </button>
             </div>
             <form onSubmit={handleSubmitAdd} className='space-y-4'>
+              {error && (
+                <div className='p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg'>
+                  {error}
+                </div>
+              )}
               <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>Vehicle ID</label>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>Registration Number (Vehicle ID)</label>
                 <input
                   type='text'
                   name='id'
                   value={formData.id}
                   onChange={handleInputChange}
+                  placeholder='e.g., GJ-01-AB-1234'
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   required
                 />
@@ -282,8 +352,8 @@ export default function VehicleManagement() {
                 <label className='block text-sm font-medium text-gray-700 mb-1'>Vehicle Type</label>
                 <input
                   type='text'
-                  name='vehicle'
-                  value={formData.vehicle}
+                  name='vehicleType'
+                  value={formData.vehicleType}
                   onChange={handleInputChange}
                   placeholder='e.g., Tata Ace'
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
@@ -342,28 +412,20 @@ export default function VehicleManagement() {
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>Driver Name</label>
-                <input
-                  type='text'
-                  name='driver'
-                  value={formData.driver}
+                <label className='block text-sm font-medium text-gray-700 mb-1'>Assign Driver (Agent)</label>
+                <select
+                  name='driverId'
+                  value={formData.driverId}
                   onChange={handleInputChange}
-                  placeholder='e.g., Rajesh Kumar'
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  required
-                />
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>Phone Number</label>
-                <input
-                  type='text'
-                  name='phone'
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder='+91 98765 43210'
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  required
-                />
+                >
+                  <option value=''>No Driver Assigned</option>
+                  {drivers.map((driver) => (
+                    <option key={driver.id} value={driver.id}>
+                      {driver.name} - {driver.phone}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className='flex gap-3 pt-4'>
                 <button
@@ -375,9 +437,10 @@ export default function VehicleManagement() {
                 </button>
                 <button
                   type='submit'
-                  className='flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors'
+                  disabled={loading}
+                  className='flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50'
                 >
-                  Add Vehicle
+                  {loading ? 'Adding...' : 'Add Vehicle'}
                 </button>
               </div>
             </form>
@@ -463,8 +526,13 @@ export default function VehicleManagement() {
               </button>
             </div>
             <form onSubmit={handleSubmitEdit} className='space-y-4'>
+              {error && (
+                <div className='p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg'>
+                  {error}
+                </div>
+              )}
               <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>Vehicle ID</label>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>Registration Number (Vehicle ID)</label>
                 <input
                   type='text'
                   name='id'
@@ -478,8 +546,8 @@ export default function VehicleManagement() {
                 <label className='block text-sm font-medium text-gray-700 mb-1'>Vehicle Type</label>
                 <input
                   type='text'
-                  name='vehicle'
-                  value={formData.vehicle}
+                  name='vehicleType'
+                  value={formData.vehicleType}
                   onChange={handleInputChange}
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   required
@@ -535,26 +603,20 @@ export default function VehicleManagement() {
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>Driver Name</label>
-                <input
-                  type='text'
-                  name='driver'
-                  value={formData.driver}
+                <label className='block text-sm font-medium text-gray-700 mb-1'>Assign Driver (Agent)</label>
+                <select
+                  name='driverId'
+                  value={formData.driverId}
                   onChange={handleInputChange}
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  required
-                />
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>Phone Number</label>
-                <input
-                  type='text'
-                  name='phone'
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  required
-                />
+                >
+                  <option value=''>No Driver Assigned</option>
+                  {drivers.map((driver) => (
+                    <option key={driver.id} value={driver.id}>
+                      {driver.name} - {driver.phone}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className='flex gap-3 pt-4'>
                 <button
@@ -565,10 +627,18 @@ export default function VehicleManagement() {
                   Cancel
                 </button>
                 <button
-                  type='submit'
-                  className='flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors'
+                  type='button'
+                  onClick={() => handleDeleteVehicle(selectedVehicle.id)}
+                  className='flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
                 >
-                  Save Changes
+                  Delete
+                </button>
+                <button
+                  type='submit'
+                  disabled={loading}
+                  className='flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50'
+                >
+                  {loading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>

@@ -55,4 +55,27 @@ export const userAPI = {
   updatePassword: (passwordData) => api.put('/users/password/update', passwordData)
 };
 
+// Vehicle API
+export const vehicleAPI = {
+  getAll: () => api.get('/vehicles'),
+  getById: (id) => api.get(`/vehicles/${id}`),
+  create: (vehicleData) => api.post('/vehicles', vehicleData),
+  update: (id, vehicleData) => api.put(`/vehicles/${id}`, vehicleData),
+  delete: (id) => api.delete(`/vehicles/${id}`),
+  // Vehicle load management
+  getLoads: (id) => api.get(`/vehicles/${id}/loads`),
+  addLoad: (id, loadData) => api.post(`/vehicles/${id}/loads`, loadData),
+  removeLoad: (vehicleId, loadId) => api.delete(`/vehicles/${vehicleId}/loads/${loadId}`)
+};
+
+// Inventory API
+export const inventoryAPI = {
+  getAll: () => api.get('/inventory'),
+  getById: (id) => api.get(`/inventory/${id}`),
+  create: (inventoryData) => api.post('/inventory', inventoryData),
+  update: (id, inventoryData) => api.put(`/inventory/${id}`, inventoryData),
+  delete: (id) => api.delete(`/inventory/${id}`),
+  updateStock: (id, stockData) => api.patch(`/inventory/${id}/stock`, stockData)
+};
+
 export default api;
