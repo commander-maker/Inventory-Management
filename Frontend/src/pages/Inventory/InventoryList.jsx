@@ -55,7 +55,7 @@ export default function InventoryList() {
 
   const inventoryStats = [
     { label: 'Total Products', value: products.length.toString(), icon: '📦' },
-    { label: 'Total Value', value: `₹${totalValue.toLocaleString()}`, icon: '💹' },
+    { label: 'Total Value', value: `Rs ${totalValue.toLocaleString()}`, icon: '💹' },
     { label: 'Low Stock', value: lowStockItems.toString(), icon: '⚠️' },
     { label: 'Out of Stock', value: outOfStockItems.toString(), icon: '❌' }
   ];
@@ -294,12 +294,12 @@ export default function InventoryList() {
                     {/* Price */}
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Price</p>
-                      <p className="text-lg font-semibold text-gray-900">₹{Number(product.price).toLocaleString()}</p>
+                      <p className="text-lg font-semibold text-gray-900">Rs {Number(product.price).toLocaleString()}</p>
                     </div>
                     {/* Value */}
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Value</p>
-                      <p className="text-lg font-semibold text-gray-900">₹{value.toLocaleString()}</p>
+                      <p className="text-lg font-semibold text-gray-900">Rs {value.toLocaleString()}</p>
                     </div>
                     {/* Supplier */}
                     <div>
@@ -370,13 +370,13 @@ export default function InventoryList() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                  <p className="text-gray-900">₹{Number(viewModal.product.price).toLocaleString()}</p>
+                  <p className="text-gray-900">Rs {Number(viewModal.product.price).toLocaleString()}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Total Value</label>
-                  <p className="text-gray-900">₹{(Number(viewModal.product.price) * viewModal.product.stock).toLocaleString()}</p>
+                  <p className="text-gray-900">Rs {(Number(viewModal.product.price) * viewModal.product.stock).toLocaleString()}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -426,7 +426,7 @@ export default function InventoryList() {
             {/* Modal Body */}
             <div className="px-6 py-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name </label>
                 <input 
                   type="text" 
                   name="name"
@@ -436,7 +436,7 @@ export default function InventoryList() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category </label>
                 <input 
                   type="text" 
                   name="category"
@@ -447,7 +447,7 @@ export default function InventoryList() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock * ({editFormData.unit || 'cases'})</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock ({editFormData.unit || 'cases'})</label>
                   <input 
                     type="number" 
                     name="stock"
@@ -458,7 +458,7 @@ export default function InventoryList() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (Rs) </label>
                   <input 
                     type="number" 
                     name="price"
@@ -481,7 +481,7 @@ export default function InventoryList() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier </label>
                 <input 
                   type="text" 
                   name="supplier"
@@ -543,7 +543,7 @@ export default function InventoryList() {
             {/* Modal Body */}
             <div className="px-6 py-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name </label>
                 <input 
                   type="text" 
                   name="name"
@@ -555,7 +555,7 @@ export default function InventoryList() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category </label>
                 <select 
                   name="category"
                   value={newProductForm.category}
@@ -572,7 +572,7 @@ export default function InventoryList() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock </label>
                   <input 
                     type="number" 
                     name="stock"
@@ -584,7 +584,7 @@ export default function InventoryList() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit </label>
                   <select 
                     name="unit"
                     value={newProductForm.unit}
@@ -602,7 +602,7 @@ export default function InventoryList() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price per Unit (₹) *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price per Unit (Rs) </label>
                 <input 
                   type="number" 
                   name="price"
@@ -616,7 +616,7 @@ export default function InventoryList() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier </label>
                 <input 
                   type="text" 
                   name="supplier"
@@ -628,7 +628,7 @@ export default function InventoryList() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status </label>
                 <select 
                   name="status"
                   value={newProductForm.status}
