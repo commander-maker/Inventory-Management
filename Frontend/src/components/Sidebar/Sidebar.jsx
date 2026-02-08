@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -11,11 +11,13 @@ import {
   LogOut,
   Menu
 } from 'lucide-react';
+import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -27,10 +29,12 @@ export default function Sidebar() {
   ];
 
   const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      logout();
-      navigate('/login');
-    }
+    setShowLogoutDialog(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -79,6 +83,17 @@ export default function Sidebar() {
           </li>
         </ul>
       </nav>
+      
+      <ConfirmDialog
+        isOpen={showLogoutDialog}
+        onClose={() => setShowLogoutDialog(false)}
+        onConfirm={confirmLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="warning"
+      />
     </aside>
   );
 }

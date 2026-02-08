@@ -67,7 +67,7 @@ export default function Login() {
                 type='email'
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder='you@example.com'
+                placeholder='Enter your email'
                 className='w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                 required
               />
@@ -111,8 +111,8 @@ export default function Login() {
             </button>
           </form>
 
-
-
+          
+          
         </div>
 
         {/* Copyright */}
