@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Eye, Edit2, Plus, Download, X, Trash2 } from 'lucide-react';
 import api, { inventoryAPI } from '../../utils/api'; // Import both
 import { toast } from 'react-toastify';
+import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 
 export default function InventoryList() {
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
@@ -13,6 +14,7 @@ export default function InventoryList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [editFormData, setEditFormData] = useState({});
+  const [deleteDialog, setDeleteDialog] = useState({ show: false, productId: null });
   const [newProductForm, setNewProductForm] = useState({
     name: '',
     category: 'Soft Drinks',
@@ -163,7 +165,12 @@ export default function InventoryList() {
   };
 
   const handleDeleteProduct = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    setDeleteDialog({ show: true, productId: id });
+  };
+  
+  const confirmDeleteProduct = async () => {
+    const id = deleteDialog.productId;
+    setDeleteDialog({ show: false, productId: null });
     
     try {
       setLoading(true);
@@ -661,6 +668,18 @@ export default function InventoryList() {
           </div>
         </div>
       )}
+      
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteDialog.show}
+        onClose={() => setDeleteDialog({ show: false, productId: null })}
+        onConfirm={confirmDeleteProduct}
+        title="Delete Product"
+        message="Are you sure you want to delete this product? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }
