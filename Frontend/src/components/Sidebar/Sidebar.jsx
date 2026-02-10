@@ -25,6 +25,7 @@ export default function Sidebar() {
     { icon: Truck, label: 'Vehicles', path: '/vehicles' },
     { icon: Calculator, label: 'Finance', path: '/finance' },
     { icon: Users, label: 'Users', path: '/users' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
   const agentItems = [
@@ -65,8 +66,8 @@ export default function Sidebar() {
                 <button
                   onClick={() => navigate(item.path)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-700 hover:bg-gray-50'
                     }`}
                 >
                   <Icon className='w-5 h-5' />

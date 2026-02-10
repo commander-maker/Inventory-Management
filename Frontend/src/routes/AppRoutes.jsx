@@ -7,6 +7,7 @@ import InventoryList from '../pages/Inventory/InventoryList';
 import FinanceDashboard from '../pages/Finance/Dashboard';
 import VehicleManagement from '../pages/Vehicle/Vehicle_management';
 import UserManagement from '../pages/User/User_management';
+import Settings from '../pages/Settings/Settings';
 import DashboardLayout from '../layouts/DashboardLayout';
 
 const ProtectedRoute = ({ children }) => {
@@ -56,6 +57,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <UserManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         }
       />
