@@ -29,8 +29,10 @@ export default function Sidebar() {
   ];
 
   const agentItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/agent-dashboard' },
     { icon: Truck, label: 'Vehicle Management', path: '/vehicles' },
     { icon: Package, label: 'Inventory Stock', path: '/inventory' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
   const menuItems = user?.role === 'agent' ? agentItems : adminItems;
