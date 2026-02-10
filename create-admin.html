@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,32 +13,39 @@
             padding: 20px;
             background: #f5f5f5;
         }
+
         .container {
             background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             color: #333;
             margin-bottom: 20px;
         }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
             color: #555;
         }
-        input, select {
+
+        input,
+        select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             box-sizing: border-box;
         }
+
         button {
             width: 100%;
             padding: 12px;
@@ -49,25 +57,30 @@
             cursor: pointer;
             margin-top: 10px;
         }
+
         button:hover {
             background: #1d4ed8;
         }
+
         .message {
             margin-top: 20px;
             padding: 15px;
             border-radius: 5px;
             display: none;
         }
+
         .success {
             background: #d1fae5;
             color: #065f46;
             border: 1px solid #10b981;
         }
+
         .error {
             background: #fee2e2;
             color: #991b1b;
             border: 1px solid #ef4444;
         }
+
         pre {
             background: #f3f4f6;
             padding: 10px;
@@ -77,27 +90,28 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <h1>🚀 Create Admin User</h1>
-        <p style="color: #666; margin-bottom: 20px;">This will create an admin user with properly hashed password.</p>
-        
+        <h1>🚀 Create User</h1>
+        <p style="color: #666; margin-bottom: 20px;">This will create a user with properly hashed password.</p>
+
         <form id="registerForm">
             <div class="form-group">
                 <label>Name</label>
-                <input type="text" id="name" value="Admin User" required>
+                <input type="text" id="name" value="User Name" required>
             </div>
-            
+
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" id="email" value="admin@aquatrack.com" required>
+                <input type="email" id="email" value="user@aquatrack.com" required>
             </div>
-            
+
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="password" value="Admin@123" required>
+                <input type="password" id="password" value="User@123" required>
             </div>
-            
+
             <div class="form-group">
                 <label>Role</label>
                 <select id="role">
@@ -105,25 +119,25 @@
                     <option value="agent">Agent</option>
                 </select>
             </div>
-            
+
             <div class="form-group">
                 <label>Phone</label>
                 <input type="text" id="phone" value="+91 98765 00000" required>
             </div>
-            
-            <button type="submit">Create Admin User</button>
+
+            <button type="submit">Create User</button>
         </form>
-        
+
         <div id="message" class="message"></div>
     </div>
 
     <script>
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const messageDiv = document.getElementById('message');
             messageDiv.style.display = 'none';
-            
+
             const userData = {
                 name: document.getElementById('name').value,
                 email: document.getElementById('email').value,
@@ -131,7 +145,7 @@
                 role: document.getElementById('role').value,
                 phone: document.getElementById('phone').value
             };
-            
+
             try {
                 const response = await fetch('http://localhost:5000/api/auth/register', {
                     method: 'POST',
@@ -140,11 +154,11 @@
                     },
                     body: JSON.stringify(userData)
                 });
-                
+
                 const result = await response.json();
-                
+
                 messageDiv.style.display = 'block';
-                
+
                 if (result.success) {
                     messageDiv.className = 'message success';
                     messageDiv.innerHTML = `
@@ -175,4 +189,5 @@
         });
     </script>
 </body>
+
 </html>
