@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Login from '../pages/Auth/Login';
 import Dashboard from '../pages/Dashboard/Dashboard';
+import AgentDashboard from '../pages/Dashboard/AgentDashboard';
 import InventoryList from '../pages/Inventory/InventoryList';
 import FinanceDashboard from '../pages/Finance/Dashboard';
 import VehicleManagement from '../pages/Vehicle/Vehicle_management';
@@ -65,6 +66,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/agent-dashboard"
+        element={
+          <ProtectedRoute>
+            <AgentDashboard />
           </ProtectedRoute>
         }
       />

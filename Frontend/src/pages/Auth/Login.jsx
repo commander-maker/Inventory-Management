@@ -36,7 +36,7 @@ export default function Login() {
             navigate('/dashboard');
             break;
           case 'agent':
-            navigate('/vehicles');
+            navigate('/agent-dashboard');
             break;
           default:
             navigate('/dashboard');
