@@ -10,34 +10,7 @@ export default function InventoryList() {
   const [viewModal, setViewModal] = useState({ isOpen: false, product: null });
   const [editModal, setEditModal] = useState({ isOpen: false, product: null });
   const [addModal, setAddModal] = useState(false);
-
-  // Hardcoded sample data
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: 'Coca-Cola 500ml',
-      category: 'Soft Drinks',
-      stock: 150,
-      unit: 'bottles',
-      price: 120,
-      supplier: 'Coca-Cola Beverages',
-      status: 'In Stock',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: 2,
-      name: 'Pepsi 1.5L',
-      category: 'Soft Drinks',
-      stock: 8,
-      unit: 'bottles',
-      price: 250,
-      supplier: 'PepsiCo Distributors',
-      status: 'Low Stock',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  ]);
+  const [products, setProducts] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -65,20 +38,12 @@ export default function InventoryList() {
     try {
       setLoading(true);
       setError('');
-      const response = await inventoryAPI.getAll(); // Use inventoryAPI
-      const apiData = response.data.data || [];
-
-      // If API returns data, use it; otherwise keep the hardcoded sample data
-      if (apiData.length > 0) {
-        setProducts(apiData);
-      }
+      const response = await inventoryAPI.getAll();
+      setProducts(response.data.data || []);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch inventory';
-      // Don't show error if we have hardcoded sample data
-      if (products.length === 0) {
-        setError(errorMessage);
-        toast.error(errorMessage);
-      }
+      setError(errorMessage);
+      toast.error(errorMessage);
       console.error('Error fetching inventory:', err);
     } finally {
       setLoading(false);
