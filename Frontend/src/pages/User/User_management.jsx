@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, UserPlus, Edit, Trash2, Phone, Calendar, Truck, TrendingUp, X, Users as UsersIcon, UserCheck, UserCog } from 'lucide-react';
 import { userAPI } from '../../utils/api';
 import { toast } from 'react-toastify';
+import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
+import InfoDialog from '../../components/InfoDialog/InfoDialog';
 
 export default function UserManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -12,6 +14,8 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
+  const [deleteDialog, setDeleteDialog] = useState({ show: false, userId: null });
+  const [passwordDialog, setPasswordDialog] = useState({ show: false, password: '', email: '' });
 
   const [formData, setFormData] = useState({
     name: '',
@@ -102,7 +106,12 @@ export default function UserManagement() {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    setDeleteDialog({ show: true, userId });
+  };
+  
+  const confirmDeleteUser = async () => {
+    const userId = deleteDialog.userId;
+    setDeleteDialog({ show: false, userId: null });
     
     setLoading(true);
     try {
@@ -129,18 +138,20 @@ export default function UserManagement() {
       
       if (response.data.success) {
         // Show temporary password to admin
+        const tempPassword = response.data.data.temporaryPassword;
+        const email = formData.email;
+        
         toast.success(
-          `User created successfully! Temporary Password: ${response.data.data.temporaryPassword} - Sent to ${formData.email}`,
-          { autoClose: 8000 }
+          `User created successfully! Temporary Password has been sent to ${email}`,
+          { autoClose: 5000 }
         );
         
-        // Also show alert for password
-        alert(
-          `User created successfully!\n\n` +
-          `Temporary Password: ${response.data.data.temporaryPassword}\n\n` +
-          `This password has been sent to ${formData.email}\n` +
-          `Please share this password with the user.`
-        );
+        // Show password dialog
+        setPasswordDialog({
+          show: true,
+          password: tempPassword,
+          email: email
+        });
         
         // Refresh user list
         await fetchUsers();
@@ -531,6 +542,27 @@ export default function UserManagement() {
           </div>
         </div>
       )}
+      
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteDialog.show}
+        onClose={() => setDeleteDialog({ show: false, userId: null })}
+        onConfirm={confirmDeleteUser}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
+      
+      {/* Password Info Dialog */}
+      <InfoDialog
+        isOpen={passwordDialog.show}
+        onClose={() => setPasswordDialog({ show: false, password: '', email: '' })}
+        title="User Created Successfully"
+        message={`Temporary Password has been sent to ${passwordDialog.email}\n\nPlease share this password with the user:`}
+        copyableText={passwordDialog.password}
+      />
     </div>
   );
 }
