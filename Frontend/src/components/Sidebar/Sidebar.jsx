@@ -1,23 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Truck, 
-  Calculator, 
-  Users, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Package,
+  Truck,
+  Calculator,
+  Users,
+  Settings,
   LogOut,
   Menu
 } from 'lucide-react';
+import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  const menuItems = [
+  const adminItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Package, label: 'Inventory', path: '/inventory' },
     { icon: Truck, label: 'Vehicles', path: '/vehicles' },
@@ -26,11 +28,22 @@ export default function Sidebar() {
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
+  const agentItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/agent-dashboard' },
+    { icon: Truck, label: 'Vehicle Management', path: '/vehicles' },
+    { icon: Package, label: 'Inventory Stock', path: '/inventory' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
+  ];
+
+  const menuItems = user?.role === 'agent' ? agentItems : adminItems;
+
   const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      logout();
-      navigate('/login');
-    }
+    setShowLogoutDialog(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -49,16 +62,15 @@ export default function Sidebar() {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <li key={item.path}>
                 <button
                   onClick={() => navigate(item.path)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   <Icon className='w-5 h-5' />
                   <span className='font-medium'>{item.label}</span>
@@ -79,6 +91,17 @@ export default function Sidebar() {
           </li>
         </ul>
       </nav>
+
+      <ConfirmDialog
+        isOpen={showLogoutDialog}
+        onClose={() => setShowLogoutDialog(false)}
+        onConfirm={confirmLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="warning"
+      />
     </aside>
   );
 }

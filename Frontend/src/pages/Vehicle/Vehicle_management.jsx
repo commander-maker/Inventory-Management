@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Truck, Eye, Edit, Clock, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { vehicleAPI, userAPI } from '../../utils/api';
 import { toast } from 'react-toastify';
+import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 
 export default function VehicleManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -12,6 +13,7 @@ export default function VehicleManagement() {
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState({ show: false, vehicleId: null });
 
   const [formData, setFormData] = useState({
     id: '',
@@ -148,7 +150,12 @@ export default function VehicleManagement() {
   };
 
   const handleDeleteVehicle = async (vehicleId) => {
-    if (!window.confirm('Are you sure you want to delete this vehicle?')) return;
+    setDeleteDialog({ show: true, vehicleId });
+  };
+  
+  const confirmDeleteVehicle = async () => {
+    const vehicleId = deleteDialog.vehicleId;
+    setDeleteDialog({ show: false, vehicleId: null });
     
     try {
       setLoading(true);
@@ -652,6 +659,18 @@ export default function VehicleManagement() {
         <span className='text-blue-600 font-medium'>AquaTrack</span> Design by Themesflat All
         rights reserved.
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteDialog.show}
+        onClose={() => setDeleteDialog({ show: false, vehicleId: null })}
+        onConfirm={confirmDeleteVehicle}
+        title="Delete Vehicle"
+        message="Are you sure you want to delete this vehicle? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }
