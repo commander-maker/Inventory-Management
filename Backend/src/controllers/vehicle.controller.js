@@ -17,6 +17,29 @@ export const getAllVehicles = async (req, res) => {
   }
 };
 
+// Get current user's assigned vehicle (for Agents)
+export const getMyVehicle = async (req, res) => {
+  try {
+    const vehicle = await VehicleService.getVehicleByDriverId(req.user.id);
+    if (!vehicle) {
+      return res.status(200).json({
+        success: true,
+        data: null,
+        message: "No vehicle assigned to this user"
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: vehicle
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // Get vehicle by ID
 export const getVehicleById = async (req, res) => {
   try {
