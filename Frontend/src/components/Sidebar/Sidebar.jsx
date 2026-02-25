@@ -9,7 +9,9 @@ import {
   Users,
   Settings,
   LogOut,
-  Menu
+  Menu,
+  MapPin,
+  Store
 } from 'lucide-react';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 
@@ -23,6 +25,8 @@ export default function Sidebar() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Package, label: 'Inventory', path: '/inventory' },
     { icon: Truck, label: 'Vehicles', path: '/vehicles' },
+    { icon: Store, label: 'Customers', path: '/customers' },
+    { icon: MapPin, label: 'Deliveries', path: '/deliveries' },
     { icon: Calculator, label: 'Finance', path: '/finance' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: Settings, label: 'Settings', path: '/settings' },
@@ -30,6 +34,7 @@ export default function Sidebar() {
 
   const agentItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/agent-dashboard' },
+    { icon: MapPin, label: 'My Deliveries', path: '/my-deliveries' },
     { icon: Truck, label: 'Vehicle Management', path: '/vehicles' },
     { icon: Package, label: 'Inventory Stock', path: '/inventory' },
     { icon: Settings, label: 'Settings', path: '/settings' },

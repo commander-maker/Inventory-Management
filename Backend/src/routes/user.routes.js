@@ -15,14 +15,14 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticate);
 
+// Password update route (must come before /:id routes)
+router.put("/password/update", updatePassword);
+
 // User CRUD routes
 router.get("/", getAllUsers);
 router.get("/:id", getUserById);
 router.post("/", createUser);
 router.put("/:id", updateUser);
 router.delete("/:id", deleteUser);
-
-// Password update route
-router.put("/password/update", updatePassword);
 
 export default router;

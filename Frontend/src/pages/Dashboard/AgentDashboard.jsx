@@ -1,56 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, Truck, TrendingUp, Clock, MapPin, Fuel, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { deliveryAPI } from '../../utils/api';
 
 export default function AgentDashboard() {
     const { user } = useAuth();
+    const [deliveries, setDeliveries] = useState([]);
+    const [deliveryStats, setDeliveryStats] = useState({
+        total: 0,
+        completed: 0,
+        inProgress: 0,
+        pending: 0,
+        failed: 0
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Fetch agent deliveries
+    useEffect(() => {
+        const fetchDeliveries = async () => {
+            try {
+                setLoading(true);
+                const response = await deliveryAPI.getMyDeliveries();
+                const deliveryData = response.data.data || [];
+                setDeliveries(deliveryData);
+
+                // Calculate statistics
+                const stats = {
+                    total: deliveryData.length,
+                    completed: deliveryData.filter(d => d.status === 'Delivered').length,
+                    inProgress: deliveryData.filter(d => d.status === 'In Transit').length,
+                    pending: deliveryData.filter(d => d.status === 'Pending').length,
+                    failed: deliveryData.filter(d => d.status === 'Failed').length
+                };
+                setDeliveryStats(stats);
+                setError(null);
+            } catch (err) {
+                console.error('Failed to fetch deliveries:', err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDeliveries();
+    }, []);
 
     // Agent stats
     const agentStats = [
         { label: 'Assigned Vehicle', value: user?.vehicle || 'GJ-01-AB-1234', icon: Truck, color: 'text-blue-500', bgColor: 'bg-blue-100' },
         { label: 'Monthly Sales', value: `Rs ${Number(user?.monthlySales || 45000).toLocaleString()}`, icon: TrendingUp, color: 'text-green-500', bgColor: 'bg-green-100' },
-        { label: 'Deliveries Today', value: '8', icon: Package, color: 'text-purple-500', bgColor: 'bg-purple-100' },
-        { label: 'Total Distance', value: '142 km', icon: MapPin, color: 'text-orange-500', bgColor: 'bg-orange-100' }
-    ];
-
-    // Today's deliveries
-    const deliveries = [
-        {
-            id: 1,
-            customer: 'Super Mart Colombo',
-            location: 'Colombo 03',
-            items: '50 cases Water, 30 cases Pepsi',
-            status: 'Completed',
-            time: '08:30 AM',
-            statusColor: 'bg-green-100 text-green-800'
-        },
-        {
-            id: 2,
-            customer: 'City Convenience Store',
-            location: 'Colombo 05',
-            items: '25 cases Coca-Cola, 15 cases Sprite',
-            status: 'Completed',
-            time: '10:15 AM',
-            statusColor: 'bg-green-100 text-green-800'
-        },
-        {
-            id: 3,
-            customer: 'Quick Shop Dehiwala',
-            location: 'Dehiwala',
-            items: '40 cases Mixed Beverages',
-            status: 'In Progress',
-            time: '02:30 PM',
-            statusColor: 'bg-blue-100 text-blue-800'
-        },
-        {
-            id: 4,
-            customer: 'Metro Mini Mart',
-            location: 'Nugegoda',
-            items: '20 cases Energy Drinks',
-            status: 'Pending',
-            time: '04:00 PM',
-            statusColor: 'bg-yellow-100 text-yellow-800'
-        }
+        { label: 'Deliveries Today', value: deliveryStats.total.toString(), icon: Package, color: 'text-purple-500', bgColor: 'bg-purple-100' },
+        { label: 'Completed Today', value: deliveryStats.completed.toString(), icon: CheckCircle, color: 'text-orange-500', bgColor: 'bg-orange-100' }
     ];
 
     // Vehicle status
@@ -121,53 +122,74 @@ export default function AgentDashboard() {
                             <p className="text-gray-600 text-sm mt-1">Your scheduled deliveries for today</p>
                         </div>
                         <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm">
-                            {deliveries.length} Total
+                            {deliveryStats.total} Total
                         </span>
                     </div>
 
                     <div className="space-y-3">
-                        {deliveries.map((delivery) => (
-                            <div
-                                key={delivery.id}
-                                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition group cursor-pointer"
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
-                                                {delivery.customer}
-                                            </h3>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${delivery.statusColor}`}>
-                                                {delivery.status}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                                            <div className="flex items-center gap-1">
-                                                <MapPin size={14} />
-                                                <span>{delivery.location}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Clock size={14} />
-                                                <span>{delivery.time}</span>
-                                            </div>
-                                        </div>
-                                        <p className="text-sm text-gray-700 mt-2">
-                                            <span className="font-medium">Items:</span> {delivery.items}
-                                        </p>
-                                    </div>
+                        {loading ? (
+                            <div className="py-8 text-center text-gray-500">Loading your deliveries...</div>
+                        ) : error ? (
+                            <div className="py-8 text-center text-red-600">Error loading deliveries: {error}</div>
+                        ) : deliveries.length === 0 ? (
+                            <div className="py-8 text-center text-gray-500">No deliveries assigned yet</div>
+                        ) : (
+                            deliveries.map((delivery) => {
+                                const statusColor = 
+                                    delivery.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                                    delivery.status === 'In Transit' ? 'bg-blue-100 text-blue-800' :
+                                    delivery.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800';
 
-                                    {delivery.status === 'Completed' && (
-                                        <CheckCircle className="text-green-500 flex-shrink-0" size={24} />
-                                    )}
-                                    {delivery.status === 'In Progress' && (
-                                        <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                    )}
-                                    {delivery.status === 'Pending' && (
-                                        <AlertCircle className="text-yellow-500 flex-shrink-0" size={24} />
-                                    )}
-                                </div>
-                            </div>
-                        ))}
+                                return (
+                                    <div
+                                        key={delivery.id}
+                                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition group cursor-pointer"
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
+                                                        {delivery.vehicleLoad?.customer?.name || 'Unknown Customer'}
+                                                    </h3>
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                                                        {delivery.status}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                                    <div className="flex items-center gap-1">
+                                                        <MapPin size={14} />
+                                                        <span>{delivery.vehicleLoad?.customer?.address || 'No address'}</span>
+                                                    </div>
+                                                    {delivery.createdAt && (
+                                                        <div className="flex items-center gap-1">
+                                                            <Clock size={14} />
+                                                            <span>{new Date(delivery.createdAt).toLocaleTimeString()}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-gray-700 mt-2">
+                                                    <span className="font-medium">Status:</span> {delivery.status}
+                                                </p>
+                                            </div>
+
+                                            {delivery.status === 'Delivered' && (
+                                                <CheckCircle className="text-green-500 flex-shrink-0" size={24} />
+                                            )}
+                                            {delivery.status === 'In Transit' && (
+                                                <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                            )}
+                                            {delivery.status === 'Pending' && (
+                                                <AlertCircle className="text-yellow-500 flex-shrink-0" size={24} />
+                                            )}
+                                            {delivery.status === 'Failed' && (
+                                                <AlertCircle className="text-red-500 flex-shrink-0" size={24} />
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
                 </div>
 

@@ -56,8 +56,29 @@ export default function VehicleManagement() {
     }
   };
 
+  // Get list of driver IDs already assigned to vehicles
+  const getAssignedDriverIds = () => {
+    return vehicles
+      .filter(v => v.driverId)
+      .map(v => v.driverId);
+  };
+
+  // Get available drivers for assignment (unassigned + current vehicle's driver)
+  const getAvailableDrivers = (currentVehicleId = null) => {
+    const assignedIds = getAssignedDriverIds();
+    return drivers.map(driver => {
+      const assignedVehicle = vehicles.find(v => v.driverId === driver.id);
+      const isAssignedToOther = assignedVehicle && assignedVehicle.id !== currentVehicleId;
+      return {
+        ...driver,
+        isAssigned: isAssignedToOther,
+        assignedVehicleId: assignedVehicle?.id || null
+      };
+    });
+  };
+
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Active': return 'bg-black text-white';
       case 'Loading': return 'bg-white text-black border border-gray-300';
       case 'Maintenance': return 'bg-red-500 text-white';
@@ -152,11 +173,11 @@ export default function VehicleManagement() {
   const handleDeleteVehicle = async (vehicleId) => {
     setDeleteDialog({ show: true, vehicleId });
   };
-  
+
   const confirmDeleteVehicle = async () => {
     const vehicleId = deleteDialog.vehicleId;
     setDeleteDialog({ show: false, vehicleId: null });
-    
+
     try {
       setLoading(true);
       await vehicleAPI.delete(vehicleId);
@@ -187,7 +208,7 @@ export default function VehicleManagement() {
           <p className='text-gray-600 mt-1'>Manage your delivery fleet and track vehicle status.</p>
         </div>
         <div className='flex gap-3'>
-          <button 
+          <button
             onClick={handleAddVehicle}
             className='flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors'
           >
@@ -307,14 +328,14 @@ export default function VehicleManagement() {
 
               {/* Action Buttons */}
               <div className='flex gap-2'>
-                <button 
+                <button
                   onClick={() => handleViewDetails(vehicle)}
                   className='flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
                 >
                   <Eye className='w-4 h-4' />
                   <span className='text-sm font-medium'>Details</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleEditVehicle(vehicle)}
                   className='flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
                 >
@@ -427,12 +448,17 @@ export default function VehicleManagement() {
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                 >
                   <option value=''>No Driver Assigned</option>
-                  {drivers.map((driver) => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.name} - {driver.phone}
+                  {getAvailableDrivers().map((driver) => (
+                    <option
+                      key={driver.id}
+                      value={driver.id}
+                      disabled={driver.isAssigned}
+                    >
+                      {driver.name} - {driver.phone}{driver.isAssigned ? ` (Assigned to ${driver.assignedVehicleId})` : ''}
                     </option>
                   ))}
                 </select>
+                <p className='text-xs text-gray-500 mt-1'>Each agent can only be assigned to one vehicle</p>
               </div>
               <div className='flex gap-3 pt-4'>
                 <button
@@ -618,12 +644,17 @@ export default function VehicleManagement() {
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                 >
                   <option value=''>No Driver Assigned</option>
-                  {drivers.map((driver) => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.name} - {driver.phone}
+                  {getAvailableDrivers(selectedVehicle?.id).map((driver) => (
+                    <option
+                      key={driver.id}
+                      value={driver.id}
+                      disabled={driver.isAssigned}
+                    >
+                      {driver.name} - {driver.phone}{driver.isAssigned ? ` (Assigned to ${driver.assignedVehicleId})` : ''}
                     </option>
                   ))}
                 </select>
+                <p className='text-xs text-gray-500 mt-1'>Each agent can only be assigned to one vehicle</p>
               </div>
               <div className='flex gap-3 pt-4'>
                 <button
@@ -659,7 +690,7 @@ export default function VehicleManagement() {
         <span className='text-blue-600 font-medium'>AquaTrack</span> Design by Themesflat All
         rights reserved.
       </div>
-      
+
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={deleteDialog.show}

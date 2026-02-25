@@ -9,6 +9,9 @@ import FinanceDashboard from '../pages/Finance/Dashboard';
 import VehicleManagement from '../pages/Vehicle/Vehicle_management';
 import UserManagement from '../pages/User/User_management';
 import Settings from '../pages/Settings/Settings';
+import MyDeliveries from '../pages/Delivery/MyDeliveries';
+import AdminDeliveries from '../pages/Delivery/AdminDeliveries';
+import CustomerList from '../pages/Customer/CustomerList';
 import DashboardLayout from '../layouts/DashboardLayout';
 
 const ProtectedRoute = ({ children }) => {
@@ -66,6 +69,30 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customers"
+        element={
+          <ProtectedRoute>
+            <CustomerList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/deliveries"
+        element={
+          <ProtectedRoute>
+            <AdminDeliveries />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-deliveries"
+        element={
+          <ProtectedRoute>
+            <MyDeliveries />
           </ProtectedRoute>
         }
       />
