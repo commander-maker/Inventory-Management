@@ -52,12 +52,12 @@ export default function MyDeliveries() {
         try {
             setUpdating(true);
             setUpdateError(null);
-            
+
             console.log('Updating delivery:', selectedDelivery.id, {
                 status: selectedDelivery.newStatus,
                 notes: notes
             });
-            
+
             const response = await deliveryAPI.updateStatus(selectedDelivery.id, {
                 status: selectedDelivery.newStatus,
                 notes: notes
@@ -204,8 +204,8 @@ export default function MyDeliveries() {
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
                                 className={`px-4 py-2 rounded-lg font-medium transition ${statusFilter === status
-                                        ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 {status}
@@ -320,6 +320,7 @@ export default function MyDeliveries() {
             {/* Confirm Dialog */}
             {showConfirmDialog && (
                 <ConfirmDialog
+                    isOpen={showConfirmDialog}
                     title={`Confirm ${selectedDelivery?.newStatus}`}
                     message={
                         <div className="space-y-4">
@@ -349,7 +350,7 @@ export default function MyDeliveries() {
                         </div>
                     }
                     onConfirm={confirmStatusUpdate}
-                    onCancel={() => {
+                    onClose={() => {
                         setShowConfirmDialog(false);
                         setNotes('');
                         setSelectedDelivery(null);

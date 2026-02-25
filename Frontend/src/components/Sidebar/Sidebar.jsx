@@ -10,7 +10,8 @@ import {
   Settings,
   LogOut,
   Menu,
-  MapPin
+  MapPin,
+  Store
 } from 'lucide-react';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 
@@ -24,6 +25,8 @@ export default function Sidebar() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Package, label: 'Inventory', path: '/inventory' },
     { icon: Truck, label: 'Vehicles', path: '/vehicles' },
+    { icon: Store, label: 'Customers', path: '/customers' },
+    { icon: MapPin, label: 'Deliveries', path: '/deliveries' },
     { icon: Calculator, label: 'Finance', path: '/finance' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: Settings, label: 'Settings', path: '/settings' },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Edit, Trash2, Phone, Calendar, Truck, TrendingUp, X, Users as UsersIcon, UserCheck, UserCog } from 'lucide-react';
+import { Search, UserPlus, Edit, Trash2, Phone, Calendar, Truck, TrendingUp, X, Users as UsersIcon, UserCog } from 'lucide-react';
 import { userAPI } from '../../utils/api';
 import { toast } from 'react-toastify';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
@@ -59,27 +59,25 @@ export default function UserManagement() {
     return colors[Math.floor(Math.random() * colors.length)];
   };
 
+  // Filter out admin users - admins are managed separately in Settings
+  const agentUsers = users.filter(u => u.role !== 'admin');
+
   const stats = [
-    { label: 'Total Users', value: users.length.toString(), icon: UsersIcon, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-    { label: 'Admins', value: users.filter(u => u.role === 'admin').length.toString(), icon: UserCheck, color: 'text-pink-600', bgColor: 'bg-pink-50' },
-    { label: 'Sales Agent', value: users.filter(u => u.role === 'agent').length.toString(), icon: UserCog, color: 'text-green-600', bgColor: 'bg-green-50' },
+    { label: 'Total Agents', value: agentUsers.length.toString(), icon: UsersIcon, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+    { label: 'Sales Agents', value: agentUsers.filter(u => u.role === 'agent').length.toString(), icon: UserCog, color: 'text-green-600', bgColor: 'bg-green-50' },
   ];
 
   // Enhanced search and filter function
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = agentUsers.filter(user => {
     // Search matches name, email, phone, or vehicle
     const searchLower = searchTerm.toLowerCase().trim();
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       user.name.toLowerCase().includes(searchLower) ||
       user.email.toLowerCase().includes(searchLower) ||
       (user.phone && user.phone.includes(searchLower)) ||
-      (user.vehicle && user.vehicle.toLowerCase().includes(searchLower)) ||
-      user.role.toLowerCase().includes(searchLower);
-    
-    // Role filter
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    
-    return matchesSearch && matchesRole;
+      (user.vehicle && user.vehicle.toLowerCase().includes(searchLower));
+
+    return matchesSearch;
   });
 
   const handleAddUser = () => {
@@ -108,15 +106,15 @@ export default function UserManagement() {
   const handleDeleteUser = async (userId) => {
     setDeleteDialog({ show: true, userId });
   };
-  
+
   const confirmDeleteUser = async () => {
     const userId = deleteDialog.userId;
     setDeleteDialog({ show: false, userId: null });
-    
+
     setLoading(true);
     try {
       const response = await userAPI.delete(userId);
-      
+
       if (response.data.success) {
         toast.success('User deleted successfully!');
         await fetchUsers();
@@ -135,28 +133,28 @@ export default function UserManagement() {
 
     try {
       const response = await userAPI.create(formData);
-      
+
       if (response.data.success) {
         // Show temporary password to admin
         const tempPassword = response.data.data.temporaryPassword;
         const email = formData.email;
-        
+
         toast.success(
           `User created successfully! Temporary Password has been sent to ${email}`,
           { autoClose: 5000 }
         );
-        
+
         // Show password dialog
         setPasswordDialog({
           show: true,
           password: tempPassword,
           email: email
         });
-        
+
         // Refresh user list
         await fetchUsers();
         setShowAddModal(false);
-        
+
         // Reset form
         setFormData({
           name: '',
@@ -182,7 +180,7 @@ export default function UserManagement() {
 
     try {
       const response = await userAPI.update(selectedUser.id, formData);
-      
+
       if (response.data.success) {
         toast.success('User updated successfully!');
         await fetchUsers();
@@ -207,20 +205,20 @@ export default function UserManagement() {
       {/* Header Section */}
       <div className='mb-6 flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-800'>User Management</h1>
-          <p className='text-gray-600 mt-1'>Manage admins and also sales agents in your system.</p>
+          <h1 className='text-3xl font-bold text-gray-800'>Agent Management</h1>
+          <p className='text-gray-600 mt-1'>Manage sales agents in your system.</p>
         </div>
-        <button 
+        <button
           onClick={handleAddUser}
           className='flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors'
         >
           <span className='text-xl'>+</span>
-          <span className='font-medium'>Add User</span>
+          <span className='font-medium'>Add Agent</span>
         </button>
       </div>
 
       {/* Stats Cards */}
-      <div className='grid grid-cols-3 gap-4 mb-6'>
+      <div className='grid grid-cols-2 gap-4 mb-6'>
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -257,17 +255,7 @@ export default function UserManagement() {
               className='w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
             />
           </div>
-          <div className='relative'>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className='appearance-none px-6 py-3 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white'
-            >
-              <option value='all'>All Roles</option>
-              <option value='admin'>Admin</option>
-              <option value='agent'>Agent</option>
-            </select>
-          </div>
+
         </div>
       </div>
 
@@ -284,76 +272,75 @@ export default function UserManagement() {
         </div>
       ) : (
         <div className='grid grid-cols-3 gap-6'>
-        {filteredUsers.map((user) => (
-          <div key={user.id} className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
-            {/* User Header */}
-            <div className='flex items-start justify-between mb-4'>
-              <div className='flex items-center gap-3'>
-                <div className={`w-12 h-12 ${user.avatarColor} rounded-full flex items-center justify-center text-white font-bold`}>
-                  {user.avatar}
+          {filteredUsers.map((user) => (
+            <div key={user.id} className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
+              {/* User Header */}
+              <div className='flex items-start justify-between mb-4'>
+                <div className='flex items-center gap-3'>
+                  <div className={`w-12 h-12 ${user.avatarColor} rounded-full flex items-center justify-center text-white font-bold`}>
+                    {user.avatar}
+                  </div>
+                  <div>
+                    <h3 className='font-bold text-gray-800'>{user.name}</h3>
+                    <p className='text-sm text-gray-600'>{user.email}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className='font-bold text-gray-800'>{user.name}</h3>
-                  <p className='text-sm text-gray-600'>{user.email}</p>
-                </div>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                user.role === 'admin' 
-                  ? 'bg-black text-white' 
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === 'admin'
+                  ? 'bg-black text-white'
                   : 'bg-white text-black border border-gray-300'
-              }`}>
-                {user.role}
-              </span>
-            </div>
-
-            {/* User Details */}
-            <div className='space-y-3 mb-4'>
-              <div className='flex items-center gap-2 text-sm text-gray-600'>
-                <Phone className='w-4 h-4' />
-                <span>{user.phone}</span>
+                  }`}>
+                  {user.role}
+                </span>
               </div>
-              <div className='flex items-center gap-2 text-sm'>
-                <Calendar className='w-4 h-4 text-gray-400' />
-                <span className='text-gray-600'>Joined:</span>
-                <span className='font-medium text-gray-800 ml-auto'>{user.joinedDate}</span>
-              </div>
-              {user.vehicle && (
-                <div className='flex items-center gap-2 text-sm'>
-                  <Truck className='w-4 h-4 text-gray-400' />
-                  <span className='text-gray-600'>Vehicle:</span>
-                  <span className='font-medium text-gray-800 ml-auto'>{user.vehicle}</span>
-                </div>
-              )}
-              {user.monthlySales && (
-                <div className='flex items-center gap-2 text-sm'>
-                  <TrendingUp className='w-4 h-4 text-gray-400' />
-                  <span className='text-gray-600'>Monthly Sales:</span>
-                  <span className='font-medium text-green-600 ml-auto'>{user.monthlySales}</span>
-                </div>
-              )}
-            </div>
 
-            {/* Action Buttons */}
-            <div className='flex gap-2'>
-              <button 
-                onClick={() => handleEditUser(user)}
-                className='flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
-              >
-                <Edit className='w-4 h-4' />
-                <span className='text-sm font-medium'>Edit</span>
-              </button>
-              {user.role !== 'admin' && (
-                <button 
-                  onClick={() => handleDeleteUser(user.id)}
-                  className='px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors'
+              {/* User Details */}
+              <div className='space-y-3 mb-4'>
+                <div className='flex items-center gap-2 text-sm text-gray-600'>
+                  <Phone className='w-4 h-4' />
+                  <span>{user.phone}</span>
+                </div>
+                <div className='flex items-center gap-2 text-sm'>
+                  <Calendar className='w-4 h-4 text-gray-400' />
+                  <span className='text-gray-600'>Joined:</span>
+                  <span className='font-medium text-gray-800 ml-auto'>{user.joinedDate}</span>
+                </div>
+                {user.vehicle && (
+                  <div className='flex items-center gap-2 text-sm'>
+                    <Truck className='w-4 h-4 text-gray-400' />
+                    <span className='text-gray-600'>Vehicle:</span>
+                    <span className='font-medium text-gray-800 ml-auto'>{user.vehicle}</span>
+                  </div>
+                )}
+                {user.monthlySales && (
+                  <div className='flex items-center gap-2 text-sm'>
+                    <TrendingUp className='w-4 h-4 text-gray-400' />
+                    <span className='text-gray-600'>Monthly Sales:</span>
+                    <span className='font-medium text-green-600 ml-auto'>{user.monthlySales}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className='flex gap-2'>
+                <button
+                  onClick={() => handleEditUser(user)}
+                  className='flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
                 >
-                  <Trash2 className='w-4 h-4' />
+                  <Edit className='w-4 h-4' />
+                  <span className='text-sm font-medium'>Edit</span>
                 </button>
-              )}
+                {user.role !== 'admin' && (
+                  <button
+                    onClick={() => handleDeleteUser(user.id)}
+                    className='px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors'
+                  >
+                    <Trash2 className='w-4 h-4' />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
       )}
 
       {/* Footer */}
@@ -396,19 +383,7 @@ export default function UserManagement() {
                   required
                 />
               </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>Role</label>
-                <select
-                  name='role'
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  required
-                >
-                  <option value='agent'>Agent</option>
-                  <option value='admin'>Admin</option>
-                </select>
-              </div>
+              <input type='hidden' name='role' value='agent' />
               <div>
                 <label className='block text-sm font-medium text-gray-700 mb-1'>Phone Number</label>
                 <input
@@ -487,19 +462,7 @@ export default function UserManagement() {
                   required
                 />
               </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>Role</label>
-                <select
-                  name='role'
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  required
-                >
-                  <option value='agent'>Agent</option>
-                  <option value='admin'>Admin</option>
-                </select>
-              </div>
+              <input type='hidden' name='role' value='agent' />
               <div>
                 <label className='block text-sm font-medium text-gray-700 mb-1'>Phone Number</label>
                 <input
@@ -542,7 +505,7 @@ export default function UserManagement() {
           </div>
         </div>
       )}
-      
+
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={deleteDialog.show}
@@ -554,7 +517,7 @@ export default function UserManagement() {
         cancelText="Cancel"
         type="danger"
       />
-      
+
       {/* Password Info Dialog */}
       <InfoDialog
         isOpen={passwordDialog.show}
