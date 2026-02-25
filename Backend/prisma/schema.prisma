@@ -78,7 +78,7 @@ model Customer {
   status             String               @default("Active")
   notes              String?
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime             @updatedAt
   distance           Decimal?             @db.Decimal(10, 2)
   DeliveryAssignment DeliveryAssignment[]
   Income             Income[]
@@ -93,7 +93,7 @@ model DeliveryAssignment {
   status      String    @default("Pending")
   notes       String?
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime  @updatedAt
   deliveredAt DateTime?
   deliveredBy Int?
   incomeId    Int?      @unique
@@ -121,7 +121,7 @@ model Expense {
   billNumber                    String?
   date                          DateTime @default(now())
   createdAt                     DateTime @default(now())
-  updatedAt                     DateTime
+  updatedAt                     DateTime @updatedAt
   User_Expense_agentIdToUser    User?    @relation("Expense_agentIdToUser", fields: [agentId], references: [id])
   User_Expense_approvedByToUser User?    @relation("Expense_approvedByToUser", fields: [approvedBy], references: [id])
   Vehicle                       Vehicle? @relation(fields: [vehicleId], references: [id])
@@ -143,7 +143,7 @@ model Income {
   receiptNumber      String?
   date               DateTime            @default(now())
   createdAt          DateTime            @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime            @updatedAt
   DeliveryAssignment DeliveryAssignment?
   User               User?               @relation(fields: [agentId], references: [id])
   Customer           Customer?           @relation(fields: [customerId], references: [id])
