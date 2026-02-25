@@ -14,12 +14,14 @@ import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import vehicleRoutes from "./routes/vehicle.routes.js";
 import inventoryRoutes from "./routes/inventory.routes.js";
+import deliveryRoutes from "./routes/delivery.routes.js";
 
 // Mount routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/inventory", inventoryRoutes);
+app.use("/api/deliveries", deliveryRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

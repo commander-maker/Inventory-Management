@@ -8,66 +8,146 @@ datasource db {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  name         String
-  email        String    @unique
-  password     String
-  role         String    // "admin" or "agent"
-  phone        String
-  vehicle      String?   // Optional, for agents
-  monthlySales Decimal?  @db.Decimal(10, 2) // Optional, for agents
-  joinedDate   DateTime  @default(now())
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  
-  // Relations
-  drivenVehicles Vehicle[] @relation("VehicleDriver")
+  id                               Int                  @id @default(autoincrement())
+  name                             String
+  email                            String               @unique
+  password                         String
+  role                             String
+  phone                            String
+  vehicle                          String?
+  monthlySales                     Decimal?             @db.Decimal(10, 2)
+  joinedDate                       DateTime             @default(now())
+  createdAt                        DateTime             @default(now())
+  updatedAt                        DateTime             @updatedAt
+  DeliveryAssignment               DeliveryAssignment[]
+  Expense_Expense_agentIdToUser    Expense[]            @relation("Expense_agentIdToUser")
+  Expense_Expense_approvedByToUser Expense[]            @relation("Expense_approvedByToUser")
+  Income                           Income[]
+  drivenVehicles                   Vehicle[]            @relation("VehicleDriver")
 }
 
 model Vehicle {
-  id          String        @id // Registration number (e.g., "GJ-01-AB-1234")
-  vehicleType String        // Type of vehicle (e.g., "Tata Ace")
-  capacity    String        // Capacity (e.g., "1 Ton", "1.5 Ton")
-  status      String        @default("Active") // "Active", "Loading", "Maintenance"
-  location    String        // Current location
-  fuelLevel   Int           @default(100) // 0-100
-  driverId    Int?          // Foreign key to User
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  
-  // Relations
-  driver      User?         @relation("VehicleDriver", fields: [driverId], references: [id])
-  loads       VehicleLoad[]
+  id                 String               @id
+  vehicleType        String
+  capacity           String
+  status             String               @default("Active")
+  location           String
+  fuelLevel          Int                  @default(100)
+  driverId           Int?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  DeliveryAssignment DeliveryAssignment[]
+  Expense            Expense[]
+  driver             User?                @relation("VehicleDriver", fields: [driverId], references: [id])
+  loads              VehicleLoad[]
 }
 
 model VehicleLoad {
   id        Int      @id @default(autoincrement())
   vehicleId String
-  item      String   // Item name (e.g., "Water 500ml")
-  quantity  String   // Quantity (e.g., "25 cases")
+  item      String
+  quantity  String
   createdAt DateTime @default(now())
-  
-  // Relations
   vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 }
 
 model Inventory {
   id        Int      @id @default(autoincrement())
   name      String
-  category  String   // "Soft Drinks", "Energy Drinks", "Juices", "Water", "Snacks"
-  stock     Int      // Quantity in stock
-  unit      String   // "cases", "boxes", "pieces", "bottles"
-  price     Decimal  @db.Decimal(10, 2) // Price per unit
+  category  String
+  stock     Int
+  unit      String
+  price     Decimal  @db.Decimal(10, 2)
   supplier  String
-  status    String   @default("In Stock") // "In Stock", "Low Stock", "Out of Stock"
+  status    String   @default("In Stock")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-/*Later you will add:
+model Customer {
+  id                 Int                  @id @default(autoincrement())
+  shopName           String
+  ownerName          String
+  phone              String
+  email              String?
+  address            String
+  city               String
+  area               String
+  businessType       String               @default("Retail")
+  status             String               @default("Active")
+  notes              String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  distance           Decimal?             @db.Decimal(10, 2)
+  DeliveryAssignment DeliveryAssignment[]
+  Income             Income[]
+}
 
-Finance model
+model DeliveryAssignment {
+  id          Int       @id @default(autoincrement())
+  vehicleId   String
+  customerId  Int
+  productName String
+  quantity    String
+  status      String    @default("Pending")
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  deliveredAt DateTime?
+  deliveredBy Int?
+  incomeId    Int?      @unique
+  totalAmount Decimal?  @db.Decimal(12, 2)
+  unitPrice   Decimal?  @db.Decimal(10, 2)
+  Customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  User        User?     @relation(fields: [deliveredBy], references: [id])
+  Income      Income?   @relation(fields: [incomeId], references: [id])
+  Vehicle     Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
-Sales model
+  @@index([customerId])
+  @@index([deliveredBy])
+  @@index([vehicleId])
+}
 
-Expenses model */
+model Expense {
+  id                            Int      @id @default(autoincrement())
+  type                          String
+  category                      String
+  amount                        Decimal  @db.Decimal(12, 2)
+  description                   String
+  vehicleId                     String?
+  agentId                       Int?
+  approvedBy                    Int?
+  billNumber                    String?
+  date                          DateTime @default(now())
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime
+  User_Expense_agentIdToUser    User?    @relation("Expense_agentIdToUser", fields: [agentId], references: [id])
+  User_Expense_approvedByToUser User?    @relation("Expense_approvedByToUser", fields: [approvedBy], references: [id])
+  Vehicle                       Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  @@index([agentId])
+  @@index([date])
+  @@index([vehicleId])
+}
+
+model Income {
+  id                 Int                 @id @default(autoincrement())
+  type               String
+  category           String
+  amount             Decimal             @db.Decimal(12, 2)
+  description        String
+  customerId         Int?
+  agentId            Int?
+  paymentMethod      String              @default("Cash")
+  receiptNumber      String?
+  date               DateTime            @default(now())
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime
+  DeliveryAssignment DeliveryAssignment?
+  User               User?               @relation(fields: [agentId], references: [id])
+  Customer           Customer?           @relation(fields: [customerId], references: [id])
+
+  @@index([agentId])
+  @@index([customerId])
+  @@index([date])
+}

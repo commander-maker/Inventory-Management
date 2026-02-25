@@ -78,4 +78,14 @@ export const inventoryAPI = {
   updateStock: (id, stockData) => api.patch(`/inventory/${id}/stock`, stockData)
 };
 
+// Delivery API
+export const deliveryAPI = {
+  getAll: () => api.get('/deliveries'),
+  getMyDeliveries: () => api.get('/deliveries/my-deliveries'),
+  getById: (id) => api.get(`/deliveries/${id}`),
+  create: (deliveryData) => api.post('/deliveries', deliveryData),
+  updateStatus: (id, statusData) => api.put(`/deliveries/${id}/status`, statusData),
+  delete: (id) => api.delete(`/deliveries/${id}`)
+};
+
 export default api;
