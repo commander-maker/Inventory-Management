@@ -175,7 +175,7 @@ export default function FinanceDashboard() {
   }));
 
   const formatAmount = (amount) => {
-    return `Rs. ${parseFloat(amount || 0).toLocaleString()}`;
+    return `LKR ${parseFloat(amount || 0).toLocaleString()}`;
   };
 
   const filterLabel = filterMonth
