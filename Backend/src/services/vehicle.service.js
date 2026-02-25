@@ -19,7 +19,7 @@ export const getAllVehicles = async () => {
       createdAt: 'desc'
     }
   });
-  
+
   return vehicles;
 };
 
@@ -39,7 +39,7 @@ export const getVehicleById = async (id) => {
       loads: true
     }
   });
-  
+
   if (!vehicle) throw new Error("Vehicle not found");
   return vehicle;
 };
@@ -55,6 +55,14 @@ export const createVehicle = async ({ id, vehicleType, capacity, status, locatio
     const driver = await prisma.user.findUnique({ where: { id: parseInt(driverId) } });
     if (!driver) throw new Error("Driver not found");
     if (driver.role !== 'agent') throw new Error("Only agents can be assigned as drivers");
+
+    // Check if this agent is already assigned to another vehicle
+    const existingAssignment = await prisma.vehicle.findFirst({
+      where: { driverId: parseInt(driverId) }
+    });
+    if (existingAssignment) {
+      throw new Error(`Agent "${driver.name}" is already assigned to vehicle ${existingAssignment.id}. Each agent can only be assigned to one vehicle.`);
+    }
   }
 
   const vehicle = await prisma.vehicle.create({
@@ -94,6 +102,17 @@ export const updateVehicle = async (id, { vehicleType, capacity, status, locatio
     const driver = await prisma.user.findUnique({ where: { id: parseInt(driverId) } });
     if (!driver) throw new Error("Driver not found");
     if (driver.role !== 'agent') throw new Error("Only agents can be assigned as drivers");
+
+    // Check if this agent is already assigned to another vehicle (not this one)
+    const existingAssignment = await prisma.vehicle.findFirst({
+      where: {
+        driverId: parseInt(driverId),
+        NOT: { id: id }  // Exclude the current vehicle being updated
+      }
+    });
+    if (existingAssignment) {
+      throw new Error(`Agent "${driver.name}" is already assigned to vehicle ${existingAssignment.id}. Each agent can only be assigned to one vehicle.`);
+    }
   }
 
   const updatedVehicle = await prisma.vehicle.update({

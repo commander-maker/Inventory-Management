@@ -1,106 +1,176 @@
-import React, { useState } from 'react';
-import { AlertTriangle, Droplet, Package, Users, Plus, Truck, DollarSign, User, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertTriangle, Droplet, Package, Users, Plus, Truck, DollarSign, User, ChevronRight, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { deliveryAPI, inventoryAPI, userAPI } from '../../utils/api';
 
 export default function Dashboard() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [deliveries, setDeliveries] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [agents, setAgents] = useState([]);
+  const [deliveryStats, setDeliveryStats] = useState({
+    total: 0,
+    pending: 0,
+    inTransit: 0,
+    delivered: 0,
+    failed: 0
+  });
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalAgents, setTotalAgents] = useState(0);
+  const [lowStockItems, setLowStockItems] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Stats data
+  // Fetch all dashboard data on mount
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch all data in parallel
+        const [deliveryRes, inventoryRes, userRes] = await Promise.all([
+          deliveryAPI.getAll(),
+          inventoryAPI.getAll(),
+          userAPI.getAll()
+        ]);
+
+        // ── Deliveries ──
+        const deliveryData = deliveryRes.data.data || [];
+        setDeliveries(deliveryData);
+
+        const stats = {
+          total: deliveryData.length,
+          pending: deliveryData.filter(d => d.status === 'Pending').length,
+          inTransit: deliveryData.filter(d => d.status === 'In Transit').length,
+          delivered: deliveryData.filter(d => d.status === 'Delivered').length,
+          failed: deliveryData.filter(d => d.status === 'Failed').length
+        };
+        setDeliveryStats(stats);
+
+        // Calculate total revenue from delivered orders
+        const revenue = deliveryData
+          .filter(d => d.status === 'Delivered' && d.totalAmount)
+          .reduce((sum, d) => sum + parseFloat(d.totalAmount), 0);
+        setTotalRevenue(revenue);
+
+        // Build recent transactions from deliveries (sorted by date, newest first)
+        const sortedDeliveries = [...deliveryData]
+          .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+        const transactions = sortedDeliveries.slice(0, 4).map(d => {
+          const timeAgo = getTimeAgo(d.updatedAt || d.createdAt);
+          return {
+            id: d.id,
+            product: `${d.productName || 'Product'} (${d.quantity || ''})`,
+            amount: d.totalAmount ? `${parseFloat(d.totalAmount).toLocaleString()} LKR` : '—',
+            time: timeAgo,
+            person: d.Vehicle?.driver?.name || d.User?.name || d.Customer?.ownerName || 'Unknown',
+            icon: getTransactionIcon(d.productName),
+            color: getTransactionColor(d.productName),
+            iconColor: getTransactionIconColor(d.productName),
+            status: d.status
+          };
+        });
+        setRecentTransactions(transactions);
+
+        // ── Inventory ──
+        const inventoryData = inventoryRes.data.data || [];
+        setInventory(inventoryData);
+
+        // Total product count (sum of stock)
+        const productCount = inventoryData.reduce((sum, item) => sum + (item.stock || 0), 0);
+        setTotalProducts(productCount);
+
+        // Low stock items (stock <= 15)
+        const lowStock = inventoryData
+          .filter(item => item.stock <= 15)
+          .sort((a, b) => a.stock - b.stock)
+          .slice(0, 4)
+          .map(item => ({
+            id: item.id,
+            name: item.name,
+            category: item.category || 'General',
+            stock: item.stock,
+            status: item.stock === 0 ? 'Out of Stock' : item.stock <= 5 ? 'Critical' : item.stock <= 10 ? 'Low' : 'Medium',
+            statusColor: item.stock === 0 ? 'bg-gray-100 text-gray-800' : item.stock <= 5 ? 'bg-red-50 text-red-700' : item.stock <= 10 ? 'bg-red-50 text-red-700' : 'bg-yellow-50 text-yellow-700',
+            badgeColor: item.stock === 0 ? 'bg-gray-100 text-gray-700' : item.stock <= 5 ? 'bg-red-100 text-red-700' : item.stock <= 10 ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+          }));
+        setLowStockItems(lowStock);
+
+        // ── Users ──
+        const userData = userRes.data.data || [];
+        const agentCount = userData.filter(u => u.role === 'agent').length;
+        setTotalAgents(agentCount);
+        setAgents(userData.filter(u => u.role === 'agent'));
+
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Helper: calculate time ago
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return 'Recently';
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  };
+
+  // Helper: get icon based on product name
+  const getTransactionIcon = (productName) => {
+    if (!productName) return Package;
+    const name = productName.toLowerCase();
+    if (name.includes('water') || name.includes('mineral')) return Droplet;
+    if (name.includes('energy') || name.includes('bull') || name.includes('monster')) return AlertTriangle;
+    return Package;
+  };
+
+  const getTransactionColor = (productName) => {
+    if (!productName) return 'bg-gray-100';
+    const name = productName.toLowerCase();
+    if (name.includes('water') || name.includes('mineral')) return 'bg-blue-100';
+    if (name.includes('energy') || name.includes('bull') || name.includes('monster')) return 'bg-yellow-100';
+    return 'bg-red-100';
+  };
+
+  const getTransactionIconColor = (productName) => {
+    if (!productName) return 'text-gray-500';
+    const name = productName.toLowerCase();
+    if (name.includes('water') || name.includes('mineral')) return 'text-blue-500';
+    if (name.includes('energy') || name.includes('bull') || name.includes('monster')) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+
+  // Stats data — all from API
   const stats = [
-    { label: 'Total Revenue', value: '500 000 LKR', icon: DollarSign, color: 'text-green-500', bgColor: 'bg-green-100' },
-    { label: 'Total Product', value: '1250', icon: Package, color: 'text-blue-500', bgColor: 'bg-blue-100' },
-    { label: 'Sales Agents', value: '12', icon: Users, color: 'text-red-500', bgColor: 'bg-red-100' }
-  ];
-
-  // Recent transactions data
-  const transactions = [
-    {
-      id: 1,
-      product: 'Water Bottles-500ml (50 cases)',
-      amount: '10 000 LKR',
-      time: '2 hours ago',
-      person: 'Rajesh Kumar',
-      icon: Droplet,
-      color: 'bg-blue-100',
-      iconColor: 'text-blue-500'
-    },
-    {
-      id: 2,
-      product: 'Soft Drinks - Pepsi (30 cases)',
-      amount: '12 000 LKR',
-      time: '4 hours ago',
-      person: 'Priya Sharma',
-      icon: Package,
-      color: 'bg-red-100',
-      iconColor: 'text-red-500'
-    },
-    {
-      id: 3,
-      product: 'Mineral Water -1L (25 cases)',
-      amount: '15 000 LKR',
-      time: '6 hours ago',
-      person: 'Nimesh',
-      icon: Droplet,
-      color: 'bg-blue-100',
-      iconColor: 'text-blue-500'
-    },
-    {
-      id: 4,
-      product: 'Energy Drinks - Red Bull (10 cases)',
-      amount: '20 000 LKR',
-      time: '8 hours ago',
-      person: 'Dilanka',
-      icon: AlertTriangle,
-      color: 'bg-yellow-100',
-      iconColor: 'text-yellow-500'
-    }
-  ];
-
-  // Low stock items
-  const lowStockItems = [
-    {
-      id: 1,
-      name: 'Water Bottles 500ml',
-      category: 'Packaged Water',
-      stock: 10,
-      status: 'Critical',
-      statusColor: 'bg-red-100 text-red-800',
-      badgeColor: 'bg-red-100 text-red-700'
-    },
-    {
-      id: 2,
-      name: 'Pepsi 300ml',
-      category: 'Soft Drinks',
-      stock: 8,
-      status: 'Low',
-      statusColor: 'bg-red-50 text-red-700',
-      badgeColor: 'bg-red-100 text-red-700'
-    },
-    {
-      id: 3,
-      name: 'Mineral Water 1L',
-      category: 'Packaged Water',
-      stock: 12,
-      status: 'Medium',
-      statusColor: 'bg-yellow-50 text-yellow-700',
-      badgeColor: 'bg-yellow-100 text-yellow-700'
-    },
-    {
-      id: 4,
-      name: 'Red Bull Energy',
-      category: 'Energy Drinks',
-      stock: 5,
-      status: 'Critical',
-      statusColor: 'bg-red-50 text-red-700',
-      badgeColor: 'bg-red-100 text-red-700'
-    }
+    { label: 'Total Revenue', value: `${totalRevenue.toLocaleString()} LKR`, icon: DollarSign, color: 'text-green-500', bgColor: 'bg-green-100' },
+    { label: 'Total Products', value: totalProducts.toLocaleString(), icon: Package, color: 'text-blue-500', bgColor: 'bg-blue-100' },
+    { label: 'Sales Agents', value: totalAgents.toString(), icon: Users, color: 'text-red-500', bgColor: 'bg-red-100' },
+    { label: 'Total Deliveries', value: deliveryStats.total.toString(), icon: Truck, color: 'text-purple-500', bgColor: 'bg-purple-100' }
   ];
 
   // Quick actions
   const quickActions = [
-    { icon: Plus, label: 'Add Inventory', color: 'text-gray-700' },
-    { icon: Truck, label: 'Dispatch Vehicle', color: 'text-gray-700' },
-    { icon: DollarSign, label: 'Record Payment', color: 'text-gray-700' },
-    { icon: User, label: 'Add Agent', color: 'text-gray-700' }
+    { icon: Plus, label: 'Add Inventory', color: 'text-gray-700', path: '/inventory' },
+    { icon: Truck, label: 'Dispatch Vehicle', color: 'text-gray-700', path: '/vehicle' },
+    { icon: DollarSign, label: 'Record Payment', color: 'text-gray-700', path: '/financial' },
+    { icon: User, label: 'Add Agent', color: 'text-gray-700', path: '/users' }
   ];
 
   return (
@@ -113,14 +183,16 @@ export default function Dashboard() {
 
       {/* Stats Section */}
       <div className="px-8 py-6">
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-4 gap-6">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <div key={index} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
                 <p className="text-gray-600 text-sm mb-3">{stat.label}</p>
                 <div className="flex justify-between items-center">
-                  <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {loading ? '...' : stat.value}
+                  </p>
                   <div className={`p-3 rounded-lg ${stat.bgColor}`}>
                     <Icon className={`${stat.color}`} size={28} />
                   </div>
@@ -132,84 +204,195 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="px-8 py-6 grid grid-cols-3 gap-6">
-        
-        {/* Recent Transactions */}
+      <div className="px-8 py-6 grid grid-cols-4 gap-6">
+
+        {/* Recent Transactions — from deliveries API */}
         <div className="col-span-2 bg-white rounded-lg shadow-sm border border-gray-100 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Recent Transactions</h2>
           <p className="text-gray-600 text-sm mb-6">Latest sales and inventory movements</p>
-          
-          <div className="space-y-3">
-            {transactions.map((transaction) => {
-              const Icon = transaction.icon;
-              return (
-                <div 
-                  key={transaction.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
-                  onClick={() => setSelectedTransaction(selectedTransaction === transaction.id ? null : transaction.id)}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-lg ${transaction.color}`}>
-                      <Icon className={`${transaction.iconColor}`} size={24} />
-                    </div>
-                    
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{transaction.product}</p>
-                      <p className="text-sm text-gray-500">{transaction.time}</p>
-                    </div>
-                    
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">{transaction.amount}</p>
-                      <p className="text-sm text-gray-500">{transaction.person}</p>
-                    </div>
-                  </div>
 
-                  {selectedTransaction === transaction.id && (
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-600">Handled by</p>
-                          <p className="font-medium text-gray-900">{transaction.person}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Transaction ID</p>
-                          <p className="font-medium text-gray-900">TXN-{transaction.id.toString().padStart(5, '0')}</p>
-                        </div>
+          {loading ? (
+            <div className="py-8 text-center text-gray-500">Loading transactions...</div>
+          ) : recentTransactions.length === 0 ? (
+            <div className="py-8 text-center text-gray-500">No transactions yet</div>
+          ) : (
+            <div className="space-y-3">
+              {recentTransactions.map((transaction) => {
+                const Icon = transaction.icon;
+                return (
+                  <div
+                    key={transaction.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+                    onClick={() => setSelectedTransaction(selectedTransaction === transaction.id ? null : transaction.id)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-lg ${transaction.color}`}>
+                        <Icon className={`${transaction.iconColor}`} size={24} />
+                      </div>
+
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{transaction.product}</p>
+                        <p className="text-sm text-gray-500">{transaction.time}</p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">{transaction.amount}</p>
+                        <p className="text-sm text-gray-500">{transaction.person}</p>
                       </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+
+                    {selectedTransaction === transaction.id && (
+                      <div className="mt-4 pt-4 border-t">
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-600">Handled by</p>
+                            <p className="font-medium text-gray-900">{transaction.person}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Status</p>
+                            <p className={`font-medium ${transaction.status === 'Delivered' ? 'text-green-600' :
+                              transaction.status === 'In Transit' ? 'text-blue-600' :
+                                transaction.status === 'Pending' ? 'text-yellow-600' :
+                                  'text-red-600'
+                              }`}>{transaction.status}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Delivery ID</p>
+                            <p className="font-medium text-gray-900">DEL-{transaction.id}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Low Stock Alert */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="text-orange-500" size={20} />
-            <h2 className="text-xl font-bold text-gray-900">Low Stock Alert</h2>
-          </div>
-          <p className="text-gray-600 text-sm mb-6">Items requiring immediate attention</p>
-          
-          <div className="space-y-3">
-            {lowStockItems.map((item) => (
-              <div key={item.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">{item.name}</p>
-                    <p className="text-xs text-gray-500">{item.category}</p>
+        {/* Low Stock Alert & Delivery Stats */}
+        <div className="col-span-2 space-y-6">
+          {/* Low Stock Alert — from inventory API */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="text-orange-500" size={20} />
+              <h2 className="text-xl font-bold text-gray-900">Low Stock Alert</h2>
+            </div>
+            <p className="text-gray-600 text-sm mb-6">Items requiring immediate attention</p>
+
+            {loading ? (
+              <div className="py-4 text-center text-gray-500">Loading...</div>
+            ) : lowStockItems.length === 0 ? (
+              <div className="py-4 text-center text-green-600 font-medium">✅ All items are well stocked!</div>
+            ) : (
+              <div className="space-y-3">
+                {lowStockItems.map((item) => (
+                  <div key={item.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">{item.name}</p>
+                        <p className="text-xs text-gray-500">{item.category}</p>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${item.badgeColor}`}>
+                        {item.stock} left
+                      </span>
+                    </div>
+                    <div className={`py-1 px-2 rounded text-xs font-medium text-center ${item.statusColor}`}>
+                      {item.status}
+                    </div>
                   </div>
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${item.badgeColor}`}>
-                    {item.stock} left
-                  </span>
-                </div>
-                <div className={`py-1 px-2 rounded text-xs font-medium text-center ${item.statusColor}`}>
-                  {item.status}
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
+
+          {/* Delivery Status Overview — from delivery API */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Delivery Status Overview</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-700 mb-1">Pending</p>
+                <p className="text-2xl font-bold text-yellow-800">{loading ? '...' : deliveryStats.pending}</p>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-700 mb-1">In Transit</p>
+                <p className="text-2xl font-bold text-blue-800">{loading ? '...' : deliveryStats.inTransit}</p>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-sm text-green-700 mb-1">Delivered</p>
+                <p className="text-2xl font-bold text-green-800">{loading ? '...' : deliveryStats.delivered}</p>
+              </div>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-700 mb-1">Failed</p>
+                <p className="text-2xl font-bold text-red-800">{loading ? '...' : deliveryStats.failed}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Deliveries — from delivery API */}
+      <div className="px-8 py-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Recent Deliveries</h2>
+          <p className="text-gray-600 text-sm mb-6">Latest delivery updates from your fleet</p>
+
+          {loading ? (
+            <div className="py-8 text-center text-gray-500">Loading deliveries...</div>
+          ) : error ? (
+            <div className="py-8 text-center text-red-600">Error loading deliveries: {error}</div>
+          ) : deliveries.length === 0 ? (
+            <div className="py-8 text-center text-gray-500">No deliveries yet</div>
+          ) : (
+            <div className="grid grid-cols-4 gap-4">
+              {deliveries.slice(0, 4).map((delivery) => (
+                <div key={delivery.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900 text-sm line-clamp-2">
+                        {delivery.Customer?.shopName || delivery.Customer?.ownerName || 'Unknown Customer'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">{delivery.productName || 'No product'}</p>
+                    </div>
+                    {delivery.status === 'Delivered' && (
+                      <CheckCircle className="text-green-500 flex-shrink-0" size={18} />
+                    )}
+                    {delivery.status === 'In Transit' && (
+                      <Clock className="text-blue-500 flex-shrink-0" size={18} />
+                    )}
+                    {delivery.status === 'Pending' && (
+                      <AlertCircle className="text-yellow-500 flex-shrink-0" size={18} />
+                    )}
+                    {delivery.status === 'Failed' && (
+                      <AlertCircle className="text-red-500 flex-shrink-0" size={18} />
+                    )}
+                  </div>
+
+                  <div className="mb-3">
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${delivery.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                      delivery.status === 'In Transit' ? 'bg-blue-100 text-blue-800' :
+                        delivery.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                      }`}>
+                      {delivery.status}
+                    </span>
+                  </div>
+
+                  {delivery.totalAmount && (
+                    <p className="text-sm font-medium text-gray-800">
+                      {parseFloat(delivery.totalAmount).toLocaleString()} LKR
+                    </p>
+                  )}
+
+                  {delivery.deliveredAt && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(delivery.deliveredAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -217,7 +400,7 @@ export default function Dashboard() {
       <div className="px-8 py-6 bg-white rounded-lg shadow-sm border border-gray-100 mx-8 mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-2">Quick Actions</h2>
         <p className="text-gray-600 text-sm mb-6">Frequently used actions for faster workflow</p>
-        
+
         <div className="grid grid-cols-4 gap-4">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
@@ -225,6 +408,7 @@ export default function Dashboard() {
               <button
                 key={index}
                 className="flex flex-col items-center justify-center p-6 border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition"
+                onClick={() => window.location.href = action.path}
               >
                 <Icon className={`${action.color} mb-3`} size={32} />
                 <span className="text-sm font-medium text-gray-900">{action.label}</span>
