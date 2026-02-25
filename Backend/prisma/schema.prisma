@@ -24,6 +24,7 @@ model User {
   Expense_Expense_approvedByToUser Expense[]            @relation("Expense_approvedByToUser")
   Income                           Income[]
   drivenVehicles                   Vehicle[]            @relation("VehicleDriver")
+  Notification                     Notification[]
 }
 
 model Vehicle {
@@ -150,4 +151,18 @@ model Income {
   @@index([agentId])
   @@index([customerId])
   @@index([date])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  type      String   @default("info") // info, success, warning, danger
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

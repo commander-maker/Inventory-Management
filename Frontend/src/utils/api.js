@@ -88,4 +88,36 @@ export const deliveryAPI = {
   delete: (id) => api.delete(`/deliveries/${id}`)
 };
 
+// Customer API
+export const customerAPI = {
+  getAll: () => api.get('/customers'),
+  getById: (id) => api.get(`/customers/${id}`),
+  create: (customerData) => api.post('/customers', customerData),
+  update: (id, customerData) => api.put(`/customers/${id}`, customerData),
+  delete: (id) => api.delete(`/customers/${id}`)
+};
+
+// Finance API
+export const financeAPI = {
+  // Expenses
+  getExpenses: (params) => api.get('/finance/expenses', { params }),
+  getExpenseById: (id) => api.get(`/finance/expenses/${id}`),
+  createExpense: (data) => api.post('/finance/expenses', data),
+  updateExpense: (id, data) => api.put(`/finance/expenses/${id}`, data),
+  deleteExpense: (id) => api.delete(`/finance/expenses/${id}`),
+  // Summary
+  getSummary: (params) => api.get('/finance/summary', { params }),
+  // Income
+  getIncome: (params) => api.get('/finance/income', { params })
+};
+
+// Notification API
+export const notificationAPI = {
+  getAll: () => api.get('/notifications'),
+  markRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllRead: () => api.put('/notifications/read-all'),
+  delete: (id) => api.delete(`/notifications/${id}`)
+};
+
+
 export default api;
