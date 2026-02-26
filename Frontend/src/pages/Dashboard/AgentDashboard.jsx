@@ -124,13 +124,8 @@ export default function AgentDashboard() {
         lastService: '5 days ago'
     };
 
-    // Performance metrics
-    const performanceMetrics = [
-        { label: 'On-Time Deliveries', value: '95%', color: 'text-green-600' },
-        { label: 'Customer Rating', value: '4.8/5', color: 'text-blue-600' },
-        { label: 'Deliveries This Week', value: '42', color: 'text-purple-600' },
-        { label: 'This Month Target', value: '78%', color: 'text-orange-600' }
-    ];
+    // Get recent deliveries (last 5)
+    const recentDeliveries = deliveries.slice(0, 5);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
@@ -312,25 +307,54 @@ export default function AgentDashboard() {
                         </div>
                     </div>
 
-                    {/* Performance Metrics */}
+                    {/* Recent Activity */}
                     <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
-                        <h2 className="text-xl font-bold mb-4">Performance</h2>
+                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                            <Clock size={24} />
+                            Recent Activity
+                        </h2>
 
                         <div className="space-y-3">
-                            {performanceMetrics.map((metric, index) => (
-                                <div key={index} className="bg-white bg-opacity-20 rounded-lg p-3 backdrop-blur-sm">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-blue-100">{metric.label}</span>
-                                        <span className="text-lg font-bold">{metric.value}</span>
+                            {recentDeliveries.length > 0 ? (
+                                recentDeliveries.map((delivery) => (
+                                    <div key={delivery.id} className="bg-white bg-opacity-20 rounded-lg p-3 backdrop-blur-sm">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="text-sm font-medium text-white">
+                                                {delivery.vehicleLoad?.customer?.name || 'Unknown Customer'}
+                                            </span>
+                                            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                                delivery.status === 'Delivered' ? 'bg-green-400 text-green-900' :
+                                                delivery.status === 'In Transit' ? 'bg-blue-400 text-blue-900' :
+                                                delivery.status === 'Pending' ? 'bg-yellow-400 text-yellow-900' :
+                                                'bg-red-400 text-red-900'
+                                            }`}>
+                                                {delivery.status}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-blue-100">
+                                            <MapPin size={12} />
+                                            <span>{delivery.vehicleLoad?.customer?.address || 'No address'}</span>
+                                        </div>
                                     </div>
+                                ))
+                            ) : (
+                                <div className="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur-sm text-center">
+                                    <p className="text-sm text-blue-100">No recent activity</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
 
                         <div className="mt-6 pt-4 border-t border-white border-opacity-30">
-                            <p className="text-sm text-blue-100">
-                                Keep up the great work! You're performing excellently this month.
-                            </p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-xs text-blue-100 mb-1">Total Today</p>
+                                    <p className="text-2xl font-bold">{deliveryStats.total}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-blue-100 mb-1">Completed</p>
+                                    <p className="text-2xl font-bold">{deliveryStats.completed}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
