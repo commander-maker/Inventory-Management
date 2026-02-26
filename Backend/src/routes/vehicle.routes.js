@@ -8,6 +8,7 @@ import {
   deleteVehicle,
   addVehicleLoad,
   removeVehicleLoad,
+  updateVehicleLoad,
   getVehicleLoads,
   getMyVehicle
 } from "../controllers/vehicle.controller.js";
@@ -29,6 +30,7 @@ router.delete("/:id", deleteVehicle);
 // Vehicle load routes
 router.get("/:id/loads", getVehicleLoads);
 router.post("/:id/loads", addVehicleLoad);
+router.put("/loads/:loadId", updateVehicleLoad);
 router.delete("/:id/loads/:loadId", removeVehicleLoad);
 
 export default router;
