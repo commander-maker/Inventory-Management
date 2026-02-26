@@ -139,6 +139,23 @@ export const removeVehicleLoad = async (req, res) => {
   }
 };
 
+// Update vehicle load quantity (for distribution tracking)
+export const updateVehicleLoad = async (req, res) => {
+  try {
+    const load = await VehicleService.updateVehicleLoad(req.params.loadId, req.body);
+    res.status(200).json({
+      success: true,
+      message: "Load updated successfully",
+      data: load
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // Get vehicle loads
 export const getVehicleLoads = async (req, res) => {
   try {

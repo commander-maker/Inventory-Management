@@ -284,3 +284,16 @@ export const getVehicleLoads = async (vehicleId) => {
 
   return loads;
 };
+
+// Update vehicle load quantity (without affecting inventory - for distribution tracking)
+export const updateVehicleLoad = async (loadId, { quantity }) => {
+  const load = await prisma.vehicleLoad.findUnique({ where: { id: parseInt(loadId) } });
+  if (!load) throw new Error("Load not found");
+
+  const updatedLoad = await prisma.vehicleLoad.update({
+    where: { id: parseInt(loadId) },
+    data: { quantity }
+  });
+
+  return updatedLoad;
+};
