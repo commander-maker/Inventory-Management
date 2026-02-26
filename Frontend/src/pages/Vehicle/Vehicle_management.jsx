@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Phone, Truck, Eye, Edit, Clock, CheckCircle, AlertCircle, X } from 'lucide-react';
-import { vehicleAPI, userAPI } from '../../utils/api';
+import { MapPin, Phone, Truck, Eye, Edit, Clock, CheckCircle, AlertCircle, X, Package, Plus, Trash2 } from 'lucide-react';
+import { vehicleAPI, userAPI, inventoryAPI } from '../../utils/api';
 import { toast } from 'react-toastify';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 
@@ -8,12 +8,15 @@ export default function VehicleManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
+  const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [deleteDialog, setDeleteDialog] = useState({ show: false, vehicleId: null });
+  const [deleteLoadDialog, setDeleteLoadDialog] = useState({ show: false, loadId: null });
 
   const [formData, setFormData] = useState({
     id: '',
@@ -25,10 +28,16 @@ export default function VehicleManagement() {
     driverId: '',
   });
 
+  const [loadFormData, setLoadFormData] = useState({
+    inventoryId: '',
+    quantity: ''
+  });
+
   // Fetch vehicles and drivers on mount
   useEffect(() => {
     fetchVehicles();
     fetchDrivers();
+    fetchInventory();
   }, []);
 
   const fetchVehicles = async () => {
@@ -53,6 +62,15 @@ export default function VehicleManagement() {
       setDrivers(agentUsers);
     } catch (err) {
       console.error('Failed to fetch drivers:', err);
+    }
+  };
+
+  const fetchInventory = async () => {
+    try {
+      const response = await inventoryAPI.getAll();
+      setInventory(response.data.data);
+    } catch (err) {
+      console.error('Failed to fetch inventory:', err);
     }
   };
 
@@ -199,6 +217,75 @@ export default function VehicleManagement() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleLoadInputChange = (e) => {
+    const { name, value } = e.target;
+    setLoadFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleManageLoad = (vehicle) => {
+    setSelectedVehicle(vehicle);
+    setLoadFormData({ inventoryId: '', quantity: '' });
+    setShowLoadModal(true);
+  };
+
+  const handleAddLoad = async (e) => {
+    e.preventDefault();
+    if (!loadFormData.inventoryId || !loadFormData.quantity) {
+      toast.error('Please select an item and enter quantity');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const selectedItem = inventory.find(item => item.id === parseInt(loadFormData.inventoryId));
+      
+      await vehicleAPI.addLoad(selectedVehicle.id, {
+        item: selectedItem.name,
+        quantity: `${loadFormData.quantity} ${selectedItem.unit}`
+      });
+
+      await fetchVehicles();
+      setLoadFormData({ inventoryId: '', quantity: '' });
+      toast.success('Load added successfully!');
+      
+      // Update selected vehicle data
+      const updatedVehicle = vehicles.find(v => v.id === selectedVehicle.id);
+      setSelectedVehicle(updatedVehicle);
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Failed to add load';
+      toast.error(errorMsg);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveLoad = async (loadId) => {
+    setDeleteLoadDialog({ show: true, loadId });
+  };
+
+  const confirmRemoveLoad = async () => {
+    const loadId = deleteLoadDialog.loadId;
+    setDeleteLoadDialog({ show: false, loadId: null });
+
+    try {
+      setLoading(true);
+      await vehicleAPI.removeLoad(selectedVehicle.id, loadId);
+      await fetchVehicles();
+      toast.success('Load removed successfully!');
+      
+      // Update selected vehicle data
+      const updatedVehicle = vehicles.find(v => v.id === selectedVehicle.id);
+      setSelectedVehicle(updatedVehicle);
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Failed to remove load';
+      toast.error(errorMsg);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className='p-6 bg-gray-50 min-h-screen'>
       {/* Header Section */}
@@ -328,6 +415,15 @@ export default function VehicleManagement() {
 
               {/* Action Buttons */}
               <div className='flex gap-2'>
+                <button
+                  onClick={() => handleManageLoad(vehicle)}
+                  className='flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                >
+                  <Package className='w-4 h-4' />
+                  <span className='text-sm font-medium'>Manage Load</span>
+                </button>
+              </div>
+              <div className='flex gap-2 mt-2'>
                 <button
                   onClick={() => handleViewDetails(vehicle)}
                   className='flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
@@ -684,6 +780,120 @@ export default function VehicleManagement() {
         </div>
       )}
 
+      {/* Load Management Modal */}
+      {showLoadModal && selectedVehicle && (
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+          <div className='bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto'>
+            <div className='flex justify-between items-center mb-4'>
+              <div>
+                <h2 className='text-2xl font-bold text-gray-800'>Manage Vehicle Load</h2>
+                <p className='text-sm text-gray-600'>Vehicle: {selectedVehicle.id}</p>
+              </div>
+              <button onClick={() => setShowLoadModal(false)} className='text-gray-500 hover:text-gray-700'>
+                <X className='w-6 h-6' />
+              </button>
+            </div>
+
+            {/* Add Load Form */}
+            <div className='bg-blue-50 rounded-lg p-4 mb-6'>
+              <h3 className='text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2'>
+                <Plus className='w-5 h-5' />
+                Add New Load
+              </h3>
+              <form onSubmit={handleAddLoad} className='space-y-3'>
+                <div className='grid grid-cols-2 gap-3'>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>Select Item</label>
+                    <select
+                      name='inventoryId'
+                      value={loadFormData.inventoryId}
+                      onChange={handleLoadInputChange}
+                      className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                      required
+                    >
+                      <option value=''>Choose from inventory...</option>
+                      {inventory.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} ({item.stock} {item.unit} available)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>Quantity</label>
+                    <input
+                      type='number'
+                      name='quantity'
+                      value={loadFormData.quantity}
+                      onChange={handleLoadInputChange}
+                      placeholder='Enter quantity'
+                      min='1'
+                      className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                      required
+                    />
+                  </div>
+                </div>
+                <button
+                  type='submit'
+                  disabled={loading}
+                  className='w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2'
+                >
+                  <Plus className='w-4 h-4' />
+                  {loading ? 'Adding...' : 'Add to Vehicle'}
+                </button>
+              </form>
+            </div>
+
+            {/* Current Loads */}
+            <div>
+              <h3 className='text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2'>
+                <Package className='w-5 h-5' />
+                Current Loads ({selectedVehicle.loads?.length || 0})
+              </h3>
+              {selectedVehicle.loads && selectedVehicle.loads.length > 0 ? (
+                <div className='space-y-2'>
+                  {selectedVehicle.loads.map((load) => (
+                    <div
+                      key={load.id}
+                      className='flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200'
+                    >
+                      <div className='flex items-center gap-3'>
+                        <div className='w-10 h-10 bg-white rounded-lg flex items-center justify-center'>
+                          <Package className='w-5 h-5 text-blue-600' />
+                        </div>
+                        <div>
+                          <p className='font-semibold text-gray-800'>{load.item}</p>
+                          <p className='text-sm text-gray-600'>Quantity: {load.quantity}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveLoad(load.id)}
+                        className='p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+                        title='Remove load'
+                      >
+                        <Trash2 className='w-5 h-5' />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className='text-center py-8 text-gray-400'>
+                  <Package className='w-12 h-12 mx-auto mb-2 opacity-30' />
+                  <p>No loads on this vehicle</p>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setShowLoadModal(false)}
+              className='w-full mt-6 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
       <div className='text-center mt-8 text-sm text-gray-600'>
         Copyright © 2024{' '}
@@ -699,6 +909,18 @@ export default function VehicleManagement() {
         title="Delete Vehicle"
         message="Are you sure you want to delete this vehicle? This action cannot be undone."
         confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
+
+      {/* Delete Load Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteLoadDialog.show}
+        onClose={() => setDeleteLoadDialog({ show: false, loadId: null })}
+        onConfirm={confirmRemoveLoad}
+        title="Remove Load"
+        message="Are you sure you want to remove this load from the vehicle?"
+        confirmText="Remove"
         cancelText="Cancel"
         type="danger"
       />
