@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import {
   TrendingUp, TrendingDown, DollarSign, User, Fuel, Wrench,
   Zap, MoreHorizontal, Plus, X, Calendar, FileText, Trash2,
-  RefreshCw, ChevronDown
+  RefreshCw, ChevronDown, Package, CheckCircle, AlertCircle
 } from 'lucide-react';
-import { financeAPI, vehicleAPI, userAPI } from '../../utils/api';
+import { financeAPI, vehicleAPI, userAPI, customerAPI, inventoryAPI } from '../../utils/api';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 
 const MONTHS = [
@@ -33,10 +33,16 @@ export default function FinanceDashboard() {
   const [loading, setLoading] = useState(true);
   const [expandedExpense, setExpandedExpense] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddRevenueModal, setShowAddRevenueModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState(null);
   const [agents, setAgents] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success'); // 'success' or 'error'
 
   // Filters
   const now = new Date();
@@ -56,12 +62,32 @@ export default function FinanceDashboard() {
     billingMonth: (now.getMonth() + 1).toString(),
     billingYear: now.getFullYear().toString()
   });
+  const [revenueForm, setRevenueForm] = useState({
+    amount: '',
+    inventoryId: '',
+    quantity: '',
+    source: 'Sales',
+    date: new Date().toISOString().split('T')[0],
+    agentId: '',
+    customerId: '',
+    paymentMethod: 'Cash'
+  });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchAll();
     fetchDropdownData();
   }, [filterMonth, filterYear]);
+
+  // Auto-hide toast after 5 seconds
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   const fetchAll = async () => {
     try {
@@ -88,15 +114,23 @@ export default function FinanceDashboard() {
 
   const fetchDropdownData = async () => {
     try {
-      const [agentsRes, vehiclesRes] = await Promise.all([
+      const [agentsRes, vehiclesRes, customersRes, inventoryRes] = await Promise.all([
         userAPI.getAll(),
-        vehicleAPI.getAll()
+        vehicleAPI.getAll(),
+        customerAPI.getAll(),
+        inventoryAPI.getAll()
       ]);
       if (agentsRes.data.success) {
         setAgents(agentsRes.data.data.filter(u => u.role === 'agent'));
       }
       if (vehiclesRes.data.success) {
         setVehicles(vehiclesRes.data.data);
+      }
+      if (customersRes.data.success) {
+        setCustomers(customersRes.data.data);
+      }
+      if (inventoryRes.data.success) {
+        setInventoryItems(inventoryRes.data.data);
       }
     } catch (error) {
       console.error('Error fetching dropdown data:', error);
@@ -167,6 +201,96 @@ export default function FinanceDashboard() {
     });
   };
 
+  const resetRevenueForm = () => {
+    setRevenueForm({
+      amount: '',
+      inventoryId: '',
+      quantity: '',
+      source: 'Sales',
+      date: new Date().toISOString().split('T')[0],
+      agentId: '',
+      customerId: '',
+      paymentMethod: 'Cash'
+    });
+  };
+
+  const handleAddRevenue = async (e) => {
+    e.preventDefault();
+    try {
+      setSubmitting(true);
+      
+      // Validate customer and inventory selection
+      if (!revenueForm.customerId) {
+        setToastMessage('Please select a customer');
+        setToastType('error');
+        setShowToast(true);
+        setSubmitting(false);
+        return;
+      }
+      
+      if (!revenueForm.inventoryId) {
+        setToastMessage('Please select an inventory item');
+        setToastType('error');
+        setShowToast(true);
+        setSubmitting(false);
+        return;
+      }
+      
+      if (!revenueForm.quantity || parseFloat(revenueForm.quantity) <= 0) {
+        setToastMessage('Please enter a valid quantity');
+        setToastType('error');
+        setShowToast(true);
+        setSubmitting(false);
+        return;
+      }
+      
+      // Build description from selected inventory and customer
+      const selectedInventory = inventoryItems.find(item => item.id === parseInt(revenueForm.inventoryId));
+      const selectedCustomer = customers.find(c => c.id === parseInt(revenueForm.customerId));
+      const quantity = parseFloat(revenueForm.quantity);
+      const unit = selectedInventory?.unit || 'units';
+      
+      const description = `Sale of ${selectedInventory?.name} (${quantity} ${unit}) to ${selectedCustomer?.shopName}`;
+      
+      const response = await financeAPI.createIncome({
+        amount: revenueForm.amount,
+        description: description,
+        source: revenueForm.source,
+        type: 'Sales',
+        category: 'Product Sales',
+        date: revenueForm.date,
+        customerId: revenueForm.customerId,
+        paymentMethod: revenueForm.paymentMethod,
+        inventoryId: revenueForm.inventoryId,
+        quantity: revenueForm.quantity
+      });
+
+      if (response.data.success) {
+        setShowAddRevenueModal(false);
+        resetRevenueForm();
+        
+        // Show success toast
+        setToastMessage(`Sale recorded successfully! ${quantity} ${unit} of ${selectedInventory?.name} sold to ${selectedCustomer?.shopName}`);
+        setToastType('success');
+        setShowToast(true);
+        
+        // Refresh all data to update dashboard
+        fetchAll();
+        fetchDropdownData(); // Refresh inventory to show updated stock
+      }
+    } catch (error) {
+      console.error('Error creating revenue:', error);
+      
+      // Show error toast
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to record sale';
+      setToastMessage(errorMessage);
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Compute breakdown percentages
   const totalExpenseAmount = summary ? parseFloat(summary.totalExpenses) : 0;
   const breakdownWithPercentage = (summary?.breakdown || []).map(b => ({
@@ -221,6 +345,14 @@ export default function FinanceDashboard() {
             title="Refresh"
           >
             <RefreshCw size={18} className="text-gray-600" />
+          </button>
+
+          <button
+            onClick={() => setShowAddRevenueModal(true)}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+          >
+            <Plus size={18} />
+            Add Revenue
           </button>
 
           <button
@@ -604,6 +736,182 @@ export default function FinanceDashboard() {
         </div>
       )}
 
+      {/* Add Revenue Modal */}
+      {showAddRevenueModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b flex-shrink-0">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Record Sale</h3>
+                <p className="text-sm text-gray-500 mt-1">Item: {revenueForm.inventoryId ? inventoryItems.find(i => i.id === parseInt(revenueForm.inventoryId))?.name : 'Select Product'}</p>
+              </div>
+              <button
+                onClick={() => { setShowAddRevenueModal(false); resetRevenueForm(); }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Body - Scrollable */}
+            <div className="flex-1 overflow-y-auto">
+              <form onSubmit={handleAddRevenue} className="p-6 space-y-5">
+                {/* Info Section */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <div className="text-blue-600 mt-0.5">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-blue-900">Distribution to customer</p>
+                    <p className="text-xs text-blue-700 mt-1">Record sale transaction and payment</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Select Customer */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <User size={16} />
+                  Select Customer*
+                </label>
+                <select
+                  value={revenueForm.customerId}
+                  onChange={(e) => setRevenueForm({ ...revenueForm, customerId: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition text-sm"
+                  required
+                >
+                  <option value="">Choose a customer...</option>
+                  {customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.shopName} - {customer.ownerName} ({customer.city})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Select Inventory Item */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <Package size={16} />
+                  Select Product*
+                </label>
+                <select
+                  value={revenueForm.inventoryId}
+                  onChange={(e) => {
+                    const selectedItem = inventoryItems.find(item => item.id === parseInt(e.target.value));
+                    setRevenueForm({ 
+                      ...revenueForm, 
+                      inventoryId: e.target.value,
+                      // Auto-calculate amount if quantity is already entered
+                      amount: revenueForm.quantity && selectedItem ? (parseFloat(revenueForm.quantity) * parseFloat(selectedItem.price)).toString() : revenueForm.amount
+                    });
+                  }}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition text-sm"
+                  required
+                >
+                  <option value="">Choose a product...</option>
+                  {inventoryItems.map(item => (
+                    <option key={item.id} value={item.id}>
+                      {item.name} - {item.category} (Stock: {item.stock} {item.unit}) - LKR {parseFloat(item.price).toLocaleString()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Quantity */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Quantity*
+                </label>
+                <input
+                  type="number"
+                  value={revenueForm.quantity}
+                  onChange={(e) => {
+                    const quantity = e.target.value;
+                    const selectedItem = inventoryItems.find(item => item.id === parseInt(revenueForm.inventoryId));
+                    setRevenueForm({ 
+                      ...revenueForm, 
+                      quantity: quantity,
+                      // Auto-calculate amount
+                      amount: quantity && selectedItem ? (parseFloat(quantity) * parseFloat(selectedItem.price)).toString() : ''
+                    });
+                  }}
+                  placeholder="Enter quantity"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition text-sm"
+                  required
+                  min="1"
+                  step="1"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  {revenueForm.inventoryId && inventoryItems.find(i => i.id === parseInt(revenueForm.inventoryId)) 
+                    ? `Available: ${inventoryItems.find(i => i.id === parseInt(revenueForm.inventoryId)).stock} ${inventoryItems.find(i => i.id === parseInt(revenueForm.inventoryId)).unit}`
+                    : 'Select a product first'}
+                </p>
+              </div>
+
+              {/* Sale Amount */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <DollarSign size={16} />
+                  Sale Amount (LKR)*
+                </label>
+                <input
+                  type="number"
+                  value={revenueForm.amount}
+                  onChange={(e) => setRevenueForm({ ...revenueForm, amount: e.target.value })}
+                  placeholder="Enter cash received"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition text-sm"
+                  required
+                  min="0"
+                  step="0.01"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">Total amount received from customer</p>
+              </div>
+
+              {/* Payment Method */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Payment Method
+                </label>
+                <select
+                  value={revenueForm.paymentMethod}
+                  onChange={(e) => setRevenueForm({ ...revenueForm, paymentMethod: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition text-sm"
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Mobile Payment">Mobile Payment</option>
+                </select>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => { setShowAddRevenueModal(false); resetRevenueForm(); }}
+                  className="flex-1 px-5 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-semibold text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Recording...' : 'Record Sale'}
+                </button>
+              </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation */}
       <ConfirmDialog
         isOpen={showDeleteDialog}
@@ -615,6 +923,45 @@ export default function FinanceDashboard() {
         cancelText="Cancel"
         type="danger"
       />
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed top-4 right-4 z-[60] animate-slideIn">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl border-l-4 ${
+            toastType === 'success' 
+              ? 'bg-green-50 border-green-500' 
+              : 'bg-red-50 border-red-500'
+          } max-w-md`}>
+            {toastType === 'success' ? (
+              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
+            )}
+            <div className="flex-1">
+              <p className={`font-semibold ${
+                toastType === 'success' ? 'text-green-900' : 'text-red-900'
+              }`}>
+                {toastType === 'success' ? 'Success!' : 'Error'}
+              </p>
+              <p className={`text-sm ${
+                toastType === 'success' ? 'text-green-700' : 'text-red-700'
+              }`}>
+                {toastMessage}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowToast(false)}
+              className={`p-1 rounded-full hover:bg-opacity-20 ${
+                toastType === 'success' ? 'hover:bg-green-600' : 'hover:bg-red-600'
+              }`}
+            >
+              <X className={`w-5 h-5 ${
+                toastType === 'success' ? 'text-green-600' : 'text-red-600'
+              }`} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

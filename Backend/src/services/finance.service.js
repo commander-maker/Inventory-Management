@@ -216,13 +216,22 @@ export const getAllIncome = async (filters = {}) => {
 // Create income record
 export const createIncome = async (data, userId) => {
     const now = new Date();
+    
+    // Validate required fields
+    if (!data.amount || parseFloat(data.amount) <= 0) {
+        throw new Error('Valid amount is required');
+    }
+    if (!data.description) {
+        throw new Error('Description is required');
+    }
+    
     const incomeData = {
         type: data.type || 'Sales',
         category: data.category || 'Product Sales',
         amount: parseFloat(data.amount),
         description: data.description,
         customerId: data.customerId ? parseInt(data.customerId) : null,
-        agentId: userId ? parseInt(userId) : null,
+        agentId: userId ? parseInt(userId) : null, // Store who created it (admin or agent)
         paymentMethod: data.paymentMethod || 'Cash',
         receiptNumber: data.receiptNumber || null,
         date: data.date ? new Date(data.date) : now,
@@ -233,10 +242,96 @@ export const createIncome = async (data, userId) => {
     const income = await prisma.income.create({
         data: incomeData,
         include: {
-            User: { select: { id: true, name: true } },
-            Customer: { select: { id: true, shopName: true, ownerName: true } }
+            User: { select: { id: true, name: true, email: true } },
+            Customer: { 
+                select: { 
+                    id: true, 
+                    shopName: true, 
+                    ownerName: true,
+                    phone: true,
+                    address: true,
+                    city: true
+                } 
+            }
+        }
+    });
+
+    // Get product details if inventory item is provided
+    let productName = 'Product Sale';
+    let quantityValue = '1';
+    
+    // If inventory item and quantity provided, reduce stock
+    if (data.inventoryId && data.quantity) {
+        const inventoryId = parseInt(data.inventoryId);
+        const quantity = parseFloat(data.quantity);
+        
+        // Get current inventory item
+        const inventoryItem = await prisma.inventory.findUnique({
+            where: { id: inventoryId }
+        });
+        
+        if (!inventoryItem) {
+            throw new Error('Inventory item not found');
+        }
+        
+        // Store product name and quantity for transaction record
+        productName = inventoryItem.productName || 'Product Sale';
+        quantityValue = quantity.toString();
+        
+        // Check if sufficient stock available
+        if (inventoryItem.stock < quantity) {
+            throw new Error(`Insufficient stock. Available: ${inventoryItem.stock}, Requested: ${quantity}`);
+        }
+        
+        // Calculate new stock
+        const newStock = inventoryItem.stock - quantity;
+        
+        // Determine status based on stock level
+        let status = 'In Stock';
+        if (newStock === 0) {
+            status = 'Out of Stock';
+        } else if (newStock < 10) {
+            status = 'Low Stock';
+        }
+        
+        // Update inventory stock
+        await prisma.inventory.update({
+            where: { id: inventoryId },
+            data: {
+                stock: newStock,
+                status: status,
+                updatedAt: now
+            }
+        });
+    }
+
+    // Create RecentTransaction record
+    await prisma.recentTransaction.create({
+        data: {
+            type: 'Sale',
+            productName: productName || 'Product Sale',
+            quantity: quantityValue || '1',
+            amount: parseFloat(data.amount),
+            customerId: data.customerId ? parseInt(data.customerId) : null,
+            customerName: income.Customer ? `${income.Customer.shopName} - ${income.Customer.ownerName}` : 'Walk-in Customer',
+            agentId: userId ? parseInt(userId) : null,
+            agentName: income.User ? income.User.name : null,
+            status: 'Completed',
+            description: data.description || '',
+            paymentMethod: data.paymentMethod || 'Cash',
+            createdAt: now,
+            updatedAt: now
         }
     });
 
     return income;
+};
+
+// Get recent transactions
+export const getRecentTransactions = async (limit = 10) => {
+    const transactions = await prisma.recentTransaction.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: limit
+    });
+    return transactions;
 };
