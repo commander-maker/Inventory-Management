@@ -9,6 +9,7 @@ import FinanceDashboard from '../pages/Finance/Dashboard';
 import VehicleManagement from '../pages/Vehicle/Vehicle_management';
 import UserManagement from '../pages/User/User_management';
 import Settings from '../pages/Settings/Settings';
+import MyVehicle from '../pages/Vehicle/MyVehicle';
 import MyDeliveries from '../pages/Delivery/MyDeliveries';
 import AdminDeliveries from '../pages/Delivery/AdminDeliveries';
 import CustomerList from '../pages/Customer/CustomerList';
@@ -93,6 +94,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <MyDeliveries />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-vehicle"
+        element={
+          <ProtectedRoute>
+            <MyVehicle />
           </ProtectedRoute>
         }
       />
