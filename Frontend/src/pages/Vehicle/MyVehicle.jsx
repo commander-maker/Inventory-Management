@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Package, MapPin, Gauge, Fuel, Calendar, AlertCircle, Search, RefreshCw, BarChart3, Boxes } from 'lucide-react';
+import { Truck, Package, MapPin, Gauge, Fuel, Calendar, AlertCircle, Search, RefreshCw, BarChart3, Boxes, Edit, Trash2, X, Minus } from 'lucide-react';
 import { vehicleAPI } from '../../utils/api';
 import { toast } from 'react-toastify';
+import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 
 export default function MyVehicle() {
     const [vehicle, setVehicle] = useState(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedLoad, setSelectedLoad] = useState(null);
+    const [editQuantity, setEditQuantity] = useState('');
+    const [deleteDialog, setDeleteDialog] = useState({ show: false, loadId: null });
 
     useEffect(() => {
         fetchMyVehicle();
@@ -22,6 +27,64 @@ export default function MyVehicle() {
         } catch (error) {
             console.error('Error fetching vehicle:', error);
             toast.error('Failed to load vehicle details');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEditLoad = (load) => {
+        setSelectedLoad(load);
+        // Extract numeric value from quantity string (e.g., "100 Bottles" -> "100")
+        const quantityMatch = load.quantity.match(/^(\d+)/);
+        setEditQuantity(quantityMatch ? quantityMatch[1] : '');
+        setShowEditModal(true);
+    };
+
+    const handleUpdateLoad = async (e) => {
+        e.preventDefault();
+        if (!editQuantity || parseInt(editQuantity) <= 0) {
+            toast.error('Please enter a valid quantity');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            // Extract the unit from the original quantity (e.g., "100 Bottles" -> "Bottles")
+            const unitMatch = selectedLoad.quantity.match(/\d+\s+(.+)$/);
+            const unit = unitMatch ? unitMatch[1] : 'Units';
+            
+            // Update the load quantity directly
+            await vehicleAPI.updateLoad(selectedLoad.id, {
+                quantity: `${editQuantity} ${unit}`
+            });
+
+            await fetchMyVehicle();
+            setShowEditModal(false);
+            toast.success('Load quantity updated successfully!');
+        } catch (error) {
+            console.error('Error updating load:', error);
+            toast.error('Failed to update load quantity');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRemoveLoad = (loadId) => {
+        setDeleteDialog({ show: true, loadId });
+    };
+
+    const confirmRemoveLoad = async () => {
+        const loadId = deleteDialog.loadId;
+        setDeleteDialog({ show: false, loadId: null });
+
+        try {
+            setLoading(true);
+            await vehicleAPI.removeLoad(vehicle.id, loadId);
+            await fetchMyVehicle();
+            toast.success('Item removed from vehicle!');
+        } catch (error) {
+            console.error('Error removing load:', error);
+            toast.error('Failed to remove item');
         } finally {
             setLoading(false);
         }
@@ -170,6 +233,7 @@ export default function MyVehicle() {
                                 <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Quantity</th>
                                 <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Category</th>
                                 <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Loaded At</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Actions</th>
                             </tr>
                         </thead>
                         <tbody className='divide-y divide-gray-50'>
@@ -186,7 +250,7 @@ export default function MyVehicle() {
                                         </td>
                                         <td className='px-6 py-4 whitespace-nowrap'>
                                             <span className='px-2.5 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg'>
-                                                {load.quantity} Units
+                                                {load.quantity}
                                             </span>
                                         </td>
                                         <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
@@ -195,11 +259,29 @@ export default function MyVehicle() {
                                         <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-400'>
                                             {new Date(load.createdAt).toLocaleDateString()}
                                         </td>
+                                        <td className='px-6 py-4 whitespace-nowrap'>
+                                            <div className='flex items-center gap-2'>
+                                                <button
+                                                    onClick={() => handleEditLoad(load)}
+                                                    className='p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors'
+                                                    title='Update quantity'
+                                                >
+                                                    <Edit className='w-4 h-4' />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRemoveLoad(load.id)}
+                                                    className='p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+                                                    title='Remove item'
+                                                >
+                                                    <Trash2 className='w-4 h-4' />
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan='4' className='px-6 py-12 text-center text-gray-400'>
+                                    <td colSpan='5' className='px-6 py-12 text-center text-gray-400'>
                                         <div className='mb-2'>
                                             <Search className='w-8 h-8 mx-auto opacity-20' />
                                         </div>
@@ -220,6 +302,72 @@ export default function MyVehicle() {
                 )}
             </div>
 
+            {/* Edit Load Modal */}
+            {showEditModal && selectedLoad && (
+                <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+                    <div className='bg-white rounded-xl p-6 w-full max-w-md'>
+                        <div className='flex justify-between items-center mb-4'>
+                            <div>
+                                <h2 className='text-2xl font-bold text-gray-800'>Update Quantity</h2>
+                                <p className='text-sm text-gray-600'>Item: {selectedLoad.item}</p>
+                            </div>
+                            <button onClick={() => setShowEditModal(false)} className='text-gray-500 hover:text-gray-700'>
+                                <X className='w-6 h-6' />
+                            </button>
+                        </div>
+                        <form onSubmit={handleUpdateLoad} className='space-y-4'>
+                            <div className='bg-blue-50 p-4 rounded-lg'>
+                                <div className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
+                                    <Minus className='w-4 h-4 text-blue-600' />
+                                    <span>Update quantity after distribution to sellers</span>
+                                </div>
+                                <p className='text-xs text-gray-500'>Current: {selectedLoad.quantity}</p>
+                            </div>
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>New Quantity</label>
+                                <input
+                                    type='number'
+                                    value={editQuantity}
+                                    onChange={(e) => setEditQuantity(e.target.value)}
+                                    placeholder='Enter new quantity'
+                                    min='0'
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    required
+                                />
+                                <p className='text-xs text-gray-500 mt-1'>Enter the remaining quantity after distribution</p>
+                            </div>
+                            <div className='flex gap-3 pt-4'>
+                                <button
+                                    type='button'
+                                    onClick={() => setShowEditModal(false)}
+                                    className='flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type='submit'
+                                    disabled={loading}
+                                    className='flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50'
+                                >
+                                    {loading ? 'Updating...' : 'Update Quantity'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={deleteDialog.show}
+                onClose={() => setDeleteDialog({ show: false, loadId: null })}
+                onConfirm={confirmRemoveLoad}
+                title="Remove Item"
+                message="Are you sure you want to remove this item from your vehicle? This indicates the item has been fully distributed."
+                confirmText="Remove"
+                cancelText="Cancel"
+                type="danger"
+            />
         </div>
     );
 }

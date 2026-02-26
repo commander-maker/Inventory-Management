@@ -66,6 +66,7 @@ export const vehicleAPI = {
   // Vehicle load management
   getLoads: (id) => api.get(`/vehicles/${id}/loads`),
   addLoad: (id, loadData) => api.post(`/vehicles/${id}/loads`, loadData),
+  updateLoad: (loadId, loadData) => api.put(`/vehicles/loads/${loadId}`, loadData),
   removeLoad: (vehicleId, loadId) => api.delete(`/vehicles/${vehicleId}/loads/${loadId}`)
 };
 
