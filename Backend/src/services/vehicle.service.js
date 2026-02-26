@@ -286,9 +286,30 @@ export const getVehicleLoads = async (vehicleId) => {
 };
 
 // Update vehicle load quantity (without affecting inventory - for distribution tracking)
-export const updateVehicleLoad = async (loadId, { quantity }) => {
+export const updateVehicleLoad = async (loadId, { quantity, saleData }, userId) => {
   const load = await prisma.vehicleLoad.findUnique({ where: { id: parseInt(loadId) } });
   if (!load) throw new Error("Load not found");
+
+  // If saleData is provided, create an income record for the sale
+  if (saleData && saleData.customerId && saleData.cashAmount) {
+    const now = new Date();
+    const incomeData = {
+      type: 'Sales',
+      category: 'Product Sales',
+      amount: parseFloat(saleData.cashAmount),
+      description: `Sale of ${saleData.distributedQuantity} ${saleData.unit} of ${saleData.itemName} to customer`,
+      customerId: parseInt(saleData.customerId),
+      agentId: userId ? parseInt(userId) : null,
+      paymentMethod: saleData.paymentMethod || 'Cash',
+      date: now,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    await prisma.income.create({
+      data: incomeData
+    });
+  }
 
   const updatedLoad = await prisma.vehicleLoad.update({
     where: { id: parseInt(loadId) },

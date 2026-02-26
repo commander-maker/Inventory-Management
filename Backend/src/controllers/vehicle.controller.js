@@ -142,7 +142,7 @@ export const removeVehicleLoad = async (req, res) => {
 // Update vehicle load quantity (for distribution tracking)
 export const updateVehicleLoad = async (req, res) => {
   try {
-    const load = await VehicleService.updateVehicleLoad(req.params.loadId, req.body);
+    const load = await VehicleService.updateVehicleLoad(req.params.loadId, req.body, req.user.id);
     res.status(200).json({
       success: true,
       message: "Load updated successfully",
