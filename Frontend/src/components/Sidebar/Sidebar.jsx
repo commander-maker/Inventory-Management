@@ -20,6 +20,7 @@ export default function Sidebar() {
   const location = useLocation();
   const { logout, user } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const adminItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -50,12 +51,19 @@ export default function Sidebar() {
     navigate('/login');
   };
 
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
-    <aside className='w-64 bg-white border-r border-gray-200 flex flex-col h-full'>
+    <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300`}>
       {/* Logo Section */}
       <div className='p-6 border-b border-gray-200 flex items-center justify-between'>
-        <h1 className='text-2xl font-bold text-blue-600'>AQUA</h1>
-        <button className='p-2 hover:bg-gray-100 rounded-lg'>
+        {!isCollapsed && <h1 className='text-2xl font-bold text-blue-600'>AQUA</h1>}
+        <button 
+          onClick={toggleSidebar}
+          className='p-2 hover:bg-gray-100 rounded-lg'
+        >
           <Menu className='w-6 h-6 text-gray-700' />
         </button>
       </div>
@@ -75,9 +83,10 @@ export default function Sidebar() {
                     ? 'bg-blue-50 text-blue-600'
                     : 'text-gray-700 hover:bg-gray-50'
                     }`}
+                  title={isCollapsed ? item.label : ''}
                 >
                   <Icon className='w-5 h-5' />
-                  <span className='font-medium'>{item.label}</span>
+                  {!isCollapsed && <span className='font-medium'>{item.label}</span>}
                 </button>
               </li>
             );
@@ -88,9 +97,10 @@ export default function Sidebar() {
             <button
               onClick={handleLogout}
               className='w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors'
+              title={isCollapsed ? 'Log Out' : ''}
             >
               <LogOut className='w-5 h-5' />
-              <span className='font-medium'>Log Out</span>
+              {!isCollapsed && <span className='font-medium'>Log Out</span>}
             </button>
           </li>
         </ul>
