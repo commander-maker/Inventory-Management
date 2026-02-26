@@ -308,7 +308,7 @@ export default function AgentDashboard() {
                     </div>
 
                     {/* Recent Activity */}
-                    <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 rounded-xl shadow-lg p-6 text-white">
+                    <div className="bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                             <Clock size={24} />
                             Recent Activity
@@ -331,7 +331,7 @@ export default function AgentDashboard() {
                                                 {delivery.status}
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-2 text-xs text-pink-100">
+                                        <div className="flex items-center gap-2 text-xs text-indigo-100">
                                             <MapPin size={12} />
                                             <span>{delivery.Customer?.address || 'No address'}</span>
                                         </div>
@@ -339,7 +339,7 @@ export default function AgentDashboard() {
                                 ))
                             ) : (
                                 <div className="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur-sm text-center">
-                                    <p className="text-sm text-pink-100">No recent activity</p>
+                                    <p className="text-sm text-indigo-100">No recent activity</p>
                                 </div>
                             )}
                         </div>
@@ -347,11 +347,11 @@ export default function AgentDashboard() {
                         <div className="mt-6 pt-4 border-t border-white border-opacity-30">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-xs text-pink-100 mb-1">Total Today</p>
+                                    <p className="text-xs text-indigo-100 mb-1">Total Today</p>
                                     <p className="text-2xl font-bold">{deliveryStats.total}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-pink-100 mb-1">Completed</p>
+                                    <p className="text-xs text-indigo-100 mb-1">Completed</p>
                                     <p className="text-2xl font-bold">{deliveryStats.completed}</p>
                                 </div>
                             </div>
