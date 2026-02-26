@@ -205,7 +205,7 @@ export default function AgentDashboard() {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-2">
                                                     <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
-                                                        {delivery.vehicleLoad?.customer?.name || 'Unknown Customer'}
+                                                        {delivery.Customer?.ownerName || delivery.Customer?.shopName || 'Unknown Customer'}
                                                     </h3>
                                                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
                                                         {delivery.status}
@@ -214,7 +214,7 @@ export default function AgentDashboard() {
                                                 <div className="flex items-center gap-4 text-sm text-gray-600">
                                                     <div className="flex items-center gap-1">
                                                         <MapPin size={14} />
-                                                        <span>{delivery.vehicleLoad?.customer?.address || 'No address'}</span>
+                                                        <span>{delivery.Customer?.address || 'No address'}</span>
                                                     </div>
                                                     {delivery.createdAt && (
                                                         <div className="flex items-center gap-1">
@@ -320,7 +320,7 @@ export default function AgentDashboard() {
                                     <div key={delivery.id} className="bg-white bg-opacity-20 rounded-lg p-3 backdrop-blur-sm">
                                         <div className="flex justify-between items-start mb-2">
                                             <span className="text-sm font-medium text-white">
-                                                {delivery.vehicleLoad?.customer?.name || 'Unknown Customer'}
+                                                {delivery.Customer?.ownerName || delivery.Customer?.shopName || 'Unknown Customer'}
                                             </span>
                                             <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
                                                 delivery.status === 'Delivered' ? 'bg-green-400 text-green-900' :
@@ -333,7 +333,7 @@ export default function AgentDashboard() {
                                         </div>
                                         <div className="flex items-center gap-2 text-xs text-blue-100">
                                             <MapPin size={12} />
-                                            <span>{delivery.vehicleLoad?.customer?.address || 'No address'}</span>
+                                            <span>{delivery.Customer?.address || 'No address'}</span>
                                         </div>
                                     </div>
                                 ))
