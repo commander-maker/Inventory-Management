@@ -24,7 +24,7 @@ export default function Sidebar() {
   const adminItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Package, label: 'Inventory', path: '/inventory' },
-    { icon: Truck, label: 'Vehicles', path: '/vehicles' },
+    { icon: Truck, label: 'Vehicle Inventory', path: '/vehicles' },
     { icon: Store, label: 'Customers', path: '/customers' },
     { icon: MapPin, label: 'Deliveries', path: '/deliveries' },
     { icon: Calculator, label: 'Finance', path: '/finance' },
