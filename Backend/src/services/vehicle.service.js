@@ -44,6 +44,26 @@ export const getVehicleById = async (id) => {
   return vehicle;
 };
 
+// Get vehicle by Driver ID (Agent's assigned vehicle)
+export const getVehicleByDriverId = async (driverId) => {
+  const vehicle = await prisma.vehicle.findFirst({
+    where: { driverId: parseInt(driverId) },
+    include: {
+      loads: true,
+      driver: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          email: true
+        }
+      }
+    }
+  });
+
+  return vehicle; // Returns null if no vehicle is assigned, which is handled by controller
+};
+
 // Create new vehicle
 export const createVehicle = async ({ id, vehicleType, capacity, status, location, fuelLevel, driverId }) => {
   // Check if vehicle already exists

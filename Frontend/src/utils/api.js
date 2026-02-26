@@ -58,6 +58,7 @@ export const userAPI = {
 // Vehicle API
 export const vehicleAPI = {
   getAll: () => api.get('/vehicles'),
+  getMyVehicle: () => api.get('/vehicles/my-vehicle'),
   getById: (id) => api.get(`/vehicles/${id}`),
   create: (vehicleData) => api.post('/vehicles', vehicleData),
   update: (id, vehicleData) => api.put(`/vehicles/${id}`, vehicleData),

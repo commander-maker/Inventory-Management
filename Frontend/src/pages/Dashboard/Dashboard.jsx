@@ -63,7 +63,7 @@ export default function Dashboard() {
           return {
             id: d.id,
             product: `${d.productName || 'Product'} (${d.quantity || ''})`,
-            amount: d.totalAmount ? `${parseFloat(d.totalAmount).toLocaleString()} LKR` : '—',
+            amount: d.totalAmount ? `LKR ${parseFloat(d.totalAmount).toLocaleString()}` : '—',
             time: timeAgo,
             person: d.Vehicle?.driver?.name || d.User?.name || d.Customer?.ownerName || 'Unknown',
             icon: getTransactionIcon(d.productName),
@@ -159,7 +159,7 @@ export default function Dashboard() {
 
   // Stats data — all from API
   const stats = [
-    { label: 'Total Revenue', value: `${totalRevenue.toLocaleString()} LKR`, icon: DollarSign, color: 'text-green-500', bgColor: 'bg-green-100' },
+    { label: 'Total Revenue', value: `LKR ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-green-500', bgColor: 'bg-green-100' },
     { label: 'Total Products', value: totalProducts.toLocaleString(), icon: Package, color: 'text-blue-500', bgColor: 'bg-blue-100' },
     { label: 'Sales Agents', value: totalAgents.toString(), icon: Users, color: 'text-red-500', bgColor: 'bg-red-100' },
     { label: 'Total Deliveries', value: deliveryStats.total.toString(), icon: Truck, color: 'text-purple-500', bgColor: 'bg-purple-100' }
@@ -380,7 +380,7 @@ export default function Dashboard() {
 
                   {delivery.totalAmount && (
                     <p className="text-sm font-medium text-gray-800">
-                      {parseFloat(delivery.totalAmount).toLocaleString()} LKR
+                      LKR {parseFloat(delivery.totalAmount).toLocaleString()}
                     </p>
                   )}
 
