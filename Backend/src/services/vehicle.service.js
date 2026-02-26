@@ -179,6 +179,44 @@ export const addVehicleLoad = async (vehicleId, { item, quantity }) => {
   const vehicle = await prisma.vehicle.findUnique({ where: { id: vehicleId } });
   if (!vehicle) throw new Error("Vehicle not found");
 
+  // Extract quantity number from the quantity string (e.g., "100 Bottles" -> 100)
+  const quantityMatch = quantity.match(/^(\d+)/);
+  const quantityNumber = quantityMatch ? parseInt(quantityMatch[1]) : 0;
+
+  // Find the inventory item by name
+  const inventoryItem = await prisma.inventory.findFirst({
+    where: {
+      name: {
+        equals: item,
+        mode: 'insensitive'
+      }
+    }
+  });
+
+  if (inventoryItem) {
+    // Check if there's enough stock
+    if (inventoryItem.stock < quantityNumber) {
+      throw new Error(`Insufficient stock. Available: ${inventoryItem.stock} ${inventoryItem.unit}`);
+    }
+
+    // Reduce stock from inventory
+    const newStock = inventoryItem.stock - quantityNumber;
+    let status = 'In Stock';
+    if (newStock === 0) {
+      status = 'Out of Stock';
+    } else if (newStock < 10) {
+      status = 'Low Stock';
+    }
+
+    await prisma.inventory.update({
+      where: { id: inventoryItem.id },
+      data: {
+        stock: newStock,
+        status
+      }
+    });
+  }
+
   const load = await prisma.vehicleLoad.create({
     data: {
       vehicleId,
@@ -194,6 +232,39 @@ export const addVehicleLoad = async (vehicleId, { item, quantity }) => {
 export const removeVehicleLoad = async (loadId) => {
   const load = await prisma.vehicleLoad.findUnique({ where: { id: parseInt(loadId) } });
   if (!load) throw new Error("Load not found");
+
+  // Extract quantity number from the quantity string (e.g., "100 Bottles" -> 100)
+  const quantityMatch = load.quantity.match(/^(\d+)/);
+  const quantityNumber = quantityMatch ? parseInt(quantityMatch[1]) : 0;
+
+  // Find the inventory item by name and restore stock
+  const inventoryItem = await prisma.inventory.findFirst({
+    where: {
+      name: {
+        equals: load.item,
+        mode: 'insensitive'
+      }
+    }
+  });
+
+  if (inventoryItem && quantityNumber > 0) {
+    // Add stock back to inventory
+    const newStock = inventoryItem.stock + quantityNumber;
+    let status = 'In Stock';
+    if (newStock === 0) {
+      status = 'Out of Stock';
+    } else if (newStock < 10) {
+      status = 'Low Stock';
+    }
+
+    await prisma.inventory.update({
+      where: { id: inventoryItem.id },
+      data: {
+        stock: newStock,
+        status
+      }
+    });
+  }
 
   await prisma.vehicleLoad.delete({
     where: { id: parseInt(loadId) }
