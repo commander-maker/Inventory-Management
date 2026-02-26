@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Droplet, Package, Users, Plus, Truck, DollarSign, User, ChevronRight, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { deliveryAPI, inventoryAPI, userAPI } from '../../utils/api';
+import { deliveryAPI, inventoryAPI, userAPI, financeAPI } from '../../utils/api';
 
 export default function Dashboard() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -29,10 +29,11 @@ export default function Dashboard() {
         setLoading(true);
 
         // Fetch all data in parallel
-        const [deliveryRes, inventoryRes, userRes] = await Promise.all([
+        const [deliveryRes, inventoryRes, userRes, incomeRes] = await Promise.all([
           deliveryAPI.getAll(),
           inventoryAPI.getAll(),
-          userAPI.getAll()
+          userAPI.getAll(),
+          financeAPI.getIncome()
         ]);
 
         // ── Deliveries ──
@@ -54,14 +55,22 @@ export default function Dashboard() {
           .reduce((sum, d) => sum + parseFloat(d.totalAmount), 0);
         setTotalRevenue(revenue);
 
-        // Build recent transactions from deliveries (sorted by date, newest first)
+        // ── Income ── 
+        const incomeData = incomeRes.data.data || [];
+
+        // Add income revenue to total
+        const incomeRevenue = incomeData.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
+        setTotalRevenue(revenue + incomeRevenue);
+
+        // Build recent transactions from both deliveries and income (sorted by date, newest first)
         const sortedDeliveries = [...deliveryData]
           .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
 
-        const transactions = sortedDeliveries.slice(0, 4).map(d => {
+        const deliveryTransactions = sortedDeliveries.slice(0, 4).map(d => {
           const timeAgo = getTimeAgo(d.updatedAt || d.createdAt);
           return {
-            id: d.id,
+            id: `del-${d.id}`,
+            type: 'delivery',
             product: `${d.productName || 'Product'} (${d.quantity || ''})`,
             amount: d.totalAmount ? `LKR ${parseFloat(d.totalAmount).toLocaleString()}` : '—',
             time: timeAgo,
@@ -69,10 +78,38 @@ export default function Dashboard() {
             icon: getTransactionIcon(d.productName),
             color: getTransactionColor(d.productName),
             iconColor: getTransactionIconColor(d.productName),
-            status: d.status
+            status: d.status,
+            date: new Date(d.updatedAt || d.createdAt)
           };
         });
-        setRecentTransactions(transactions);
+
+        // Map income records to transactions
+        const incomeTransactions = incomeData.slice(0, 4).map(inc => {
+          const timeAgo = getTimeAgo(inc.date || inc.createdAt);
+          const description = inc.description || 'Sale';
+          const productName = description.includes('of') ? description.split('of')[1]?.split('to')[0]?.trim() : 'Product';
+          
+          return {
+            id: `inc-${inc.id}`,
+            type: 'sale',
+            product: productName,
+            amount: `LKR ${parseFloat(inc.amount).toLocaleString()}`,
+            time: timeAgo,
+            person: inc.Customer?.shopName || inc.Customer?.ownerName || inc.User?.name || 'Customer',
+            icon: getTransactionIcon(productName),
+            color: 'bg-green-100',
+            iconColor: 'text-green-600',
+            status: 'Completed',
+            date: new Date(inc.date || inc.createdAt)
+          };
+        });
+
+        // Combine and sort all transactions by date
+        const allTransactions = [...deliveryTransactions, ...incomeTransactions]
+          .sort((a, b) => b.date - a.date)
+          .slice(0, 4);
+        
+        setRecentTransactions(allTransactions);
 
         // ── Inventory ──
         const inventoryData = inventoryRes.data.data || [];

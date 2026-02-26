@@ -94,3 +94,17 @@ export const getAllIncome = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// Create income
+export const createIncome = async (req, res) => {
+    try {
+        const income = await FinanceService.createIncome(req.body, req.user.id);
+        res.status(201).json({
+            success: true,
+            message: "Income recorded successfully",
+            data: income
+        });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+};

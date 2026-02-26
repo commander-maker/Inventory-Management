@@ -7,7 +7,8 @@ import {
     updateExpense,
     deleteExpense,
     getExpenseSummary,
-    getAllIncome
+    getAllIncome,
+    createIncome
 } from "../controllers/finance.controller.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.middleware.js";
@@ -22,6 +23,7 @@ router.get("/summary", getExpenseSummary);
 
 // Income
 router.get("/income", getAllIncome);
+router.post("/income", createIncome);
 
 // Expenses CRUD
 router.get("/expenses", getAllExpenses);
