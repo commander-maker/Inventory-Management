@@ -292,7 +292,7 @@ export default function AdminDeliveries() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-indigo-700 mb-1">Revenue</p>
-                                <p className="text-lg font-bold text-indigo-900">Rs.{totalRevenue.toLocaleString()}</p>
+                                <p className="text-lg font-bold text-indigo-900">LKR {totalRevenue.toLocaleString()}</p>
                             </div>
                             <DollarSign size={28} className="text-indigo-600" />
                         </div>
@@ -420,7 +420,7 @@ export default function AdminDeliveries() {
                                             {/* Amount */}
                                             <td className="px-6 py-4">
                                                 <p className="text-sm font-semibold text-gray-900">
-                                                    {delivery.totalAmount ? `Rs.${parseFloat(delivery.totalAmount).toLocaleString()}` : '—'}
+                                                    {delivery.totalAmount ? `LKR ${parseFloat(delivery.totalAmount).toLocaleString()}` : '—'}
                                                 </p>
                                             </td>
 
@@ -582,7 +582,7 @@ export default function AdminDeliveries() {
                                         <option value="">Select Product from Inventory</option>
                                         {inventory.map(p => (
                                             <option key={p.id} value={p.name}>
-                                                {p.name} — Stock: {p.stock} {p.unit} — Rs.{parseFloat(p.price).toLocaleString()}/{p.unit}
+                                                {p.name} — Stock: {p.stock} {p.unit} — LKR {parseFloat(p.price).toLocaleString()}/{p.unit}
                                             </option>
                                         ))}
                                     </select>
@@ -604,7 +604,7 @@ export default function AdminDeliveries() {
                                 {/* Unit Price & Total */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs font-medium text-purple-700 mb-1">Unit Price (Rs.)</label>
+                                        <label className="block text-xs font-medium text-purple-700 mb-1">Unit Price (LKR)</label>
                                         <input
                                             type="number"
                                             value={assignForm.unitPrice}
@@ -624,7 +624,7 @@ export default function AdminDeliveries() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-purple-700 mb-1">Total Amount (Rs.)</label>
+                                        <label className="block text-xs font-medium text-purple-700 mb-1">Total Amount (LKR)</label>
                                         <input
                                             type="number"
                                             value={assignForm.totalAmount}
@@ -671,7 +671,7 @@ export default function AdminDeliveries() {
                                         </p>
                                         {assignForm.totalAmount && (
                                             <p className="text-sm font-bold text-gray-900 mt-1">
-                                                Total: Rs.{parseFloat(assignForm.totalAmount).toLocaleString()}
+                                                Total: LKR {parseFloat(assignForm.totalAmount).toLocaleString()}
                                             </p>
                                         )}
                                     </div>
