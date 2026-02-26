@@ -108,3 +108,14 @@ export const createIncome = async (req, res) => {
         res.status(400).json({ success: false, message: error.message });
     }
 };
+
+// Get recent transactions
+export const getRecentTransactions = async (req, res) => {
+    try {
+        const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+        const transactions = await FinanceService.getRecentTransactions(limit);
+        res.status(200).json({ success: true, data: transactions });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

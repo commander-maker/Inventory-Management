@@ -8,7 +8,8 @@ import {
     deleteExpense,
     getExpenseSummary,
     getAllIncome,
-    createIncome
+    createIncome,
+    getRecentTransactions
 } from "../controllers/finance.controller.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.middleware.js";
@@ -20,6 +21,9 @@ router.use(authenticate);
 
 // Summary (must be before /:id)
 router.get("/summary", getExpenseSummary);
+
+// Recent Transactions
+router.get("/recent-transactions", getRecentTransactions);
 
 // Income
 router.get("/income", getAllIncome);
