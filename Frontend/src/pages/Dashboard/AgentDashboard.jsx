@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Truck, TrendingUp, Clock, MapPin, Fuel, CheckCircle, AlertCircle } from 'lucide-react';
+import { Package, Truck, TrendingUp, Clock, MapPin, Fuel, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { deliveryAPI } from '../../utils/api';
 
 export default function AgentDashboard() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [deliveries, setDeliveries] = useState([]);
     const [deliveryStats, setDeliveryStats] = useState({
         total: 0,
@@ -15,6 +17,13 @@ export default function AgentDashboard() {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showReportIssueModal, setShowReportIssueModal] = useState(false);
+    const [issueForm, setIssueForm] = useState({
+        type: 'Vehicle',
+        description: '',
+        priority: 'Medium'
+    });
+    const [submittingIssue, setSubmittingIssue] = useState(false);
 
     // Fetch agent deliveries
     useEffect(() => {
@@ -45,6 +54,57 @@ export default function AgentDashboard() {
 
         fetchDeliveries();
     }, []);
+
+    // Quick Action Handlers
+    const handleUpdateDelivery = () => {
+        navigate('/my-deliveries');
+    };
+
+    const handleReportIssue = () => {
+        setShowReportIssueModal(true);
+    };
+
+    const handleViewRoute = () => {
+        navigate('/my-deliveries');
+    };
+
+    const handleViewSales = () => {
+        navigate('/finance');
+    };
+
+    const handleSubmitIssue = async (e) => {
+        e.preventDefault();
+        setSubmittingIssue(true);
+        
+        try {
+            // Here you would call an API to submit the issue
+            // For now, we'll just simulate it
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Reset form and close modal
+            setIssueForm({
+                type: 'Vehicle',
+                description: '',
+                priority: 'Medium'
+            });
+            setShowReportIssueModal(false);
+            alert('Issue reported successfully!');
+        } catch (err) {
+            console.error('Failed to report issue:', err);
+            alert('Failed to report issue. Please try again.');
+        } finally {
+            setSubmittingIssue(false);
+        }
+    };
+
+    const handleCloseIssueModal = () => {
+        setShowReportIssueModal(false);
+        setIssueForm({
+            type: 'Vehicle',
+            description: '',
+            priority: 'Medium'
+        });
+    };
 
     // Agent stats
     const agentStats = [
@@ -282,28 +342,126 @@ export default function AgentDashboard() {
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
 
                     <div className="grid grid-cols-4 gap-4">
-                        <button className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group">
+                        <button 
+                            onClick={handleUpdateDelivery}
+                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group"
+                        >
                             <Package className="text-gray-600 group-hover:text-blue-600 mb-3 transition" size={32} />
                             <span className="text-sm font-medium text-gray-900">Update Delivery</span>
                         </button>
 
-                        <button className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group">
+                        <button 
+                            onClick={handleReportIssue}
+                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group"
+                        >
                             <Truck className="text-gray-600 group-hover:text-blue-600 mb-3 transition" size={32} />
                             <span className="text-sm font-medium text-gray-900">Report Issue</span>
                         </button>
 
-                        <button className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group">
+                        <button 
+                            onClick={handleViewRoute}
+                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group"
+                        >
                             <MapPin className="text-gray-600 group-hover:text-blue-600 mb-3 transition" size={32} />
                             <span className="text-sm font-medium text-gray-900">View Route</span>
                         </button>
 
-                        <button className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group">
+                        <button 
+                            onClick={handleViewSales}
+                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group"
+                        >
                             <TrendingUp className="text-gray-600 group-hover:text-blue-600 mb-3 transition" size={32} />
                             <span className="text-sm font-medium text-gray-900">View Sales</span>
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Report Issue Modal */}
+            {showReportIssueModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                        <div className="flex items-center justify-between p-6 border-b">
+                            <h3 className="text-xl font-bold text-gray-900">Report an Issue</h3>
+                            <button
+                                onClick={handleCloseIssueModal}
+                                className="text-gray-400 hover:text-gray-600 transition"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmitIssue} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Issue Type
+                                </label>
+                                <select
+                                    value={issueForm.type}
+                                    onChange={(e) => setIssueForm({ ...issueForm, type: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    required
+                                >
+                                    <option value="Vehicle">Vehicle Issue</option>
+                                    <option value="Delivery">Delivery Issue</option>
+                                    <option value="Customer">Customer Issue</option>
+                                    <option value="Route">Route Issue</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Priority
+                                </label>
+                                <select
+                                    value={issueForm.priority}
+                                    onChange={(e) => setIssueForm({ ...issueForm, priority: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    required
+                                >
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Description
+                                </label>
+                                <textarea
+                                    value={issueForm.description}
+                                    onChange={(e) => setIssueForm({ ...issueForm, description: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                    rows="4"
+                                    placeholder="Describe the issue in detail..."
+                                    required
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseIssueModal}
+                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+                                    disabled={submittingIssue}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:bg-blue-400 disabled:cursor-not-allowed"
+                                    disabled={submittingIssue}
+                                >
+                                    {submittingIssue ? 'Submitting...' : 'Submit Issue'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
