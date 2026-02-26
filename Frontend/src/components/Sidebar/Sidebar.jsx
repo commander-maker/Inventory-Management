@@ -35,8 +35,7 @@ export default function Sidebar() {
   const agentItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/agent-dashboard' },
     { icon: MapPin, label: 'My Deliveries', path: '/my-deliveries' },
-    { icon: Truck, label: 'Vehicle Management', path: '/vehicles' },
-    { icon: Package, label: 'Inventory Stock', path: '/inventory' },
+    { icon: Truck, label: 'My Vehicle Inventory', path: '/my-vehicle' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 

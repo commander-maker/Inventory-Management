@@ -58,7 +58,7 @@ export default function InventoryList() {
 
   const inventoryStats = [
     { label: 'Total Products', value: products.length.toString(), icon: '📦' },
-    { label: 'Total Value', value: `Rs ${totalValue.toLocaleString()}`, icon: '💹' },
+    { label: 'Total Value', value: `LKR ${totalValue.toLocaleString()}`, icon: '💹' },
     { label: 'Low Stock', value: lowStockItems.toString(), icon: '⚠️' },
     { label: 'Out of Stock', value: outOfStockItems.toString(), icon: '❌' }
   ];
@@ -302,12 +302,12 @@ export default function InventoryList() {
                     {/* Price */}
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Price</p>
-                      <p className="text-lg font-semibold text-gray-900">Rs {Number(product.price).toLocaleString()}</p>
+                      <p className="text-lg font-semibold text-gray-900">LKR {Number(product.price).toLocaleString()}</p>
                     </div>
                     {/* Value */}
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Value</p>
-                      <p className="text-lg font-semibold text-gray-900">Rs {value.toLocaleString()}</p>
+                      <p className="text-lg font-semibold text-gray-900">LKR {value.toLocaleString()}</p>
                     </div>
                     {/* Supplier */}
                     <div>
@@ -378,13 +378,13 @@ export default function InventoryList() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                  <p className="text-gray-900">Rs {Number(viewModal.product.price).toLocaleString()}</p>
+                  <p className="text-gray-900">LKR {Number(viewModal.product.price).toLocaleString()}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Total Value</label>
-                  <p className="text-gray-900">Rs {(Number(viewModal.product.price) * viewModal.product.stock).toLocaleString()}</p>
+                  <p className="text-gray-900">LKR {(Number(viewModal.product.price) * viewModal.product.stock).toLocaleString()}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -466,7 +466,7 @@ export default function InventoryList() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (Rs) </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (LKR) </label>
                   <input
                     type="number"
                     name="price"
@@ -610,7 +610,7 @@ export default function InventoryList() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price per Unit (Rs) </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price per Unit (LKR) </label>
                 <input
                   type="number"
                   name="price"
