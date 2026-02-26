@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Package, MapPin, Gauge, Fuel, Calendar, AlertCircle, Search, RefreshCw, BarChart3, Boxes, Edit, Trash2, X, Minus } from 'lucide-react';
-import { vehicleAPI } from '../../utils/api';
+import { Truck, Package, MapPin, Gauge, Fuel, Calendar, AlertCircle, Search, RefreshCw, BarChart3, Boxes, Edit, Trash2, X, Minus, DollarSign, User } from 'lucide-react';
+import { vehicleAPI, customerAPI } from '../../utils/api';
 import { toast } from 'react-toastify';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 
@@ -11,10 +11,17 @@ export default function MyVehicle() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedLoad, setSelectedLoad] = useState(null);
     const [editQuantity, setEditQuantity] = useState('');
+    const [customers, setCustomers] = useState([]);
+    const [saleData, setSaleData] = useState({
+        customerId: '',
+        cashAmount: '',
+        paymentMethod: 'Cash'
+    });
     const [deleteDialog, setDeleteDialog] = useState({ show: false, loadId: null });
 
     useEffect(() => {
         fetchMyVehicle();
+        fetchCustomers();
     }, []);
 
     const fetchMyVehicle = async () => {
@@ -32,38 +39,71 @@ export default function MyVehicle() {
         }
     };
 
+    const fetchCustomers = async () => {
+        try {
+            const response = await customerAPI.getAll();
+            setCustomers(response.data.data || []);
+        } catch (error) {
+            console.error('Error fetching customers:', error);
+        }
+    };
+
     const handleEditLoad = (load) => {
         setSelectedLoad(load);
         // Extract numeric value from quantity string (e.g., "100 Bottles" -> "100")
         const quantityMatch = load.quantity.match(/^(\d+)/);
         setEditQuantity(quantityMatch ? quantityMatch[1] : '');
+        setSaleData({
+            customerId: '',
+            cashAmount: '',
+            paymentMethod: 'Cash'
+        });
         setShowEditModal(true);
     };
 
     const handleUpdateLoad = async (e) => {
         e.preventDefault();
-        if (!editQuantity || parseInt(editQuantity) <= 0) {
+        if (!editQuantity || parseInt(editQuantity) < 0) {
             toast.error('Please enter a valid quantity');
+            return;
+        }
+        if (!saleData.customerId || !saleData.cashAmount) {
+            toast.error('Please select customer and enter sale amount');
             return;
         }
 
         try {
             setLoading(true);
-            // Extract the unit from the original quantity (e.g., "100 Bottles" -> "Bottles")
+            // Extract the unit and original quantity
             const unitMatch = selectedLoad.quantity.match(/\d+\s+(.+)$/);
             const unit = unitMatch ? unitMatch[1] : 'Units';
+            const originalQuantity = parseInt(selectedLoad.quantity.match(/^(\d+)/)[1]);
+            const newQuantity = parseInt(editQuantity);
+            const distributedQuantity = originalQuantity - newQuantity;
             
-            // Update the load quantity directly
+            if (distributedQuantity < 0) {
+                toast.error('New quantity cannot be greater than original quantity');
+                setLoading(false);
+                return;
+            }
+
+            // Update the load quantity with sale details
             await vehicleAPI.updateLoad(selectedLoad.id, {
-                quantity: `${editQuantity} ${unit}`
+                quantity: `${editQuantity} ${unit}`,
+                saleData: {
+                    ...saleData,
+                    itemName: selectedLoad.item,
+                    distributedQuantity: distributedQuantity,
+                    unit: unit
+                }
             });
 
             await fetchMyVehicle();
             setShowEditModal(false);
-            toast.success('Load quantity updated successfully!');
+            toast.success('Sale recorded and inventory updated!');
         } catch (error) {
             console.error('Error updating load:', error);
-            toast.error('Failed to update load quantity');
+            toast.error(error.response?.data?.message || 'Failed to update load quantity');
         } finally {
             setLoading(false);
         }
@@ -304,11 +344,11 @@ export default function MyVehicle() {
 
             {/* Edit Load Modal */}
             {showEditModal && selectedLoad && (
-                <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-                    <div className='bg-white rounded-xl p-6 w-full max-w-md'>
+                <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto'>
+                    <div className='bg-white rounded-xl p-6 w-full max-w-md m-4 max-h-[90vh] overflow-y-auto'>
                         <div className='flex justify-between items-center mb-4'>
                             <div>
-                                <h2 className='text-2xl font-bold text-gray-800'>Update Quantity</h2>
+                                <h2 className='text-2xl font-bold text-gray-800'>Record Sale</h2>
                                 <p className='text-sm text-gray-600'>Item: {selectedLoad.item}</p>
                             </div>
                             <button onClick={() => setShowEditModal(false)} className='text-gray-500 hover:text-gray-700'>
@@ -319,23 +359,76 @@ export default function MyVehicle() {
                             <div className='bg-blue-50 p-4 rounded-lg'>
                                 <div className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
                                     <Minus className='w-4 h-4 text-blue-600' />
-                                    <span>Update quantity after distribution to sellers</span>
+                                    <span>Distribution to customer</span>
                                 </div>
                                 <p className='text-xs text-gray-500'>Current: {selectedLoad.quantity}</p>
                             </div>
+
                             <div>
-                                <label className='block text-sm font-medium text-gray-700 mb-1'>New Quantity</label>
+                                <label className='block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2'>
+                                    <User className='w-4 h-4' />
+                                    Select Customer*
+                                </label>
+                                <select
+                                    value={saleData.customerId}
+                                    onChange={(e) => setSaleData({...saleData, customerId: e.target.value})}
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    required
+                                >
+                                    <option value=''>Choose a customer...</option>
+                                    {customers.map((customer) => (
+                                        <option key={customer.id} value={customer.id}>
+                                            {customer.shopName} - {customer.ownerName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Remaining Quantity*</label>
                                 <input
                                     type='number'
                                     value={editQuantity}
                                     onChange={(e) => setEditQuantity(e.target.value)}
-                                    placeholder='Enter new quantity'
+                                    placeholder='Enter remaining quantity'
                                     min='0'
                                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                                     required
                                 />
-                                <p className='text-xs text-gray-500 mt-1'>Enter the remaining quantity after distribution</p>
+                                <p className='text-xs text-gray-500 mt-1'>Enter quantity left after distribution</p>
                             </div>
+
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2'>
+                                    <DollarSign className='w-4 h-4' />
+                                    Sale Amount (LKR)*
+                                </label>
+                                <input
+                                    type='number'
+                                    value={saleData.cashAmount}
+                                    onChange={(e) => setSaleData({...saleData, cashAmount: e.target.value})}
+                                    placeholder='Enter cash received'
+                                    min='0'
+                                    step='0.01'
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    required
+                                />
+                                <p className='text-xs text-gray-500 mt-1'>Total amount received from customer</p>
+                            </div>
+
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Payment Method</label>
+                                <select
+                                    value={saleData.paymentMethod}
+                                    onChange={(e) => setSaleData({...saleData, paymentMethod: e.target.value})}
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                >
+                                    <option value='Cash'>Cash</option>
+                                    <option value='Bank Transfer'>Bank Transfer</option>
+                                    <option value='Credit'>Credit</option>
+                                </select>
+                            </div>
+
                             <div className='flex gap-3 pt-4'>
                                 <button
                                     type='button'
@@ -349,7 +442,7 @@ export default function MyVehicle() {
                                     disabled={loading}
                                     className='flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50'
                                 >
-                                    {loading ? 'Updating...' : 'Update Quantity'}
+                                    {loading ? 'Recording...' : 'Record Sale'}
                                 </button>
                             </div>
                         </form>

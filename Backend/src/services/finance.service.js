@@ -73,6 +73,7 @@ export const createExpense = async (data, userId) => {
         date
     } = data;
 
+    const now = new Date();
     const expense = await prisma.expense.create({
         data: {
             type,
@@ -83,8 +84,9 @@ export const createExpense = async (data, userId) => {
             agentId: agentId ? parseInt(agentId) : null,
             approvedBy: parseInt(userId),
             billNumber: billNumber || null,
-            date: date ? new Date(date) : new Date(),
-            updatedAt: new Date()
+            date: date ? new Date(date) : now,
+            createdAt: now,
+            updatedAt: now
         },
         include: {
             User_Expense_agentIdToUser: {
@@ -203,9 +205,37 @@ export const getAllIncome = async (filters = {}) => {
         where,
         include: {
             User: { select: { id: true, name: true } },
-            Customer: { select: { id: true, shopName: true } }
+            Customer: { select: { id: true, shopName: true, ownerName: true } }
         },
         orderBy: { date: 'desc' }
+    });
+
+    return income;
+};
+
+// Create income record
+export const createIncome = async (data, userId) => {
+    const now = new Date();
+    const incomeData = {
+        type: data.type || 'Sales',
+        category: data.category || 'Product Sales',
+        amount: parseFloat(data.amount),
+        description: data.description,
+        customerId: data.customerId ? parseInt(data.customerId) : null,
+        agentId: userId ? parseInt(userId) : null,
+        paymentMethod: data.paymentMethod || 'Cash',
+        receiptNumber: data.receiptNumber || null,
+        date: data.date ? new Date(data.date) : now,
+        createdAt: now,
+        updatedAt: now
+    };
+
+    const income = await prisma.income.create({
+        data: incomeData,
+        include: {
+            User: { select: { id: true, name: true } },
+            Customer: { select: { id: true, shopName: true, ownerName: true } }
+        }
     });
 
     return income;
