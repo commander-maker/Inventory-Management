@@ -142,6 +142,24 @@ export default function FinanceDashboard() {
     try {
       setSubmitting(true);
 
+      // Validate amount
+      if (!form.amount || parseFloat(form.amount) <= 0) {
+        setToastMessage('Please enter a valid amount');
+        setToastType('error');
+        setShowToast(true);
+        setSubmitting(false);
+        return;
+      }
+
+      // Validate description
+      if (!form.description || form.description.trim() === '') {
+        setToastMessage('Please enter a description');
+        setToastType('error');
+        setShowToast(true);
+        setSubmitting(false);
+        return;
+      }
+
       let description = form.description;
       // For Utilities, auto-add month info to description
       if (form.category === 'Utilities' || form.category === 'Rent') {
@@ -165,11 +183,23 @@ export default function FinanceDashboard() {
       if (response.data.success) {
         setShowAddModal(false);
         resetForm();
+        
+        // Show success toast
+        setToastMessage(`Expense created successfully! LKR ${parseFloat(form.amount).toLocaleString()} added for ${form.category}`);
+        setToastType('success');
+        setShowToast(true);
+        
+        // Refresh all data to update dashboard
         fetchAll();
       }
     } catch (error) {
       console.error('Error creating expense:', error);
-      alert(error.response?.data?.message || 'Failed to create expense');
+      
+      // Show error toast
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create expense';
+      setToastMessage(errorMessage);
+      setToastType('error');
+      setShowToast(true);
     } finally {
       setSubmitting(false);
     }
