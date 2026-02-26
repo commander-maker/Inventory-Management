@@ -111,7 +111,9 @@ export const financeAPI = {
   getSummary: (params) => api.get('/finance/summary', { params }),
   // Income
   getIncome: (params) => api.get('/finance/income', { params }),
-  createIncome: (data) => api.post('/finance/income', data)
+  createIncome: (data) => api.post('/finance/income', data),
+  // Recent Transactions
+  getRecentTransactions: (limit) => api.get('/finance/recent-transactions', { params: { limit } })
 };
 
 // Notification API
