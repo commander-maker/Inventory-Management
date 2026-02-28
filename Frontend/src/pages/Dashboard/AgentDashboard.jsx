@@ -128,16 +128,16 @@ export default function AgentDashboard() {
     const recentDeliveries = deliveries.slice(0, 5);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
             {/* Header */}
-            <div className="bg-white border-b shadow-sm">
+            <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 shadow-sm">
                 <div className="px-8 py-6">
                     <div className="flex justify-between items-center">
                         <div>
                             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                                 Agent Dashboard
                             </h1>
-                            <p className="text-gray-600 mt-1">Welcome back, {user?.name || 'Agent'}!</p>
+                            <p className="text-gray-600 dark:text-gray-400 mt-1">Welcome back, {user?.name || 'Agent'}!</p>
                         </div>
                         <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg shadow-md">
                             <Clock size={20} />
@@ -153,11 +153,11 @@ export default function AgentDashboard() {
                     {agentStats.map((stat, index) => {
                         const Icon = stat.icon;
                         return (
-                            <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-                                <p className="text-gray-600 text-sm mb-3">{stat.label}</p>
+                            <div key={index} className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition">
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{stat.label}</p>
                                 <div className="flex justify-between items-center">
-                                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                                    <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
+                                    <div className={`p-3 rounded-lg ${stat.bgColor} dark:bg-opacity-20`}>
                                         <Icon className={`${stat.color}`} size={24} />
                                     </div>
                                 </div>
@@ -170,11 +170,11 @@ export default function AgentDashboard() {
             <div className="px-8 py-6 grid grid-cols-3 gap-6">
 
                 {/* Today's Deliveries */}
-                <div className="col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="col-span-2 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">Today's Deliveries</h2>
-                            <p className="text-gray-600 text-sm mt-1">Your scheduled deliveries for today</p>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Today's Deliveries</h2>
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Your scheduled deliveries for today</p>
                         </div>
                         <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm">
                             {deliveryStats.total} Total
@@ -183,11 +183,11 @@ export default function AgentDashboard() {
 
                     <div className="space-y-3">
                         {loading ? (
-                            <div className="py-8 text-center text-gray-500">Loading your deliveries...</div>
+                            <div className="py-8 text-center text-gray-500 dark:text-gray-400">Loading your deliveries...</div>
                         ) : error ? (
-                            <div className="py-8 text-center text-red-600">Error loading deliveries: {error}</div>
+                            <div className="py-8 text-center text-red-600 dark:text-red-400">Error loading deliveries: {error}</div>
                         ) : deliveries.length === 0 ? (
-                            <div className="py-8 text-center text-gray-500">No deliveries assigned yet</div>
+                            <div className="py-8 text-center text-gray-500 dark:text-gray-400">No deliveries assigned yet</div>
                         ) : (
                             deliveries.map((delivery) => {
                                 const statusColor = 
@@ -199,19 +199,19 @@ export default function AgentDashboard() {
                                 return (
                                     <div
                                         key={delivery.id}
-                                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition group cursor-pointer"
+                                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition group cursor-pointer bg-white dark:bg-gray-800"
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-2">
-                                                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
+                                                    <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
                                                         {delivery.Customer?.ownerName || delivery.Customer?.shopName || 'Unknown Customer'}
                                                     </h3>
                                                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
                                                         {delivery.status}
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                                <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                                                     <div className="flex items-center gap-1">
                                                         <MapPin size={14} />
                                                         <span>{delivery.Customer?.address || 'No address'}</span>
@@ -223,7 +223,7 @@ export default function AgentDashboard() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-gray-700 mt-2">
+                                                <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
                                                     <span className="font-medium">Status:</span> {delivery.status}
                                                 </p>
                                             </div>
@@ -251,31 +251,31 @@ export default function AgentDashboard() {
                 {/* Vehicle Status & Performance */}
                 <div className="space-y-6">
                     {/* Vehicle Status */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
                         <div className="flex items-center gap-2 mb-4">
                             <Truck className="text-blue-600" size={24} />
-                            <h2 className="text-xl font-bold text-gray-900">Vehicle Status</h2>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Vehicle Status</h2>
                         </div>
 
                         <div className="space-y-4">
                             <div>
                                 <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600">Registration</span>
-                                    <span className="font-semibold text-gray-900">{vehicleStatus.registrationNo}</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Registration</span>
+                                    <span className="font-semibold text-gray-900 dark:text-white">{vehicleStatus.registrationNo}</span>
                                 </div>
                                 <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600">Type</span>
-                                    <span className="font-medium text-gray-900">{vehicleStatus.type}</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Type</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">{vehicleStatus.type}</span>
                                 </div>
                                 <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600">Location</span>
-                                    <div className="flex items-center gap-1 text-gray-900">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Location</span>
+                                    <div className="flex items-center gap-1 text-gray-900 dark:text-white">
                                         <MapPin size={14} className="text-blue-600" />
                                         <span className="font-medium">{vehicleStatus.location}</span>
                                     </div>
                                 </div>
                                 <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600">Status</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Status</span>
                                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
                                         {vehicleStatus.status}
                                     </span>
@@ -285,13 +285,13 @@ export default function AgentDashboard() {
                             {/* Fuel Level */}
                             <div>
                                 <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600 flex items-center gap-1">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
                                         <Fuel size={14} />
                                         Fuel Level
                                     </span>
-                                    <span className="font-semibold text-gray-900">{vehicleStatus.fuelLevel}%</span>
+                                    <span className="font-semibold text-gray-900 dark:text-white">{vehicleStatus.fuelLevel}%</span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                                     <div
                                         className="bg-gradient-to-r from-green-500 to-emerald-500 h-full rounded-full transition-all duration-500"
                                         style={{ width: `${vehicleStatus.fuelLevel}%` }}
@@ -299,9 +299,9 @@ export default function AgentDashboard() {
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t">
-                                <p className="text-xs text-gray-500">
-                                    Last Service: <span className="font-medium text-gray-700">{vehicleStatus.lastService}</span>
+                            <div className="pt-4 border-t dark:border-gray-800">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Last Service: <span className="font-medium text-gray-700 dark:text-gray-300">{vehicleStatus.lastService}</span>
                                 </p>
                             </div>
                         </div>
@@ -362,40 +362,40 @@ export default function AgentDashboard() {
 
             {/* Quick Actions */}
             <div className="px-8 py-6 mb-8">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
+                <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
 
                     <div className="grid grid-cols-4 gap-4">
                         <button 
                             onClick={handleUpdateDelivery}
-                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group"
+                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition group bg-white dark:bg-gray-800"
                         >
-                            <Package className="text-gray-600 group-hover:text-blue-600 mb-3 transition" size={32} />
-                            <span className="text-sm font-medium text-gray-900">Update Delivery</span>
+                            <Package className="text-gray-600 dark:text-gray-400 group-hover:text-blue-600 mb-3 transition" size={32} />
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">Update Delivery</span>
                         </button>
 
                         <button 
                             onClick={handleReportIssue}
-                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group"
+                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition group bg-white dark:bg-gray-800"
                         >
-                            <Truck className="text-gray-600 group-hover:text-blue-600 mb-3 transition" size={32} />
-                            <span className="text-sm font-medium text-gray-900">Report Issue</span>
+                            <Truck className="text-gray-600 dark:text-gray-400 group-hover:text-blue-600 mb-3 transition" size={32} />
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">Report Issue</span>
                         </button>
 
                         <button 
                             onClick={handleViewRoute}
-                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group"
+                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition group bg-white dark:bg-gray-800"
                         >
-                            <MapPin className="text-gray-600 group-hover:text-blue-600 mb-3 transition" size={32} />
-                            <span className="text-sm font-medium text-gray-900">View Route</span>
+                            <MapPin className="text-gray-600 dark:text-gray-400 group-hover:text-blue-600 mb-3 transition" size={32} />
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">View Route</span>
                         </button>
 
                         <button 
                             onClick={handleViewSales}
-                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group"
+                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition group bg-white dark:bg-gray-800"
                         >
-                            <TrendingUp className="text-gray-600 group-hover:text-blue-600 mb-3 transition" size={32} />
-                            <span className="text-sm font-medium text-gray-900">View Sales</span>
+                            <TrendingUp className="text-gray-600 dark:text-gray-400 group-hover:text-blue-600 mb-3 transition" size={32} />
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">View Sales</span>
                         </button>
                     </div>
                 </div>
@@ -404,12 +404,12 @@ export default function AgentDashboard() {
             {/* Report Issue Modal */}
             {showReportIssueModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-                        <div className="flex items-center justify-between p-6 border-b">
-                            <h3 className="text-xl font-bold text-gray-900">Report an Issue</h3>
+                    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full">
+                        <div className="flex items-center justify-between p-6 border-b dark:border-gray-800">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Report an Issue</h3>
                             <button
                                 onClick={handleCloseIssueModal}
-                                className="text-gray-400 hover:text-gray-600 transition"
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
                             >
                                 <X size={24} />
                             </button>
@@ -417,13 +417,13 @@ export default function AgentDashboard() {
 
                         <form onSubmit={handleSubmitIssue} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Issue Type
                                 </label>
                                 <select
                                     value={issueForm.type}
                                     onChange={(e) => setIssueForm({ ...issueForm, type: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                     required
                                 >
                                     <option value="Vehicle">Vehicle Issue</option>
@@ -435,13 +435,13 @@ export default function AgentDashboard() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Priority
                                 </label>
                                 <select
                                     value={issueForm.priority}
                                     onChange={(e) => setIssueForm({ ...issueForm, priority: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                     required
                                 >
                                     <option value="Low">Low</option>
@@ -452,13 +452,13 @@ export default function AgentDashboard() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Description
                                 </label>
                                 <textarea
                                     value={issueForm.description}
                                     onChange={(e) => setIssueForm({ ...issueForm, description: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                     rows="4"
                                     placeholder="Describe the issue in detail..."
                                     required
