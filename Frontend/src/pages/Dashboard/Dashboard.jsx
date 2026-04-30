@@ -190,26 +190,26 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="bg-white border-b px-8 py-6">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Welcome back! Here's what's happening with your business</p>
+      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 px-4 xs:px-5 md:px-8 py-4 xs:py-5 md:py-6">
+        <h1 className="text-xl xs:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <p className="text-xs xs:text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1">Welcome back! Here's what's happening with your business</p>
       </div>
 
       {/* Stats Section */}
-      <div className="px-8 py-6">
-        <div className="grid grid-cols-4 gap-6">
+      <div className="px-4 xs:px-5 md:px-8 py-4 xs:py-5 md:py-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xs:gap-4 md:gap-6">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <div key={index} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <p className="text-gray-600 text-sm mb-3">{stat.label}</p>
+              <div key={index} className="bg-white dark:bg-gray-900 rounded-lg p-4 xs:p-5 md:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+                <p className="text-gray-600 dark:text-gray-400 text-xs xs:text-sm mb-2 xs:mb-3">{stat.label}</p>
                 <div className="flex justify-between items-center">
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-lg xs:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
                     {loading ? '...' : stat.value}
                   </p>
-                  <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+                  <div className={`p-2 xs:p-2.5 md:p-3 rounded-lg ${stat.bgColor} dark:bg-opacity-20`}>
                     <Icon className={`${stat.color}`} size={28} />
                   </div>
                 </div>
@@ -220,59 +220,59 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="px-8 py-6 grid grid-cols-4 gap-6">
+      <div className="px-4 xs:px-5 md:px-8 py-4 xs:py-5 md:py-6 grid grid-cols-1 md:grid-cols-4 gap-4 xs:gap-5 md:gap-6">
 
         {/* Recent Transactions — from deliveries API */}
-        <div className="col-span-2 bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Recent Transactions</h2>
-          <p className="text-gray-600 text-sm mb-6">Latest sales and inventory movements</p>
+        <div className="col-span-1 md:col-span-2 bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
+          <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-1 xs:mb-2">Recent Transactions</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-xs xs:text-sm mb-4 xs:mb-5 md:mb-6">Latest sales and inventory movements</p>
 
           {loading ? (
-            <div className="py-8 text-center text-gray-500">Loading transactions...</div>
+            <div className="py-6 xs:py-8 text-center text-sm text-gray-500 dark:text-gray-400">Loading transactions...</div>
           ) : recentTransactions.length === 0 ? (
-            <div className="py-8 text-center text-gray-500">No transactions yet</div>
+            <div className="py-6 xs:py-8 text-center text-sm text-gray-500 dark:text-gray-400">No transactions yet</div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 xs:space-y-3">
               {recentTransactions.map((transaction) => {
                 const Icon = transaction.icon;
                 return (
                   <div
                     key={transaction.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 xs:p-4 hover:shadow-md transition cursor-pointer bg-white dark:bg-gray-800"
                     onClick={() => setSelectedTransaction(selectedTransaction === transaction.id ? null : transaction.id)}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg ${transaction.color}`}>
+                    <div className="flex items-center gap-2.5 xs:gap-3 md:gap-4">
+                      <div className={`p-2 xs:p-2.5 md:p-3 rounded-lg ${transaction.color} flex-shrink-0`}>
                         <Icon className={`${transaction.iconColor}`} size={24} />
                       </div>
 
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-gray-900">{transaction.product}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 xs:gap-2 flex-wrap">
+                          <p className="font-medium text-sm xs:text-base text-gray-900 dark:text-white truncate">{transaction.product}</p>
                           {transaction.isLatest && (
-                            <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-semibold rounded-full">
+                            <span className="px-1.5 xs:px-2 py-0.5 bg-blue-600 text-white text-[10px] xs:text-xs font-semibold rounded-full whitespace-nowrap">
                               Latest
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500">{transaction.time}</p>
+                        <p className="text-xs xs:text-sm text-gray-500 dark:text-gray-400">{transaction.time}</p>
                       </div>
 
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">{transaction.amount}</p>
-                        <p className="text-sm text-gray-500">{transaction.person}</p>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-semibold text-sm xs:text-base text-gray-900 dark:text-white">{transaction.amount}</p>
+                        <p className="text-xs xs:text-sm text-gray-500 dark:text-gray-400 hidden xs:block">{transaction.person}</p>
                       </div>
                     </div>
 
                     {selectedTransaction === transaction.id && (
-                      <div className="mt-4 pt-4 border-t">
-                        <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="mt-3 xs:mt-4 pt-3 xs:pt-4 border-t dark:border-gray-700">
+                        <div className="grid grid-cols-1 xs:grid-cols-3 gap-2 xs:gap-4 text-xs xs:text-sm">
                           <div>
-                            <p className="text-gray-600">Handled by</p>
-                            <p className="font-medium text-gray-900">{transaction.person}</p>
+                            <p className="text-gray-600 dark:text-gray-400">Handled by</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{transaction.person}</p>
                           </div>
                           <div>
-                            <p className="text-gray-600">Status</p>
+                            <p className="text-gray-600 dark:text-gray-400">Status</p>
                             <p className={`font-medium ${transaction.status === 'Delivered' ? 'text-green-600' :
                               transaction.status === 'In Transit' ? 'text-blue-600' :
                                 transaction.status === 'Pending' ? 'text-yellow-600' :
@@ -280,8 +280,8 @@ export default function Dashboard() {
                               }`}>{transaction.status}</p>
                           </div>
                           <div>
-                            <p className="text-gray-600">Delivery ID</p>
-                            <p className="font-medium text-gray-900">DEL-{transaction.id}</p>
+                            <p className="text-gray-600 dark:text-gray-400">Delivery ID</p>
+                            <p className="font-medium text-gray-900 dark:text-white">DEL-{transaction.id}</p>
                           </div>
                         </div>
                       </div>
@@ -294,27 +294,27 @@ export default function Dashboard() {
         </div>
 
         {/* Low Stock Alert & Delivery Stats */}
-        <div className="col-span-2 space-y-6">
+        <div className="col-span-1 md:col-span-2 space-y-4 xs:space-y-5 md:space-y-6">
           {/* Low Stock Alert — from inventory API */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
+            <div className="flex items-center gap-2 mb-1 xs:mb-2">
               <AlertTriangle className="text-orange-500" size={20} />
-              <h2 className="text-xl font-bold text-gray-900">Low Stock Alert</h2>
+              <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white">Low Stock Alert</h2>
             </div>
-            <p className="text-gray-600 text-sm mb-6">Items requiring immediate attention</p>
+            <p className="text-gray-600 dark:text-gray-400 text-xs xs:text-sm mb-4 xs:mb-5 md:mb-6">Items requiring immediate attention</p>
 
             {loading ? (
-              <div className="py-4 text-center text-gray-500">Loading...</div>
+              <div className="py-4 text-center text-gray-500 dark:text-gray-400">Loading...</div>
             ) : lowStockItems.length === 0 ? (
-              <div className="py-4 text-center text-green-600 font-medium">✅ All items are well stocked!</div>
+              <div className="py-4 text-center text-green-600 dark:text-green-400 font-medium">✅ All items are well stocked!</div>
             ) : (
               <div className="space-y-3">
                 {lowStockItems.map((item) => (
-                  <div key={item.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition">
+                  <div key={item.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-md transition bg-white dark:bg-gray-800">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <p className="font-medium text-gray-900 text-sm">{item.name}</p>
-                        <p className="text-xs text-gray-500">{item.category}</p>
+                        <p className="font-medium text-gray-900 dark:text-white text-sm">{item.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.category}</p>
                       </div>
                       <span className={`px-2 py-1 rounded text-xs font-semibold ${item.badgeColor}`}>
                         {item.stock} left
@@ -330,24 +330,24 @@ export default function Dashboard() {
           </div>
 
           {/* Delivery Status Overview — from delivery API */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Delivery Status Overview</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-700 mb-1">Pending</p>
-                <p className="text-2xl font-bold text-yellow-800">{loading ? '...' : deliveryStats.pending}</p>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
+            <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-3 xs:mb-4">Delivery Status Overview</h2>
+            <div className="grid grid-cols-2 gap-3 xs:gap-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 xs:p-4">
+                <p className="text-xs xs:text-sm text-yellow-700 mb-1">Pending</p>
+                <p className="text-lg xs:text-xl md:text-2xl font-bold text-yellow-800">{loading ? '...' : deliveryStats.pending}</p>
               </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-700 mb-1">In Transit</p>
-                <p className="text-2xl font-bold text-blue-800">{loading ? '...' : deliveryStats.inTransit}</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 xs:p-4">
+                <p className="text-xs xs:text-sm text-blue-700 mb-1">In Transit</p>
+                <p className="text-lg xs:text-xl md:text-2xl font-bold text-blue-800">{loading ? '...' : deliveryStats.inTransit}</p>
               </div>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-sm text-green-700 mb-1">Delivered</p>
-                <p className="text-2xl font-bold text-green-800">{loading ? '...' : deliveryStats.delivered}</p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 xs:p-4">
+                <p className="text-xs xs:text-sm text-green-700 mb-1">Delivered</p>
+                <p className="text-lg xs:text-xl md:text-2xl font-bold text-green-800">{loading ? '...' : deliveryStats.delivered}</p>
               </div>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-sm text-red-700 mb-1">Failed</p>
-                <p className="text-2xl font-bold text-red-800">{loading ? '...' : deliveryStats.failed}</p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 xs:p-4">
+                <p className="text-xs xs:text-sm text-red-700 mb-1">Failed</p>
+                <p className="text-lg xs:text-xl md:text-2xl font-bold text-red-800">{loading ? '...' : deliveryStats.failed}</p>
               </div>
             </div>
           </div>
@@ -355,21 +355,21 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="px-8 py-6 bg-white rounded-lg shadow-sm border border-gray-100 mx-8 mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Quick Actions</h2>
-        <p className="text-gray-600 text-sm mb-6">Frequently used actions for faster workflow</p>
+      <div className="px-4 xs:px-5 md:px-8 py-4 xs:py-5 md:py-6 bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 mx-4 xs:mx-5 md:mx-8 mb-4 xs:mb-6 md:mb-8">
+        <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-1 xs:mb-2">Quick Actions</h2>
+        <p className="text-gray-600 dark:text-gray-400 text-xs xs:text-sm mb-4 xs:mb-5 md:mb-6">Frequently used actions for faster workflow</p>
 
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xs:gap-4">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
               <button
                 key={index}
-                className="flex flex-col items-center justify-center p-6 border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition"
+                className="flex flex-col items-center justify-center p-4 xs:p-5 md:p-6 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition bg-white dark:bg-gray-800"
                 onClick={() => window.location.href = action.path}
               >
-                <Icon className={`${action.color} mb-3`} size={32} />
-                <span className="text-sm font-medium text-gray-900">{action.label}</span>
+                <Icon className={`${action.color} dark:text-gray-400 mb-2 xs:mb-3`} size={32} />
+                <span className="text-xs xs:text-sm font-medium text-gray-900 dark:text-white text-center">{action.label}</span>
               </button>
             );
           })}

@@ -38,4 +38,19 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// Root API endpoint
+app.get("/api", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "API is working."
+  });
+});
+
+app.get("/api/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "API is working."
+  });
+});
+
 export default app;

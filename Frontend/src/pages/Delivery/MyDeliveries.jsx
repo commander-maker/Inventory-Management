@@ -131,7 +131,7 @@ export default function MyDeliveries() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
             {/* Header */}
             <div className="bg-white border-b shadow-sm sticky top-0 z-10">
                 <div className="px-8 py-6">
