@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import {
   LayoutDashboard,
   Package,
@@ -15,12 +16,12 @@ import {
 } from 'lucide-react';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, isDesktop, onToggle, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
+  const { isDark } = useTheme();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const adminItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -51,20 +52,46 @@ export default function Sidebar() {
     navigate('/login');
   };
 
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+  const handleNavigation = (path) => {
+    navigate(path);
+    if (!isDesktop) onClose();
   };
 
+  // Desktop: isOpen toggles between expanded (w-64) and collapsed (w-20)
+  // Mobile: isOpen toggles overlay visibility
+  const isExpanded = isDesktop ? !isOpen : true; // mobile overlay is always full width when open
+  const isCollapsed = isDesktop ? isOpen : false;
+
   return (
-    <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300`}>
+    <>
+      {/* Mobile overlay backdrop */}
+      {!isDesktop && isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={onClose}
+        />
+      )}
+
+      <aside className={`
+        bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col h-full transition-all duration-300 z-50
+        ${isDesktop ? 'relative' : 'fixed'}
+        ${isDesktop
+          ? (isOpen ? 'w-20' : 'w-64')
+          : 'w-64'
+        }
+        ${isDesktop
+          ? 'translate-x-0'
+          : (isOpen ? 'translate-x-0' : '-translate-x-full')
+        }
+      `}>
       {/* Logo Section */}
-      <div className='p-6 border-b border-gray-200 flex items-center justify-between'>
-        {!isCollapsed && <h1 className='text-2xl font-bold text-blue-600'>AQUA</h1>}
+      <div className='p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between'>
+        {!isCollapsed && <h1 className='text-2xl font-bold text-blue-600 dark:text-blue-400'>AQUA</h1>}
         <button 
-          onClick={toggleSidebar}
-          className='p-2 hover:bg-gray-100 rounded-lg'
+          onClick={onToggle}
+          className='p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200'
         >
-          <Menu className='w-6 h-6 text-gray-700' />
+          <Menu className='w-6 h-6 text-gray-700 dark:text-gray-400' />
         </button>
       </div>
 
@@ -78,10 +105,10 @@ export default function Sidebar() {
             return (
               <li key={item.path}>
                 <button
-                  onClick={() => navigate(item.path)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-700 hover:bg-gray-50'
+                  onClick={() => handleNavigation(item.path)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${isActive
+                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                    : 'text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   title={isCollapsed ? item.label : ''}
                 >
@@ -96,7 +123,7 @@ export default function Sidebar() {
           <li className='pt-4'>
             <button
               onClick={handleLogout}
-              className='w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors'
+              className='w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200'
               title={isCollapsed ? 'Log Out' : ''}
             >
               <LogOut className='w-5 h-5' />
@@ -117,5 +144,6 @@ export default function Sidebar() {
         type="warning"
       />
     </aside>
+    </>
   );
 }

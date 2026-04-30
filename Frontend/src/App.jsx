@@ -1,13 +1,16 @@
 import React from 'react';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import AppRoutes from './routes/AppRoutes';
 import Navbar from './components/Navbar/Navbar';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-function App() {
+function AppContent() {
+  const { isDark } = useTheme();
+  
   return (
-    <AuthProvider>
+    <>
       <AppRoutes />
       <ToastContainer 
         position="top-right"
@@ -19,9 +22,19 @@ function App() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="light"
+        theme={isDark ? "dark" : "light"}
       />
-    </AuthProvider>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
