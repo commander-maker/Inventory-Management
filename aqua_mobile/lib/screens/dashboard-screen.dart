@@ -76,37 +76,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1a1f3a),
+        backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'AQUA',
+          'Sales Dashboard',
           style: TextStyle(
-            color: Colors.blue,
-            fontSize: 24,
+            color: Colors.black87,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
-            letterSpacing: 2,
           ),
-        ),
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            );
-          },
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.red),
-            onPressed: _handleLogout,
+            icon: const Icon(Icons.notifications_none, color: Colors.black87),
+            onPressed: () {},
           ),
         ],
       ),
       drawer: _buildDrawerMenu(),
       body: Container(
-        color: const Color(0xFF1a1f3a),
+        color: Colors.grey.shade50,
         child: isLoading
             ? const Center(
                 child: CircularProgressIndicator(
@@ -118,38 +107,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Dashboard Header
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Agent Dashboard',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Welcome back, ${widget.user.name}!',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade400,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    // Stats Cards - 2x2 Grid
-                    _buildStatsGrid(),
-                    const SizedBox(height: 24),
-                    // Today's Deliveries Section
-                    _buildTodaysDeliveries(),
-                    const SizedBox(height: 24),
-                    // Vehicle Status Section
-                    _buildVehicleStatus(),
-                    const SizedBox(height: 24),
+                    // Welcome Header
+                    _buildWelcomeHeader(),
+                    const SizedBox(height: 20),
+                    // Monthly Sales Card
+                    _buildMonthlySalesCard(),
+                    const SizedBox(height: 20),
+                    // Deliveries and Completed Stats
+                    _buildDeliveriesStats(),
+                    const SizedBox(height: 20),
+                    // Assigned Vehicle Section
+                    _buildAssignedVehicleSection(),
+                    const SizedBox(height: 20),
+                    // Recent Delivery Details
+                    _buildRecentDeliveryDetails(),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -157,219 +129,363 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildStatsGrid() {
-    final stats = _calculateStats();
-    final vehicleReg = vehicleData?['registration'] ?? 'N/A';
-
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.2,
+  Widget _buildWelcomeHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildDashboardStatCard(
-          'Assigned Vehicle',
-          vehicleReg,
-          Icons.directions_car,
+        Text(
+          'Welcome back, ${widget.user.name}!',
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
-        _buildDashboardStatCard('Monthly Sales', 'Rs 0', Icons.trending_up),
-        _buildDashboardStatCard(
-          'Deliveries Today',
-          stats['total'].toString(),
-          Icons.local_shipping,
-        ),
-        _buildDashboardStatCard(
-          'Completed Today',
-          stats['delivered'].toString(),
-          Icons.check_circle,
+        const SizedBox(height: 8),
+        Text(
+          'Friday, May 1, 2026',
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
         ),
       ],
     );
   }
 
-  Widget _buildDashboardStatCard(String title, String value, IconData icon) {
+  Widget _buildMonthlySalesCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF252d48),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: Colors.blue.shade300, size: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'MONTHLY SALES',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Icon(Icons.trending_up, color: Colors.blue, size: 20),
+            ],
           ),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
+          const Text(
+            'Rs 120,000',
+            style: TextStyle(
+              fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Colors.black87,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
-            title,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+            '↑ 12.5% from last month',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.green.shade600,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTodaysDeliveries() {
-    final todaysDeliveries = deliveries
-        .where(
-          (d) =>
-              (d['status'] ?? '').toString().toLowerCase() == 'pending' ||
-              (d['status'] ?? '').toString().toLowerCase() == 'in transit',
-        )
-        .take(1)
-        .toList();
-
-    if (todaysDeliveries.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF252d48),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade700, width: 0.5),
+  Widget _buildDeliveriesStats() {
+    final stats = _calculateStats();
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatBox(
+            'DELIVERIES',
+            stats['total'].toString(),
+            'Scheduled Today',
+            Icons.local_shipping,
+            Colors.blue,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Today\'s Deliveries',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Your scheduled deliveries for today',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '${deliveries.length} Total',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                'No active deliveries right now',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
-              ),
-            ),
-          ],
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatBox(
+            'COMPLETED',
+            stats['delivered'].toString(),
+            'Tasks Finished',
+            Icons.check_circle,
+            Colors.green,
+          ),
         ),
-      );
-    }
+      ],
+    );
+  }
 
-    final delivery = todaysDeliveries.first;
-    final customer = delivery['Customer'] as Map<String, dynamic>? ?? {};
-    final customerName = customer['shopName'] ?? 'Unknown';
-    final status = delivery['status'] ?? 'Pending';
-    final statusColor = _getStatusColor(status);
-
+  Widget _buildStatBox(
+    String label,
+    String value,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF252d48),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Today\'s Deliveries',
-            style: TextStyle(
-              fontSize: 16,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Icon(icon, color: color, size: 20),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Colors.black87,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Your scheduled deliveries for today',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+            subtitle,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
-          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssignedVehicleSection() {
+    if (vehicleData == null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Text('No vehicle assigned'),
+      );
+    }
+
+    final registration = vehicleData?['registration'] ?? 'N/A';
+    final type = vehicleData?['type'] ?? 'N/A';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            height: 180,
+            width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey.shade200,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
             ),
-            child: Text(
-              '${deliveries.length} Total',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+            child: Center(
+              child: Icon(
+                Icons.directions_car,
+                size: 80,
+                color: Colors.grey.shade400,
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    registration,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  type,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Last service: 12 days ago',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentDeliveryDetails() {
+    final recentDeliveries = deliveries.take(3).toList();
+
+    if (recentDeliveries.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Text('No recent deliveries'),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: const Text(
+              'Recent Delivery Details',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Divider(color: Colors.grey.shade200, height: 1),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: recentDeliveries.length,
+            separatorBuilder: (_, __) =>
+                Divider(color: Colors.grey.shade200, height: 1),
+            itemBuilder: (context, index) {
+              final delivery = recentDeliveries[index];
+              final customer =
+                  delivery['Customer'] as Map<String, dynamic>? ?? {};
+              final customerName = customer['shopName'] ?? 'Unknown';
+              final address = customer['address'] ?? 'N/A';
+              final status = delivery['status'] ?? 'Pending';
+
+              return Padding(
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      customerName,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          customerName,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getStatusBgColor(status),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: _getStatusColor(status),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(
                           Icons.location_on,
-                          size: 12,
-                          color: Colors.grey.shade400,
+                          size: 14,
+                          color: Colors.grey.shade600,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            '${customer['address'] ?? 'N/A'}, ${customer['city'] ?? ''}',
+                            address,
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade400,
+                              color: Colors.grey.shade600,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -377,185 +493,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Status: $status',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: statusColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '10:02:28 AM',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Icon(Icons.info, color: statusColor, size: 20),
-              ),
-            ],
+              );
+            },
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildVehicleStatus() {
-    if (vehicleData == null) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF252d48),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade700, width: 0.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.directions_car,
-                  color: Colors.blue.shade300,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'Vehicle Status',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                'No vehicle assigned',
-                style: TextStyle(color: Colors.grey.shade500),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final registration = vehicleData?['registration'] ?? 'N/A';
-    final type = vehicleData?['type'] ?? 'N/A';
-    final location = vehicleData?['location'] ?? 'N/A';
-    final status = vehicleData?['status'] ?? 'Active';
-    final fuelLevel = vehicleData?['fuelLevel'] ?? 0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF252d48),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.directions_car, color: Colors.blue.shade300, size: 20),
-              const SizedBox(width: 8),
-              const Text(
-                'Vehicle Status',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildVehicleInfoRow('Registration', registration),
-          const SizedBox(height: 12),
-          _buildVehicleInfoRow('Type', type),
-          const SizedBox(height: 12),
-          _buildVehicleInfoRowWithIcon('Location', location, Icons.location_on),
-          const SizedBox(height: 12),
-          _buildVehicleStatusRow('Status', status, Colors.green),
-          const SizedBox(height: 12),
-          _buildFuelLevelRow('Fuel Level', fuelLevel is int ? fuelLevel : 0),
-          const SizedBox(height: 12),
-          _buildVehicleInfoRow('Last Service', '5 days ago'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVehicleInfoRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVehicleInfoRowWithIcon(
-    String label,
-    String value,
-    IconData icon,
-  ) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-        ),
-        Row(
-          children: [
-            Icon(icon, size: 14, color: Colors.blue.shade300),
-            const SizedBox(width: 4),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
+      case 'delivered':
+        return Colors.green;
       case 'pending':
         return Colors.orange;
       case 'in transit':
         return Colors.blue;
-      case 'delivered':
-        return Colors.green;
       case 'failed':
         return Colors.red;
       default:
@@ -563,157 +536,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Widget _buildVehicleStatusRow(String label, String value, Color statusColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: statusColor,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFuelLevelRow(String label, int percentage) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-            ),
-            Text(
-              '$percentage%',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: LinearProgressIndicator(
-            value: percentage / 100,
-            minHeight: 6,
-            backgroundColor: Colors.grey.shade700,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              percentage > 50 ? Colors.green : Colors.orange,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecentActivity() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.blue.shade400, Colors.purple.shade400],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.history, color: Colors.white, size: 24),
-              const SizedBox(width: 8),
-              const Text(
-                'Recent Activity',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Text(
-                'No recent activity',
-                style: TextStyle(fontSize: 14, color: Colors.white),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Divider(color: Colors.white30, thickness: 1),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildActivityStat('Total Today', '0'),
-              _buildActivityStat('Completed', '0'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityStat(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8)),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ],
-    );
+  Color _getStatusBgColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        return Colors.green.shade100;
+      case 'pending':
+        return Colors.orange.shade100;
+      case 'in transit':
+        return Colors.blue.shade100;
+      case 'failed':
+        return Colors.red.shade100;
+      default:
+        return Colors.grey.shade100;
+    }
   }
 
   Widget _buildDrawerMenu() {
     return Drawer(
-      backgroundColor: const Color(0xFF1a1f3a),
+      backgroundColor: Colors.white,
       child: Column(
         children: [
           // Drawer Header
           Container(
             padding: const EdgeInsets.all(20),
             decoration: const BoxDecoration(
-              color: Color(0xFF252d48),
+              color: Color(0xFF1a1f3a),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(12),
                 bottomRight: Radius.circular(12),
@@ -752,7 +599,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         widget.user.role,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade400,
+                          color: Colors.grey.shade300,
                         ),
                       ),
                     ],
@@ -831,14 +678,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: isLogout
-            ? Colors.red.withOpacity(0.1)
-            : Colors.blue.withOpacity(0.1),
+            ? Colors.red.withOpacity(0.08)
+            : Colors.blue.withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: ListTile(
         leading: Icon(
           icon,
-          color: isLogout ? Colors.red : Colors.blue.shade300,
+          color: isLogout ? Colors.red : Colors.blue,
           size: 22,
         ),
         title: Text(
@@ -846,13 +693,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: isLogout ? Colors.red : Colors.white,
+            color: isLogout ? Colors.red : Colors.black,
           ),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios,
           size: 14,
-          color: Colors.grey.shade600,
+          color: Colors.grey.shade400,
         ),
         onTap: onTap,
       ),

@@ -10,22 +10,31 @@ import {
     Eye,
     EyeOff,
     Loader,
-    AlertCircle
+    AlertCircle,
+    Upload,
+    X
 } from 'lucide-react';
-import { userAPI } from '../../utils/api';
+import { userAPI, getAssetUrl } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Settings() {
+    const { setUser } = useAuth();
     const [activeTab, setActiveTab] = useState('profile');
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [saveStatus, setSaveStatus] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState(null);
+    const [uploadStatus, setUploadStatus] = useState(null);
+    const [uploadLoading, setUploadLoading] = useState(false);
     const [formData, setFormData] = useState({
         // Profile
         name: '',
         email: '',
         phone: '',
         role: '',
+        avatar: null,
 
         // Security
         currentPassword: '',
@@ -42,8 +51,12 @@ export default function Settings() {
                 name: user.name || '',
                 email: user.email || '',
                 phone: user.phone || '',
-                role: user.role || ''
+                role: user.role || '',
+                avatar: user.avatar || null
             }));
+            if (user.avatar) {
+                    setAvatarPreview(getAssetUrl(user.avatar));
+            }
         }
     }, []);
 
@@ -61,6 +74,89 @@ export default function Settings() {
         setError(null);
     };
 
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                setError('Only image files (JPEG, PNG, GIF) are allowed');
+                return;
+            }
+
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                setError('Image size must be less than 5MB');
+                return;
+            }
+
+            setAvatarFile(file);
+            setError(null);
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setAvatarPreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleUploadAvatar = async () => {
+        if (!avatarFile) {
+            setError('Please select an image first');
+            return;
+        }
+
+        try {
+            setUploadLoading(true);
+            setUploadStatus('uploading');
+
+            const formDataToSend = new FormData();
+            formDataToSend.append('avatar', avatarFile);
+
+            const response = await userAPI.uploadAvatar(formDataToSend);
+
+            if (response.data.success) {
+                // Update localStorage with new avatar
+                const user = JSON.parse(localStorage.getItem('user'));
+                const updatedUser = {
+                    ...user,
+                    avatar: response.data.data.avatar
+                };
+
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                setUser(updatedUser);
+
+                setFormData(prev => ({
+                    ...prev,
+                    avatar: response.data.data.avatar
+                }));
+                setAvatarPreview(getAssetUrl(response.data.data.avatar));
+
+                setAvatarFile(null);
+                setUploadStatus('success');
+                setTimeout(() => setUploadStatus(null), 3000);
+            } else {
+                setError(response.data.message || 'Failed to upload avatar');
+                setUploadStatus('error');
+                setTimeout(() => setUploadStatus(null), 3000);
+            }
+        } catch (error) {
+            console.error('Error uploading avatar:', error);
+            setError(error.response?.data?.message || 'Error uploading avatar');
+            setUploadStatus('error');
+            setTimeout(() => setUploadStatus(null), 3000);
+        } finally {
+            setUploadLoading(false);
+        }
+    };
+
+    const handleRemoveAvatarPreview = () => {
+        setAvatarFile(null);
+        setAvatarPreview(getAssetUrl(formData.avatar));
+    };
+
     const handleSaveProfile = async () => {
         try {
             setLoading(true);
@@ -75,12 +171,15 @@ export default function Settings() {
 
             if (response.data.success) {
                 // Update localStorage
-                localStorage.setItem('user', JSON.stringify({
+                const updatedUser = {
                     ...user,
                     name: formData.name,
                     email: formData.email,
                     phone: formData.phone
-                }));
+                };
+
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                setUser(updatedUser);
                 
                 setSaveStatus('success');
                 setTimeout(() => setSaveStatus(null), 3000);
@@ -210,17 +309,113 @@ export default function Settings() {
                                         <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base">Update your personal information</p>
                                     </div>
 
-                                    {/* Profile Picture */}
-                                    <div className="flex items-center gap-4 md:gap-6 pb-4 md:pb-6 border-b dark:border-gray-800">
-                                        <div className="relative">
-                                            <div className="w-16 h-16 xs:w-20 xs:h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl xs:text-2xl md:text-3xl font-bold shadow-lg">
-                                                {formData.name.charAt(0).toUpperCase() || 'A'}
+                                    {/* Profile Picture and Avatar Upload */}
+                                    <div className="space-y-4 md:space-y-6 pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-800">
+                                        <div className="flex items-center gap-4 md:gap-5">
+                                            <div className="relative shrink-0">
+                                                {avatarPreview ? (
+                                                    <img 
+                                                        src={avatarPreview} 
+                                                        alt={formData.name}
+                                                        className="w-16 h-16 xs:w-20 xs:h-20 md:w-24 md:h-24 rounded-full object-cover ring-4 ring-white dark:ring-gray-900 shadow-[0_10px_30px_rgba(0,0,0,0.18)] border border-gray-200 dark:border-gray-700"
+                                                    />
+                                                ) : (
+                                                    <div className="w-16 h-16 xs:w-20 xs:h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white text-xl xs:text-2xl md:text-3xl font-bold ring-4 ring-white dark:ring-gray-900 shadow-[0_10px_30px_rgba(0,0,0,0.18)] border border-gray-200 dark:border-gray-700">
+                                                        {formData.name.charAt(0).toUpperCase() || 'A'}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h3 className="text-base xs:text-lg font-semibold text-gray-900 dark:text-white truncate">{formData.name}</h3>
+                                                <p className="text-gray-600 dark:text-gray-400 capitalize text-sm md:text-base">{formData.role}</p>
+                                                <p className="mt-1 text-xs md:text-sm text-gray-500 dark:text-gray-500">Profile image used across your account and navbar.</p>
                                             </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-base xs:text-lg font-semibold text-gray-900 dark:text-white">{formData.name}</h3>
-                                            <p className="text-gray-600 dark:text-gray-400 capitalize text-sm md:text-base">{formData.role}</p>
-                                        </div>
+
+                                        {formData.role === 'agent' && (
+                                            <div className="pt-4 md:pt-6 border-t border-gray-200 dark:border-gray-700">
+                                                <div className="flex items-start justify-between gap-3 mb-4">
+                                                    <div>
+                                                        <h3 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white">Change Profile Picture</h3>
+                                                        <p className="mt-1 text-xs md:text-sm text-gray-500 dark:text-gray-400">PNG, JPG, GIF up to 5MB. Best results use a square image.</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 lg:grid-cols-[140px,1fr] gap-4 md:gap-5 items-start">
+                                                    {avatarFile && avatarPreview ? (
+                                                        <div className="relative mx-auto lg:mx-0 w-full max-w-[180px]">
+                                                            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 shadow-sm">
+                                                                <img 
+                                                                    src={avatarPreview} 
+                                                                    alt="Preview"
+                                                                    className="w-full aspect-square rounded-xl object-cover"
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                onClick={handleRemoveAvatarPreview}
+                                                                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition shadow-lg"
+                                                                title="Remove"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="mx-auto lg:mx-0 w-full max-w-[180px] rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-6 text-center">
+                                                            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-700">
+                                                                <Upload size={18} className="text-gray-500 dark:text-gray-400" />
+                                                            </div>
+                                                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">No new image selected</p>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="space-y-3">
+                                                        <input
+                                                            type="file"
+                                                            id="avatar-input"
+                                                            accept="image/*"
+                                                            onChange={handleAvatarChange}
+                                                            className="hidden"
+                                                        />
+                                                        <label
+                                                            htmlFor="avatar-input"
+                                                            className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-4 text-left transition hover:border-blue-400 hover:bg-blue-50/50 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-blue-500 dark:hover:bg-gray-800/80"
+                                                        >
+                                                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                                                                <Upload size={18} />
+                                                            </span>
+                                                            <span className="min-w-0">
+                                                                <span className="block text-sm font-semibold text-gray-800 dark:text-gray-100">Choose image</span>
+                                                                <span className="block text-xs text-gray-500 dark:text-gray-400">Select a profile photo from your device</span>
+                                                            </span>
+                                                        </label>
+
+                                                        {uploadStatus === 'uploading' && (
+                                                            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm">
+                                                                <Loader size={16} className="animate-spin" />
+                                                                <span>Uploading image...</span>
+                                                            </div>
+                                                        )}
+                                                        {uploadStatus === 'success' && (
+                                                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
+                                                                <Check size={16} />
+                                                                <span>Avatar updated successfully!</span>
+                                                            </div>
+                                                        )}
+
+                                                        {avatarFile && (
+                                                            <button
+                                                                onClick={handleUploadAvatar}
+                                                                disabled={uploadLoading}
+                                                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-slate-900 dark:hover:bg-gray-200"
+                                                            >
+                                                                <Upload size={16} />
+                                                                <span>Upload Avatar</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Form Fields */}

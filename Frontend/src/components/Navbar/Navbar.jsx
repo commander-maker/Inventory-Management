@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Bell, MessageSquare, Maximize, Grid3x3, User, X, Check, Trash2, Clock, Moon, Sun, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { notificationAPI } from '../../utils/api';
+import { notificationAPI, getAssetUrl } from '../../utils/api';
 import { toast } from 'react-toastify';
 
 export default function Navbar({ onMenuToggle }) {
@@ -98,6 +98,8 @@ export default function Navbar({ onMenuToggle }) {
         return 'bg-gray-400';
     }
   };
+
+  const avatarUrl = getAssetUrl(user?.avatar);
 
   const getTimeAgo = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -258,9 +260,17 @@ export default function Navbar({ onMenuToggle }) {
         {/* User Profile - Dynamic */}
         <div className='flex items-center gap-2 cursor-pointer pl-2 ml-2 border-l border-gray-200 dark:border-gray-700'>
           <div className={`w-9 h-9 rounded-full ${getAvatarColor(user?.role)} flex items-center justify-center overflow-hidden border-2 border-white dark:border-gray-900 shadow-sm`}>
-            <span className='text-white font-bold text-sm'>
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </span>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={user?.name || 'User'}
+                className='w-full h-full object-cover'
+              />
+            ) : (
+              <span className='text-white font-bold text-sm'>
+                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </span>
+            )}
           </div>
           <div className='text-sm hidden md:block'>
             <div className='font-bold text-gray-800 dark:text-white leading-none mb-1'>{user?.name || 'User'}</div>

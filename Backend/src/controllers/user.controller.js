@@ -1,5 +1,6 @@
 // User controller - Handle user management requests
 import * as UserService from "../services/user.service.js";
+import fs from 'fs';
 
 // Get all users
 export const getAllUsers = async (req, res) => {
@@ -93,6 +94,46 @@ export const updatePassword = async (req, res) => {
       message: result.message
     });
   } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Upload avatar for agent
+export const uploadAvatar = async (req, res) => {
+  try {
+    // Only agents can upload avatars
+    if (req.user.role !== 'agent') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only agents can upload profile pictures'
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    // Update user avatar in database
+    const result = await UserService.updateAvatar(req.user.id, req.file);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Avatar uploaded successfully',
+      data: result
+    });
+  } catch (error) {
+    // Clean up uploaded file if database update fails
+    if (req.file) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error('Error deleting file:', err);
+      });
+    }
     res.status(400).json({
       success: false,
       message: error.message
