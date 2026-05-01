@@ -50,23 +50,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1a1f3a),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        automaticallyImplyLeading: false,
         title: const Text(
           'Settings',
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
       body: Container(
-        color: const Color(0xFF1a1f3a),
+        color: Colors.grey.shade50,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -81,13 +78,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Manage your profile and security settings',
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -124,10 +121,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isActive ? Colors.blue : const Color(0xFF252d48),
+            color: isActive ? Colors.blue : Colors.white,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isActive ? Colors.blue : Colors.grey.shade700,
+              color: isActive ? Colors.blue : Colors.grey.shade300,
               width: 1,
             ),
           ),
@@ -137,7 +134,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isActive ? Colors.white : Colors.grey.shade400,
+                color: isActive ? Colors.white : Colors.black,
               ),
             ),
           ),
@@ -277,7 +274,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: Colors.black,
           ),
         ),
         const SizedBox(height: 8),
@@ -287,7 +284,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           obscureText: isPassword && !showNewPassword,
           decoration: InputDecoration(
             hintText: 'Enter $label',
-            hintStyle: TextStyle(color: Colors.grey.shade600),
+            hintStyle: TextStyle(color: Colors.grey.shade500),
             prefixIcon: Icon(icon, color: Colors.blue.shade300, size: 18),
             suffixIcon: isPassword
                 ? IconButton(
@@ -305,11 +302,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade700, width: 1),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade700, width: 1),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -317,18 +314,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade800, width: 1),
+              borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
             ),
             filled: true,
-            fillColor: enabled
-                ? const Color(0xFF252d48)
-                : const Color(0xFF1f2536),
+            fillColor: enabled ? Colors.white : Colors.grey.shade100,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 12,
             ),
           ),
-          style: const TextStyle(fontSize: 13, color: Colors.white),
+          style: const TextStyle(fontSize: 13, color: Colors.black),
         ),
       ],
     );

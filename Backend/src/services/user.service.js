@@ -3,6 +3,7 @@ import prisma from "../config/db.js";
 import bcrypt from "bcryptjs";
 import { generatePassword } from "../utils/passwordGenerator.js";
 import { sendPasswordEmail } from "./email.service.js";
+import fs from 'fs';
 
 // Get all users (exclude passwords)
 export const getAllUsers = async () => {
@@ -160,4 +161,44 @@ export const updatePassword = async (userId, oldPassword, newPassword) => {
   });
 
   return { message: "Password updated successfully" };
+};
+
+// Update user avatar
+export const updateAvatar = async (userId, file) => {
+  const user = await prisma.user.findUnique({ where: { id: parseInt(userId) } });
+  if (!user) throw new Error("User not found");
+
+  // If user already has an avatar, delete the old one
+  if (user.avatar) {
+    const oldFilePath = user.avatar.replace('/uploads/avatars/', '');
+    try {
+      fs.unlinkSync(`public/uploads/avatars/${oldFilePath}`);
+    } catch (error) {
+      console.error('Error deleting old avatar:', error);
+    }
+  }
+
+  // Create avatar path relative to public folder
+  const avatarPath = `/uploads/avatars/${file.filename}`;
+
+  // Update user with new avatar
+  const updatedUser = await prisma.user.update({
+    where: { id: parseInt(userId) },
+    data: { avatar: avatarPath },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      phone: true,
+      avatar: true,
+      vehicle: true,
+      monthlySales: true,
+      joinedDate: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+
+  return updatedUser;
 };
