@@ -337,21 +337,21 @@ export default function FinanceDashboard() {
     : `Year ${filterYear}`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="bg-white border-b px-8 py-6 flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 px-4 xs:px-5 md:px-8 py-4 xs:py-5 md:py-6 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Finance Management</h1>
-          <p className="text-gray-600 mt-1">Track income, expenses, and generate financial reports</p>
+          <h1 className="text-xl xs:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Finance Management</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm md:text-base">Track income, expenses, and generate financial reports</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 xs:gap-3 flex-wrap">
           {/* Month/Year Filter */}
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-            <Calendar size={16} className="text-gray-500" />
+          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2">
+            <Calendar size={16} className="text-gray-500 dark:text-gray-400" />
             <select
               value={filterMonth}
               onChange={(e) => setFilterMonth(e.target.value)}
-              className="bg-transparent border-none text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
+              className="bg-transparent border-none text-sm font-medium text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer"
             >
               <option value="">All Months</option>
               {MONTHS.map((m, i) => (
@@ -361,7 +361,7 @@ export default function FinanceDashboard() {
             <select
               value={filterYear}
               onChange={(e) => setFilterYear(parseInt(e.target.value))}
-              className="bg-transparent border-none text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
+              className="bg-transparent border-none text-sm font-medium text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer"
             >
               {[2024, 2025, 2026, 2027].map(y => (
                 <option key={y} value={y}>{y}</option>
@@ -371,26 +371,26 @@ export default function FinanceDashboard() {
 
           <button
             onClick={fetchAll}
-            className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+            className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
             title="Refresh"
           >
-            <RefreshCw size={18} className="text-gray-600" />
+            <RefreshCw size={18} className="text-gray-600 dark:text-gray-400" />
           </button>
 
           <button
             onClick={() => setShowAddRevenueModal(true)}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+            className="px-3 xs:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-1.5 xs:gap-2 text-sm md:text-base"
           >
-            <Plus size={18} />
-            Add Revenue
+            <Plus size={16} className="md:w-[18px] md:h-[18px]" />
+            <span className="hidden xs:inline">Add</span> Revenue
           </button>
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            className="px-3 xs:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-1.5 xs:gap-2 text-sm md:text-base"
           >
-            <Plus size={18} />
-            Add Expense
+            <Plus size={16} className="md:w-[18px] md:h-[18px]" />
+            <span className="hidden xs:inline">Add</span> Expense
           </button>
         </div>
       </div>
@@ -402,60 +402,60 @@ export default function FinanceDashboard() {
       ) : (
         <>
           {/* Stats Cards */}
-          <div className="px-8 py-6">
-            <div className="grid grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <p className="text-gray-600 text-sm mb-3">Total Income</p>
+          <div className="px-4 xs:px-5 md:px-8 py-4 xs:py-5 md:py-6">
+            <div className="grid grid-cols-3 gap-2 xs:gap-4 md:gap-6">
+              <div className="bg-white dark:bg-gray-900 rounded-lg p-4 xs:p-5 md:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+                <p className="text-gray-600 dark:text-gray-400 text-xs xs:text-sm mb-2 xs:mb-3">Total Income</p>
                 <div className="flex justify-between items-center">
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-lg xs:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
                     {formatAmount(summary?.totalIncome)}
                   </p>
-                  <div className="p-3 rounded-lg bg-green-50">
-                    <TrendingUp className="text-green-500" size={28} />
+                  <div className="p-2 xs:p-3 rounded-lg bg-green-50 dark:bg-green-900/30">
+                    <TrendingUp className="text-green-500 dark:text-green-400" size={20} />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">{filterLabel}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{filterLabel}</p>
               </div>
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <p className="text-gray-600 text-sm mb-3">Total Expenses</p>
+              <div className="bg-white dark:bg-gray-900 rounded-lg p-4 xs:p-5 md:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+                <p className="text-gray-600 dark:text-gray-400 text-xs xs:text-sm mb-2 xs:mb-3">Total Expenses</p>
                 <div className="flex justify-between items-center">
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-lg xs:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
                     {formatAmount(summary?.totalExpenses)}
                   </p>
-                  <div className="p-3 rounded-lg bg-red-50">
-                    <TrendingDown className="text-red-500" size={28} />
+                  <div className="p-2 xs:p-3 rounded-lg bg-red-50 dark:bg-red-900/30">
+                    <TrendingDown className="text-red-500 dark:text-red-400" size={20} />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">{filterLabel}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{filterLabel}</p>
               </div>
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <p className="text-gray-600 text-sm mb-3">Net Profit</p>
+              <div className="bg-white dark:bg-gray-900 rounded-lg p-4 xs:p-5 md:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+                <p className="text-gray-600 dark:text-gray-400 text-xs xs:text-sm mb-2 xs:mb-3">Net Profit</p>
                 <div className="flex justify-between items-center">
-                  <p className={`text-2xl font-bold ${parseFloat(summary?.netProfit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-lg xs:text-xl md:text-2xl font-bold ${parseFloat(summary?.netProfit) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     {formatAmount(summary?.netProfit)}
                   </p>
-                  <div className="p-3 rounded-lg bg-blue-50">
-                    <DollarSign className="text-blue-500" size={28} />
+                  <div className="p-2 xs:p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30">
+                    <DollarSign className="text-blue-500 dark:text-blue-400" size={20} />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">{filterLabel}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{filterLabel}</p>
               </div>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="px-8 py-2 grid grid-cols-3 gap-6">
+          <div className="px-4 xs:px-5 md:px-8 py-2 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {/* Expense Breakdown */}
-            <div className="col-span-2 bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Expense Breakdown</h2>
-              <p className="text-gray-600 text-sm mb-6">
+            <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
+              <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-2">Expense Breakdown</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
                 {filterLabel} expense distribution by category
               </p>
 
               {breakdownWithPercentage.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  <DollarSign size={48} className="mx-auto mb-3" />
-                  <p>No expenses for this period</p>
+                <div className="text-center py-8 md:py-12 text-gray-400 dark:text-gray-600">
+                  <DollarSign size={36} className="mx-auto mb-3 md:w-12 md:h-12" />
+                  <p className="text-sm md:text-base">No expenses for this period</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -465,34 +465,34 @@ export default function FinanceDashboard() {
                     return (
                       <div
                         key={item.category}
-                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+                        className="border border-gray-200 dark:border-gray-800 rounded-lg p-3 xs:p-4 hover:shadow-md dark:hover:bg-gray-800 transition cursor-pointer"
                         onClick={() => setExpandedExpense(expandedExpense === item.category ? null : item.category)}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-lg ${meta.bgLight}`}>
-                            <IconComponent className={`${meta.color} text-white`} size={24} />
+                        <div className="flex items-center gap-3 xs:gap-4">
+                          <div className={`p-2 xs:p-3 rounded-lg ${meta.bgLight} dark:bg-opacity-20`}>
+                            <IconComponent className={`${meta.color} text-white`} size={20} />
                           </div>
 
                           <div className="flex-1">
                             <div className="flex justify-between items-start mb-2">
-                              <h3 className="font-semibold text-gray-900">{item.category}</h3>
-                              <span className="text-lg font-bold text-gray-900">{formatAmount(item.amount)}</span>
+                              <h3 className="font-semibold text-gray-900 dark:text-white text-sm xs:text-base">{item.category}</h3>
+                              <span className="text-sm xs:text-base md:text-lg font-bold text-gray-900 dark:text-white">{formatAmount(item.amount)}</span>
                             </div>
                             <div className="flex items-center justify-between">
-                              <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                              <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
                                 <div
                                   className={`${meta.color} h-2 rounded-full transition-all`}
                                   style={{ width: `${item.percentage}%` }}
                                 ></div>
                               </div>
-                              <span className="text-sm text-gray-600">{item.percentage}%</span>
+                              <span className="text-sm text-gray-600 dark:text-gray-400">{item.percentage}%</span>
                             </div>
                           </div>
                         </div>
 
                         {expandedExpense === item.category && (
-                          <div className="mt-4 pt-4 border-t">
-                            <p className="text-sm text-gray-600 mb-2">
+                          <div className="mt-4 pt-4 border-t dark:border-gray-800">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                               <span className="font-medium">Number of entries:</span> {item.count}
                             </p>
                             {/* Show individual expenses for this category */}
@@ -500,24 +500,24 @@ export default function FinanceDashboard() {
                               {expenses
                                 .filter(e => e.category === item.category)
                                 .map(exp => (
-                                  <div key={exp.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                                    <div className="flex-1">
-                                      <p className="text-sm font-medium text-gray-900">{exp.description}</p>
-                                      <p className="text-xs text-gray-500">
+                                  <div key={exp.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2.5 xs:p-3 rounded-lg">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs xs:text-sm font-medium text-gray-900 dark:text-white truncate">{exp.description}</p>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">
                                         {new Date(exp.date).toLocaleDateString()}
                                         {exp.billNumber && ` · Bill: ${exp.billNumber}`}
                                         {exp.User_Expense_agentIdToUser && ` · Agent: ${exp.User_Expense_agentIdToUser.name}`}
                                       </p>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                      <span className="text-sm font-semibold text-gray-900">{formatAmount(exp.amount)}</span>
+                                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatAmount(exp.amount)}</span>
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setSelectedExpenseId(exp.id);
                                           setShowDeleteDialog(true);
                                         }}
-                                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
+                                        className="p-1.5 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"
                                       >
                                         <Trash2 size={14} />
                                       </button>
@@ -536,12 +536,12 @@ export default function FinanceDashboard() {
             </div>
 
             {/* Recent Expenses */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Recent Expenses</h2>
-              <p className="text-gray-600 text-sm mb-6">Latest financial transactions</p>
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
+              <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-2">Recent Expenses</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 md:mb-6">Latest financial transactions</p>
 
               {expenses.length === 0 ? (
-                <div className="text-center py-8 text-gray-400">
+                <div className="text-center py-8 text-gray-400 dark:text-gray-600">
                   <FileText size={36} className="mx-auto mb-2" />
                   <p className="text-sm">No recent expenses</p>
                 </div>
@@ -552,14 +552,14 @@ export default function FinanceDashboard() {
                     const IconComponent = meta.icon;
                     return (
                       <div key={expense.id} className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg flex-shrink-0 ${meta.bgLight}`}>
-                          <IconComponent className="text-gray-700" size={20} />
+                        <div className={`p-2 rounded-lg flex-shrink-0 ${meta.bgLight} dark:bg-opacity-20`}>
+                          <IconComponent className="text-gray-700 dark:text-gray-300" size={20} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{expense.description}</p>
-                          <p className="text-xs text-gray-500">{new Date(expense.date).toLocaleDateString()}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{expense.description}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(expense.date).toLocaleDateString()}</p>
                         </div>
-                        <p className="text-sm font-semibold text-gray-900 flex-shrink-0">{formatAmount(expense.amount)}</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">{formatAmount(expense.amount)}</p>
                       </div>
                     );
                   })}
@@ -572,28 +572,28 @@ export default function FinanceDashboard() {
 
       {/* Add Expense Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 dark:bg-opacity-70">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full mx-3 xs:mx-4 max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-xl font-bold text-gray-900">Add New Expense</h3>
+            <div className="flex items-center justify-between p-4 xs:p-5 md:p-6 border-b dark:border-gray-800">
+              <h3 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white">Add New Expense</h3>
               <button
                 onClick={() => { setShowAddModal(false); resetForm(); }}
-                className="p-1 hover:bg-gray-100 rounded-full transition"
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition text-gray-500 dark:text-gray-400"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleAddExpense} className="p-6 space-y-4">
+            <form onSubmit={handleAddExpense} className="p-4 xs:p-5 md:p-6 space-y-4">
               {/* Type */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Expense Type</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Expense Type</label>
                 <select
                   value={form.type}
                   onChange={(e) => setForm({ ...form, type: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
                   <option value="Operational">Operational</option>
@@ -603,11 +603,11 @@ export default function FinanceDashboard() {
 
               {/* Category */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Category</label>
                 <select
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
                   {EXPENSE_CATEGORIES.map(c => (
@@ -618,18 +618,18 @@ export default function FinanceDashboard() {
 
               {/* Monthly Billing Info (for Utilities & Rent) */}
               {(form.category === 'Utilities' || form.category === 'Rent') && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
+                  <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
                     <Calendar size={16} />
                     Billing Period (Month-wise)
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-blue-700 mb-1">Billing Month</label>
+                      <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">Billing Month</label>
                       <select
                         value={form.billingMonth}
                         onChange={(e) => setForm({ ...form, billingMonth: e.target.value })}
-                        className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full px-3 py-2 border border-blue-300 dark:border-blue-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       >
                         {MONTHS.map((m, i) => (
                           <option key={i} value={i + 1}>{m}</option>
@@ -637,11 +637,11 @@ export default function FinanceDashboard() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-blue-700 mb-1">Billing Year</label>
+                      <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">Billing Year</label>
                       <select
                         value={form.billingYear}
                         onChange={(e) => setForm({ ...form, billingYear: e.target.value })}
-                        className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full px-3 py-2 border border-blue-300 dark:border-blue-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       >
                         {[2024, 2025, 2026, 2027].map(y => (
                           <option key={y} value={y}>{y}</option>
@@ -654,13 +654,13 @@ export default function FinanceDashboard() {
 
               {/* Amount */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Amount (LKR)</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Amount (LKR)</label>
                 <input
                   type="number"
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
                   placeholder="Enter amount"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                   min="0"
                   step="0.01"
@@ -669,7 +669,7 @@ export default function FinanceDashboard() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Description</label>
                 <input
                   type="text"
                   value={form.description}
@@ -681,43 +681,43 @@ export default function FinanceDashboard() {
                           form.category === 'Fuel' ? 'e.g. Diesel for vehicle' :
                             'Enter description'
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Date</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Date</label>
                 <input
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
 
               {/* Bill Number */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Bill Number (Optional)</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Bill Number (Optional)</label>
                 <input
                   type="text"
                   value={form.billNumber}
                   onChange={(e) => setForm({ ...form, billNumber: e.target.value })}
                   placeholder="e.g. BILL-1234"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               {/* Agent (for Salary, Fuel) */}
               {(form.category === 'Salary' || form.category === 'Fuel') && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Agent (Optional)</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Agent (Optional)</label>
                   <select
                     value={form.agentId}
                     onChange={(e) => setForm({ ...form, agentId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Select Agent</option>
                     {agents.map(a => (
@@ -730,11 +730,11 @@ export default function FinanceDashboard() {
               {/* Vehicle (for Fuel, Vehicle Repair, Tire Replacement) */}
               {(form.category === 'Fuel' || form.category === 'Vehicle Repair' || form.category === 'Tire Replacement') && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Vehicle (Optional)</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Vehicle (Optional)</label>
                   <select
                     value={form.vehicleId}
                     onChange={(e) => setForm({ ...form, vehicleId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Select Vehicle</option>
                     {vehicles.map(v => (
@@ -745,11 +745,11 @@ export default function FinanceDashboard() {
               )}
 
               {/* Submit */}
-              <div className="flex gap-3 pt-4 border-t">
+              <div className="flex gap-3 pt-4 border-t dark:border-gray-800">
                 <button
                   type="button"
                   onClick={() => { setShowAddModal(false); resetForm(); }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium"
                 >
                   Cancel
                 </button>
@@ -768,25 +768,25 @@ export default function FinanceDashboard() {
 
       {/* Add Revenue Modal */}
       {showAddRevenueModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 dark:bg-opacity-70 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col mx-3 xs:mx-0">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b flex-shrink-0">
+            <div className="flex items-center justify-between px-4 xs:px-5 md:px-6 py-4 xs:py-5 border-b dark:border-gray-800 flex-shrink-0">
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">Record Sale</h3>
-                <p className="text-sm text-gray-500 mt-1">Item: {revenueForm.inventoryId ? inventoryItems.find(i => i.id === parseInt(revenueForm.inventoryId))?.name : 'Select Product'}</p>
+                <h3 className="text-xl xs:text-2xl font-bold text-gray-900 dark:text-white">Record Sale</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Item: {revenueForm.inventoryId ? inventoryItems.find(i => i.id === parseInt(revenueForm.inventoryId))?.name : 'Select Product'}</p>
               </div>
               <button
                 onClick={() => { setShowAddRevenueModal(false); resetRevenueForm(); }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition text-gray-500 dark:text-gray-400"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body - Scrollable */}
             <div className="flex-1 overflow-y-auto">
-              <form onSubmit={handleAddRevenue} className="p-6 space-y-5">
+              <form onSubmit={handleAddRevenue} className="p-4 xs:p-5 md:p-6 space-y-4 xs:space-y-5">
                 {/* Info Section */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start gap-2">
@@ -957,7 +957,7 @@ export default function FinanceDashboard() {
       {/* Toast Notification */}
       {showToast && (
         <div className="fixed top-4 right-4 z-[60] animate-slideIn">
-          <div className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl border-l-4 ${
+          <div className={`flex items-center gap-2 xs:gap-3 px-4 xs:px-6 py-3 xs:py-4 rounded-lg shadow-2xl border-l-4 ${
             toastType === 'success' 
               ? 'bg-green-50 border-green-500' 
               : 'bg-red-50 border-red-500'

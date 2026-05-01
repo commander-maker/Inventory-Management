@@ -6,7 +6,15 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// Enable CORS with configuration
+app.use(cors({
+  origin: ['http://localhost:5000', 'http://localhost:5100', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:8080', 'http://192.168.158.133:5000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // Import routes
@@ -35,6 +43,21 @@ app.get("/api/health", (req, res) => {
     success: true,
     message: "AquaTrack Backend API is running",
     timestamp: new Date().toISOString()
+  });
+});
+
+// Root API endpoint
+app.get("/api", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "API is working."
+  });
+});
+
+app.get("/api/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "API is working."
   });
 });
 
