@@ -3,6 +3,8 @@ import { Search, Eye, Edit2, Plus, Download, X, Trash2 } from 'lucide-react';
 import api, { inventoryAPI } from '../../utils/api'; // Import both
 import { toast } from 'react-toastify';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export default function InventoryList() {
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
@@ -187,6 +189,43 @@ export default function InventoryList() {
     }
   };
 
+  const handleExportInventoryPdf = () => {
+    try {
+      const doc = new jsPDF();
+      const title = 'Inventory Report';
+      doc.setFontSize(18);
+      doc.text(title, 14, 20);
+
+      const headers = [['Name', 'Category', 'Stock', 'Unit', 'Price (LKR)', 'Value (LKR)', 'Supplier', 'Status']];
+
+      const rows = filteredProducts.map(p => [
+        p.name || '',
+        p.category || '',
+        p.stock != null ? String(p.stock) : '',
+        p.unit || '',
+        p.price != null ? Number(p.price).toLocaleString() : '',
+        (p.price != null && p.stock != null) ? (Number(p.price) * Number(p.stock)).toLocaleString() : '',
+        p.supplier || '',
+        p.status || ''
+      ]);
+
+      doc.autoTable({
+        head: headers,
+        body: rows,
+        startY: 28,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [30, 41, 59] }
+      });
+
+      const filename = `inventory_${new Date().toISOString().slice(0,10)}.pdf`;
+      doc.save(filename);
+      toast.success('Exported inventory PDF');
+    } catch (err) {
+      console.error('Error exporting PDF:', err);
+      toast.error('Failed to export PDF');
+    }
+  };
+
  return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
@@ -198,7 +237,7 @@ export default function InventoryList() {
               <p className="text-xs xs:text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1">Manage and track your product inventory</p>
             </div>
             <div className="flex gap-2 xs:gap-3 md:gap-4 w-full xs:w-auto">
-              <button className="flex items-center justify-center gap-1.5 xs:gap-2 px-3 xs:px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs xs:text-sm md:text-base flex-1 xs:flex-none">
+              <button onClick={handleExportInventoryPdf} className="flex items-center justify-center gap-1.5 xs:gap-2 px-3 xs:px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs xs:text-sm md:text-base flex-1 xs:flex-none">
                 <Download size={18} />
                 Export
               </button>
@@ -450,23 +489,23 @@ export default function InventoryList() {
                   name="category"
                   value={editFormData.category || ''}
                   onChange={handleEditInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock ({editFormData.unit || 'cases'})</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock ({editFormData.unit || 'cases'})</label>
                   <input
                     type="number"
                     name="stock"
                     min="0"
                     value={editFormData.stock || ''}
                     onChange={handleEditInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (LKR) </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price (LKR) </label>
                   <input
                     type="number"
                     name="price"
@@ -474,37 +513,37 @@ export default function InventoryList() {
                     step="0.01"
                     value={editFormData.price || ''}
                     onChange={handleEditInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unit</label>
                 <input
                   type="text"
                   name="unit"
                   value={editFormData.unit || ''}
                   onChange={handleEditInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier </label>
                 <input
                   type="text"
                   name="supplier"
                   value={editFormData.supplier || ''}
                   onChange={handleEditInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                 <select
                   name="status"
                   value={editFormData.status || ''}
                   onChange={handleEditInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500"
                 >
                   <option value="In Stock">In Stock</option>
                   <option value="Low Stock">Low Stock</option>
@@ -514,17 +553,17 @@ export default function InventoryList() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t flex gap-3 sticky bottom-0 bg-white">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex gap-3 sticky bottom-0 bg-white dark:bg-gray-900">
               <button
                 onClick={() => setEditModal({ isOpen: false, product: null })}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-black dark:bg-gray-700 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition disabled:opacity-50"
               >
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
@@ -536,13 +575,13 @@ export default function InventoryList() {
       {/* Add Product Modal */}
       {addModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex justify-between items-center px-6 py-4 border-b sticky top-0 bg-white">
-              <h2 className="text-xl font-bold text-gray-900">Add New Product</h2>
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-900">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add New Product</h2>
               <button
                 onClick={() => setAddModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               >
                 <X size={24} />
               </button>
@@ -551,24 +590,24 @@ export default function InventoryList() {
             {/* Modal Body */}
             <div className="px-6 py-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product Name </label>
                 <input
                   type="text"
                   name="name"
                   value={newProductForm.name}
                   onChange={handleAddProductChange}
                   placeholder="e.g., Pepsi 300ml"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category </label>
                 <select
                   name="category"
                   value={newProductForm.category}
                   onChange={handleAddProductChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <option value="Soft Drinks">Soft Drinks</option>
                   <option value="Energy Drinks">Energy Drinks</option>
@@ -580,7 +619,7 @@ export default function InventoryList() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock </label>
                   <input
                     type="number"
                     name="stock"
@@ -588,16 +627,16 @@ export default function InventoryList() {
                     value={newProductForm.stock}
                     onChange={handleAddProductChange}
                     placeholder="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unit </label>
                   <select
                     name="unit"
                     value={newProductForm.unit}
                     onChange={handleAddProductChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black"
                   >
                     <option value="cases">Cases</option>
                     <option value="bottles">Bottles</option>
@@ -610,7 +649,7 @@ export default function InventoryList() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price per Unit (LKR) </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price per Unit (LKR) </label>
                 <input
                   type="number"
                   name="price"
@@ -619,29 +658,29 @@ export default function InventoryList() {
                   value={newProductForm.price}
                   onChange={handleAddProductChange}
                   placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier </label>
                 <input
                   type="text"
                   name="supplier"
                   value={newProductForm.supplier}
                   onChange={handleAddProductChange}
                   placeholder="e.g., PepsiCo Distributors"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status </label>
                 <select
                   name="status"
                   value={newProductForm.status}
                   onChange={handleAddProductChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <option value="In Stock">In Stock</option>
                   <option value="Low Stock">Low Stock</option>
@@ -651,17 +690,17 @@ export default function InventoryList() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t flex gap-3 sticky bottom-0 bg-white">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex gap-3 sticky bottom-0 bg-white dark:bg-gray-900">
               <button
                 onClick={() => setAddModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddProduct}
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-black dark:bg-gray-700 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition disabled:opacity-50"
               >
                 {loading ? 'Adding...' : 'Add Product'}
               </button>
