@@ -231,7 +231,7 @@ export const createIncome = async (data, userId) => {
         amount: parseFloat(data.amount),
         description: data.description,
         customerId: data.customerId ? parseInt(data.customerId) : null,
-        agentId: userId ? parseInt(userId) : null, // Store who created it (admin or agent)
+        agentId: userId ? parseInt(userId) : null,
         paymentMethod: data.paymentMethod || 'Cash',
         receiptNumber: data.receiptNumber || null,
         date: data.date ? new Date(data.date) : now,
