@@ -66,23 +66,20 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1a1f3a),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        automaticallyImplyLeading: false,
         title: const Text(
           'My Vehicle Inventory',
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
       body: Container(
-        color: const Color(0xFF1a1f3a),
+        color: Colors.grey.shade50,
         child: isLoading
             ? const Center(
                 child: CircularProgressIndicator(
@@ -107,7 +104,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Colors.black,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -115,7 +112,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                           'View and manage your vehicle inventory',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey.shade400,
+                            color: Colors.grey.shade600,
                           ),
                         ),
                       ],
@@ -130,7 +127,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Colors.black,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -161,9 +158,9 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
         padding: const EdgeInsets.all(20),
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF252d48),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.red.withOpacity(0.3)),
+          border: Border.all(color: Colors.red.withOpacity(0.2)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -175,13 +172,13 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               errorMessage ?? 'Unknown error occurred',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -202,27 +199,27 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
         padding: const EdgeInsets.all(20),
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF252d48),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade700),
+          border: Border.all(color: Colors.grey.shade200),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.directions_car, color: Colors.grey.shade600, size: 48),
+            Icon(Icons.directions_car, color: Colors.grey.shade300, size: 48),
             const SizedBox(height: 12),
             const Text(
               'No Vehicle Assigned',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'You currently don\'t have a vehicle assigned. Please contact your administrator.',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
           ],
@@ -241,9 +238,16 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF252d48),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700, width: 0.5),
+        border: Border.all(color: Colors.grey.shade200, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +261,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Colors.black,
                 ),
               ),
             ],
@@ -294,14 +298,14 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
         ),
         Text(
           value,
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: Colors.black,
           ),
         ),
       ],
@@ -314,7 +318,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
         ),
         Row(
           children: [
@@ -325,7 +329,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: Colors.black,
               ),
             ),
           ],
@@ -340,7 +344,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -369,14 +373,14 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
           children: [
             Text(
               label,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
             Text(
               '$percentage%',
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: Colors.black,
               ),
             ),
           ],
@@ -387,7 +391,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
           child: LinearProgressIndicator(
             value: percentage / 100,
             minHeight: 6,
-            backgroundColor: Colors.grey.shade700,
+            backgroundColor: Colors.grey.shade300,
             valueColor: AlwaysStoppedAnimation<Color>(
               percentage > 50 ? Colors.green : Colors.orange,
             ),
@@ -402,26 +406,26 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40),
       decoration: BoxDecoration(
-        color: const Color(0xFF252d48),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700, width: 0.5),
+        border: Border.all(color: Colors.grey.shade200, width: 0.5),
       ),
       child: Column(
         children: [
-          Icon(Icons.inventory_2, size: 64, color: Colors.grey.shade600),
+          Icon(Icons.inventory_2, size: 64, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           const Text(
             'No Inventory Items',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Colors.black,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Your vehicle currently has no items.',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -433,9 +437,16 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF252d48),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700, width: 0.5),
+        border: Border.all(color: Colors.grey.shade200, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -449,13 +460,13 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Qty: ${item['quantity'] ?? 0}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
             ),
