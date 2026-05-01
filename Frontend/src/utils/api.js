@@ -3,6 +3,16 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+export const getAssetUrl = (assetPath) => {
+  if (!assetPath) return null;
+  if (/^https?:\/\//i.test(assetPath) || assetPath.startsWith('data:')) {
+    return assetPath;
+  }
+
+  const apiRoot = API_BASE_URL.replace(/\/api\/?$/, '');
+  return `${apiRoot}${assetPath}`;
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -52,7 +62,12 @@ export const userAPI = {
   create: (userData) => api.post('/users', userData),
   update: (id, userData) => api.put(`/users/${id}`, userData),
   delete: (id) => api.delete(`/users/${id}`),
-  updatePassword: (passwordData) => api.put('/users/password/update', passwordData)
+  updatePassword: (passwordData) => api.put('/users/password/update', passwordData),
+  uploadAvatar: (formData) => api.post('/users/avatar/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
 };
 
 // Vehicle API
