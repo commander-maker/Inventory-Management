@@ -1,20 +1,67 @@
 import 'api_service.dart';
+import '../models/model.dart';
 
 class AuthService {
-  Future<dynamic> login(String email, String password) async {
-    return await ApiService.post("auth/login", {
-      "email": email,
-      "password": password,
-    });
+  /// Sign in with email and password for Agent role
+  static Future<AuthResponse> signIn({
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    try {
+      final response = await ApiService.post("auth/login", {
+        "email": email,
+        "password": password,
+        "role": role,
+      });
+
+      if (response != null && response is Map<String, dynamic>) {
+        return AuthResponse.fromJson(response);
+      } else {
+        return AuthResponse(
+          success: false,
+          message: 'Invalid response from server',
+        );
+      }
+    } catch (e) {
+      return AuthResponse(success: false, message: 'Error: $e');
+    }
   }
 
-  Future<dynamic> register(
-      String name, String email, String password, String role) async {
-    return await ApiService.post("auth/register", {
-      "name": name,
-      "email": email,
-      "password": password,
-      "role": role,
-    });
+  /// Register new agent
+  static Future<AuthResponse> register({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    try {
+      final response = await ApiService.post("auth/register", {
+        "name": name,
+        "email": email,
+        "password": password,
+        "role": role,
+      });
+
+      if (response != null && response is Map<String, dynamic>) {
+        return AuthResponse.fromJson(response);
+      } else {
+        return AuthResponse(
+          success: false,
+          message: 'Invalid response from server',
+        );
+      }
+    } catch (e) {
+      return AuthResponse(success: false, message: 'Error: $e');
+    }
+  }
+
+  /// Sign out
+  static Future<void> signOut() async {
+    try {
+      // Add logout logic if needed
+    } catch (e) {
+      throw Exception('Sign out failed: $e');
+    }
   }
 }
