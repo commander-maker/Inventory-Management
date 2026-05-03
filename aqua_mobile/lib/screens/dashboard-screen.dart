@@ -678,8 +678,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: isLogout
-          ? Colors.red.withOpacity(0.08)
-          : Colors.blue.withOpacity(0.08),
+            ? Colors.red.withOpacity(0.08)
+            : Colors.blue.withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: ListTile(

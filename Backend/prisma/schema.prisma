@@ -14,6 +14,7 @@ model User {
   password                         String
   role                             String
   phone                            String
+  avatar                           String?
   vehicle                          String?
   monthlySales                     Decimal?             @db.Decimal(10, 2)
   joinedDate                       DateTime             @default(now())
