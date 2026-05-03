@@ -1,0 +1,2 @@
+# Enforce LF for generated Swift file to avoid CRLF warnings.
+/aqua_mobile/macos/Flutter/GeneratedPluginRegistrant.swift text eol=lf

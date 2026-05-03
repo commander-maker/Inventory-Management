@@ -63,6 +63,64 @@ export default function InventoryList() {
     { label: 'Out of Stock', value: outOfStockItems.toString(), icon: '❌' }
   ];
 
+  const handleExportReport = () => {
+    if (!products.length) {
+      toast.info('No inventory data to export');
+      return;
+    }
+
+    const reportDate = new Date();
+    const rows = [
+      ['Inventory Report'],
+      [`Generated At`, reportDate.toLocaleString()],
+      [],
+      ['Summary'],
+      ['Total Products', products.length],
+      ['Total Value (LKR)', totalValue.toFixed(2)],
+      ['Low Stock', lowStockItems],
+      ['Out of Stock', outOfStockItems],
+      [],
+      ['Items'],
+      ['Name', 'Category', 'Stock', 'Unit', 'Price (LKR)', 'Value (LKR)', 'Supplier', 'Status']
+    ];
+
+    products.forEach((product) => {
+      const value = Number(product.price) * product.stock;
+      rows.push([
+        product.name,
+        product.category,
+        product.stock,
+        product.unit,
+        Number(product.price).toFixed(2),
+        value.toFixed(2),
+        product.supplier || '',
+        product.status
+      ]);
+    });
+
+    const escapeCell = (cell) => {
+      const text = String(cell ?? '');
+      if (/[",\n]/.test(text)) {
+        return `"${text.replace(/"/g, '""')}"`;
+      }
+      return text;
+    };
+
+    const csvContent = rows
+      .map((row) => row.map(escapeCell).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `inventory-report-${reportDate.toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Enhanced search and filter function
   const filteredProducts = products.filter(product => {
     // Search matches product name, supplier, or category
@@ -198,7 +256,10 @@ export default function InventoryList() {
               <p className="text-xs xs:text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1">Manage and track your product inventory</p>
             </div>
             <div className="flex gap-2 xs:gap-3 md:gap-4 w-full xs:w-auto">
-              <button className="flex items-center justify-center gap-1.5 xs:gap-2 px-3 xs:px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs xs:text-sm md:text-base flex-1 xs:flex-none">
+              <button
+                onClick={handleExportReport}
+                className="flex items-center justify-center gap-1.5 xs:gap-2 px-3 xs:px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs xs:text-sm md:text-base flex-1 xs:flex-none"
+              >
                 <Download size={18} />
                 Export
               </button>
@@ -419,9 +480,9 @@ export default function InventoryList() {
       {/* Edit Modal */}
       {editModal.isOpen && editModal.product && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
             {/* Modal Header */}
-            <div className="flex justify-between items-center px-6 py-4 border-b dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Edit Product</h2>
               <button
                 onClick={() => setEditModal({ isOpen: false, product: null })}
@@ -450,23 +511,23 @@ export default function InventoryList() {
                   name="category"
                   value={editFormData.category || ''}
                   onChange={handleEditInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock ({editFormData.unit || 'cases'})</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock ({editFormData.unit || 'cases'})</label>
                   <input
                     type="number"
                     name="stock"
                     min="0"
                     value={editFormData.stock || ''}
                     onChange={handleEditInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (LKR) </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price (LKR) </label>
                   <input
                     type="number"
                     name="price"
@@ -474,37 +535,37 @@ export default function InventoryList() {
                     step="0.01"
                     value={editFormData.price || ''}
                     onChange={handleEditInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unit</label>
                 <input
                   type="text"
                   name="unit"
                   value={editFormData.unit || ''}
                   onChange={handleEditInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier </label>
                 <input
                   type="text"
                   name="supplier"
                   value={editFormData.supplier || ''}
                   onChange={handleEditInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                 <select
                   name="status"
                   value={editFormData.status || ''}
                   onChange={handleEditInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 >
                   <option value="In Stock">In Stock</option>
                   <option value="Low Stock">Low Stock</option>
@@ -514,17 +575,17 @@ export default function InventoryList() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t flex gap-3 sticky bottom-0 bg-white">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex gap-3 sticky bottom-0 bg-white dark:bg-gray-900">
               <button
                 onClick={() => setEditModal({ isOpen: false, product: null })}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-black dark:bg-blue-600 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-blue-700 transition disabled:opacity-50"
               >
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
@@ -536,13 +597,13 @@ export default function InventoryList() {
       {/* Add Product Modal */}
       {addModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
             {/* Modal Header */}
-            <div className="flex justify-between items-center px-6 py-4 border-b sticky top-0 bg-white">
-              <h2 className="text-xl font-bold text-gray-900">Add New Product</h2>
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add New Product</h2>
               <button
                 onClick={() => setAddModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               >
                 <X size={24} />
               </button>
@@ -551,24 +612,24 @@ export default function InventoryList() {
             {/* Modal Body */}
             <div className="px-6 py-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product Name </label>
                 <input
                   type="text"
                   name="name"
                   value={newProductForm.name}
                   onChange={handleAddProductChange}
                   placeholder="e.g., Pepsi 300ml"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category </label>
                 <select
                   name="category"
                   value={newProductForm.category}
                   onChange={handleAddProductChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 >
                   <option value="Soft Drinks">Soft Drinks</option>
                   <option value="Energy Drinks">Energy Drinks</option>
@@ -580,7 +641,7 @@ export default function InventoryList() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock </label>
                   <input
                     type="number"
                     name="stock"
@@ -588,16 +649,16 @@ export default function InventoryList() {
                     value={newProductForm.stock}
                     onChange={handleAddProductChange}
                     placeholder="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unit </label>
                   <select
                     name="unit"
                     value={newProductForm.unit}
                     onChange={handleAddProductChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   >
                     <option value="cases">Cases</option>
                     <option value="bottles">Bottles</option>
@@ -610,7 +671,7 @@ export default function InventoryList() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price per Unit (LKR) </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price per Unit (LKR) </label>
                 <input
                   type="number"
                   name="price"
@@ -619,29 +680,29 @@ export default function InventoryList() {
                   value={newProductForm.price}
                   onChange={handleAddProductChange}
                   placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier </label>
                 <input
                   type="text"
                   name="supplier"
                   value={newProductForm.supplier}
                   onChange={handleAddProductChange}
                   placeholder="e.g., PepsiCo Distributors"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status </label>
                 <select
                   name="status"
                   value={newProductForm.status}
                   onChange={handleAddProductChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 >
                   <option value="In Stock">In Stock</option>
                   <option value="Low Stock">Low Stock</option>
@@ -651,17 +712,17 @@ export default function InventoryList() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t flex gap-3 sticky bottom-0 bg-white">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex gap-3 sticky bottom-0 bg-white dark:bg-gray-900">
               <button
                 onClick={() => setAddModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddProduct}
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-black dark:bg-blue-600 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-blue-700 transition disabled:opacity-50"
               >
                 {loading ? 'Adding...' : 'Add Product'}
               </button>

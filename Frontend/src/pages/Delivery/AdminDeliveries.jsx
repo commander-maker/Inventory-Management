@@ -532,16 +532,16 @@ export default function AdminDeliveries() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 dark:bg-opacity-70">
                     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
                         {/* Header */}
-                        <div className="flex items-center justify-between p-6 border-b dark:border-gray-800 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-t-xl">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-t-xl">
                             <div>
-                                <h3 className="text-xl font-bold text-white">Assign Delivery</h3>
-                                <p className="text-blue-100 text-sm mt-1">Assign products to an agent for customer delivery</p>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Assign Delivery</h3>
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Assign products to an agent for customer delivery</p>
                             </div>
                             <button
                                 onClick={() => setShowAssignModal(false)}
-                                className="p-1 hover:bg-white/20 rounded-full transition"
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition"
                             >
-                                <X className="w-5 h-5 text-white" />
+                                <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                             </button>
                         </div>
 
@@ -549,15 +549,15 @@ export default function AdminDeliveries() {
                         <form onSubmit={handleAssignDelivery} className="p-6 space-y-5">
 
                             {/* Step 1: Select Vehicle (Agent) */}
-                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
-                                <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
+                            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
                                     <Truck size={16} />
                                     Step 1: Select Vehicle & Agent
                                 </p>
                                 <select
                                     value={assignForm.vehicleId}
                                     onChange={(e) => setAssignForm(prev => ({ ...prev, vehicleId: e.target.value }))}
-                                    className="w-full px-4 py-2 border border-blue-300 dark:border-blue-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     required
                                 >
                                     <option value="">Select Vehicle (with agent)</option>
@@ -577,8 +577,8 @@ export default function AdminDeliveries() {
                                     )}
                                 </select>
                                 {assignForm.vehicleId && vehiclesWithDrivers.find(v => v.id === assignForm.vehicleId) && (
-                                    <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-900">
-                                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                                    <div className="mt-2 p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                                        <p className="text-xs text-gray-700 dark:text-gray-300">
                                             <span className="font-semibold">Agent:</span>{' '}
                                             {vehiclesWithDrivers.find(v => v.id === assignForm.vehicleId)?.driver?.name}{' '}
                                             · <span className="font-semibold">Phone:</span>{' '}
@@ -589,15 +589,15 @@ export default function AdminDeliveries() {
                             </div>
 
                             {/* Step 2: Select Customer */}
-                            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900 rounded-lg p-4">
-                                <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-3 flex items-center gap-2">
+                            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
                                     <MapPin size={16} />
                                     Step 2: Select Customer (Shop)
                                 </p>
                                 <select
                                     value={assignForm.customerId}
                                     onChange={(e) => setAssignForm(prev => ({ ...prev, customerId: e.target.value }))}
-                                    className="w-full px-4 py-2 border border-green-300 dark:border-green-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     required
                                 >
                                     <option value="">Select Customer</option>
@@ -608,11 +608,11 @@ export default function AdminDeliveries() {
                                     ))}
                                 </select>
                                 {assignForm.customerId && (
-                                    <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded-lg border border-green-100 dark:border-green-900">
+                                    <div className="mt-2 p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
                                         {(() => {
                                             const c = customers.find(c => c.id === parseInt(assignForm.customerId));
                                             return c ? (
-                                                <p className="text-xs text-green-700 dark:text-green-300">
+                                                <p className="text-xs text-gray-700 dark:text-gray-300">
                                                     <span className="font-semibold">Address:</span> {c.address}, {c.city}{' '}
                                                     · <span className="font-semibold">Phone:</span> {c.phone}
                                                 </p>
@@ -623,19 +623,19 @@ export default function AdminDeliveries() {
                             </div>
 
                             {/* Step 3: Product Details */}
-                            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-900 rounded-lg p-4">
-                                <p className="text-sm font-semibold text-purple-800 dark:text-purple-300 mb-3 flex items-center gap-2">
+                            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
                                     <ShoppingCart size={16} />
                                     Step 3: Product & Quantity
                                 </p>
 
                                 {/* Product */}
                                 <div className="mb-3">
-                                    <label className="block text-xs font-medium text-purple-700 dark:text-purple-300 mb-1">Product</label>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Product</label>
                                     <select
                                         value={assignForm.productName}
                                         onChange={(e) => handleProductChange(e.target.value)}
-                                        className="w-full px-4 py-2 border border-purple-300 dark:border-purple-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         required
                                     >
                                         <option value="">Select Product from Inventory</option>
@@ -649,13 +649,13 @@ export default function AdminDeliveries() {
 
                                 {/* Quantity */}
                                 <div className="mb-3">
-                                    <label className="block text-xs font-medium text-purple-700 dark:text-purple-300 mb-1">Quantity</label>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
                                     <input
                                         type="text"
                                         value={assignForm.quantity}
                                         onChange={(e) => handleQuantityChange(e.target.value)}
                                         placeholder="e.g. 50 Bottles, 10 Cases"
-                                        className="w-full px-4 py-2 border border-purple-300 dark:border-purple-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         required
                                     />
                                 </div>
@@ -663,7 +663,7 @@ export default function AdminDeliveries() {
                                 {/* Unit Price & Total */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs font-medium text-purple-700 dark:text-purple-300 mb-1">Unit Price (LKR)</label>
+                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Unit Price (LKR)</label>
                                         <input
                                             type="number"
                                             value={assignForm.unitPrice}
@@ -677,19 +677,19 @@ export default function AdminDeliveries() {
                                                 }));
                                             }}
                                             placeholder="0.00"
-                                            className="w-full px-4 py-2 border border-purple-300 dark:border-purple-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                             min="0"
                                             step="0.01"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-purple-700 dark:text-purple-300 mb-1">Total Amount (LKR)</label>
+                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Total Amount (LKR)</label>
                                         <input
                                             type="number"
                                             value={assignForm.totalAmount}
                                             onChange={(e) => setAssignForm(prev => ({ ...prev, totalAmount: e.target.value }))}
                                             placeholder="Auto-calculated"
-                                            className="w-full px-4 py-2 border border-purple-300 dark:border-purple-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-purple-100 dark:bg-purple-900/30 dark:text-white font-semibold"
+                                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-100 dark:bg-gray-700 dark:text-white font-semibold"
                                             min="0"
                                             step="0.01"
                                         />

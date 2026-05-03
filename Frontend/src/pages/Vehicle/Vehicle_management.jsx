@@ -403,11 +403,11 @@ export default function VehicleManagement() {
               {/* Current Load (if exists) */}
               {vehicle.loads && vehicle.loads.length > 0 && (
                 <div className='border-t border-gray-100 dark:border-gray-800 pt-3 xs:pt-4 mb-3 xs:mb-4'>
-                  <p className='text-xs xs:text-sm font-semibold text-gray-800 dark:text-white mb-2'>Current load:</p>
+                  <p className='text-sm xs:text-base font-bold text-gray-900 dark:text-white mb-2'>Current Load</p>
                   {vehicle.loads.map((load) => (
-                    <div key={load.id} className='flex justify-between text-xs xs:text-sm text-gray-600 dark:text-gray-400 mb-1'>
-                      <span>{load.item}</span>
-                      <span className='font-medium text-gray-800 dark:text-white'>{load.quantity}</span>
+                    <div key={load.id} className='flex justify-between text-sm xs:text-base text-gray-700 dark:text-gray-300 mb-1'>
+                      <span className='font-semibold text-gray-900 dark:text-white'>{load.item}</span>
+                      <span className='font-bold text-gray-900 dark:text-white'>{load.quantity}</span>
                     </div>
                   ))}
                 </div>
@@ -594,11 +594,11 @@ export default function VehicleManagement() {
               </div>
               <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
                 <span className='text-gray-600 dark:text-gray-400 font-medium'>Vehicle Type:</span>
-                <span className='text-gray-800 dark:text-white'>{selectedVehicle.vehicle}</span>
+                <span className='text-gray-800 dark:text-white'>{selectedVehicle.vehicleType}</span>
               </div>
               <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
                 <span className='text-gray-600 dark:text-gray-400 font-medium'>Status:</span>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${selectedVehicle.statusColor}`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedVehicle.status)}`}>
                   {selectedVehicle.status}
                 </span>
               </div>
@@ -616,17 +616,17 @@ export default function VehicleManagement() {
               </div>
               <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
                 <span className='text-gray-600 dark:text-gray-400 font-medium'>Driver:</span>
-                <span className='text-gray-800 dark:text-white'>{selectedVehicle.driver}</span>
+                <span className='text-gray-800 dark:text-white'>{selectedVehicle.driver?.name || 'Not Assigned'}</span>
               </div>
               <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
                 <span className='text-gray-600 dark:text-gray-400 font-medium'>Phone:</span>
-                <span className='text-gray-800 dark:text-white'>{selectedVehicle.phone}</span>
+                <span className='text-gray-800 dark:text-white'>{selectedVehicle.driver?.phone || '-'}</span>
               </div>
-              {selectedVehicle.currentLoad && (
+              {selectedVehicle.loads && selectedVehicle.loads.length > 0 && (
                 <div className='pt-2'>
                   <span className='text-gray-600 dark:text-gray-400 font-medium block mb-2'>Current Load:</span>
-                  {selectedVehicle.currentLoad.map((load, idx) => (
-                    <div key={idx} className='flex justify-between text-sm py-1'>
+                  {selectedVehicle.loads.map((load) => (
+                    <div key={load.id} className='flex justify-between text-sm py-1'>
                       <span className='text-gray-600 dark:text-gray-400'>{load.item}</span>
                       <span className='text-gray-800 dark:text-white'>{load.quantity}</span>
                     </div>

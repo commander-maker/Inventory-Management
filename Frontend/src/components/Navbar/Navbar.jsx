@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, MessageSquare, Maximize, Grid3x3, User, X, Check, Trash2, Clock, Moon, Sun, Menu } from 'lucide-react';
+import { Bell, Maximize, Calendar, Trash2, Clock, Moon, Sun, Menu } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { notificationAPI } from '../../utils/api';
@@ -8,6 +9,7 @@ import { toast } from 'react-toastify';
 export default function Navbar({ onMenuToggle }) {
   const { user } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -75,6 +77,23 @@ export default function Navbar({ onMenuToggle }) {
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+  const handleFullscreenToggle = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error('Error toggling fullscreen:', error);
+    }
+  };
+
+  const handleCalendarClick = () => {
+    const calendarPath = user?.role === 'agent' ? '/my-deliveries' : '/deliveries';
+    navigate(calendarPath);
+  };
+
   // Get role display name
   const getRoleDisplayName = (role) => {
     switch (role) {
@@ -125,22 +144,14 @@ export default function Navbar({ onMenuToggle }) {
 
   return (
     <nav className='bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 xs:px-4 md:px-6 py-3 flex items-center justify-between w-full sticky top-0 z-30 transition-colors duration-200'>
-      {/* Mobile menu button + Search Bar */}
-      <div className='flex items-center gap-2 flex-1'>
+      {/* Mobile menu button */}
+      <div className='flex items-center flex-1'>
         <button
           onClick={onMenuToggle}
           className='p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200 md:hidden'
         >
           <Menu className='w-5 h-5 text-gray-700 dark:text-gray-400' />
         </button>
-        <div className='flex items-center gap-2 bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-lg flex-1 max-w-md transition-colors duration-200'>
-          <Search className='w-5 h-5 text-gray-400 dark:text-gray-500' />
-          <input
-            type='text'
-            placeholder='Search'
-            className='bg-transparent outline-none text-sm text-gray-700 dark:text-gray-300 w-full placeholder-gray-400 dark:placeholder-gray-500'
-          />
-        </div>
       </div>
 
       {/* Right Side Icons */}
@@ -250,13 +261,29 @@ export default function Navbar({ onMenuToggle }) {
 
 
         {/* Fullscreen Icon */}
-        <Maximize className='w-5 h-5 text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded p-1 box-content transition-colors duration-200' />
+        <button
+          onClick={handleFullscreenToggle}
+          className='hover:bg-gray-100 dark:hover:bg-gray-800 rounded p-1 box-content transition-colors duration-200'
+          title='Toggle fullscreen'
+        >
+          <Maximize className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+        </button>
 
-        {/* Grid Icon */}
-        <Grid3x3 className='w-5 h-5 text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded p-1 box-content transition-colors duration-200' />
+        {/* Calendar Icon */}
+        <button
+          onClick={handleCalendarClick}
+          className='hover:bg-gray-100 dark:hover:bg-gray-800 rounded p-1 box-content transition-colors duration-200'
+          title='Open calendar'
+        >
+          <Calendar className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+        </button>
 
         {/* User Profile - Dynamic */}
-        <div className='flex items-center gap-2 cursor-pointer pl-2 ml-2 border-l border-gray-200 dark:border-gray-700'>
+        <div
+          onClick={() => navigate('/settings')}
+          className='flex items-center gap-2 cursor-pointer pl-2 ml-2 border-l border-gray-200 dark:border-gray-700'
+          title='Profile settings'
+        >
           <div className={`w-9 h-9 rounded-full ${getAvatarColor(user?.role)} flex items-center justify-center overflow-hidden border-2 border-white dark:border-gray-900 shadow-sm`}>
             <span className='text-white font-bold text-sm'>
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
