@@ -6,9 +6,11 @@ import {
   createUser, 
   updateUser, 
   deleteUser,
-  updatePassword 
+  updatePassword,
+  uploadAvatar
 } from "../controllers/user.controller.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
+import upload from "../middlewares/upload.middleware.js";
 
 const router = express.Router();
 
@@ -17,6 +19,9 @@ router.use(authenticate);
 
 // Password update route (must come before /:id routes)
 router.put("/password/update", updatePassword);
+
+// Avatar upload route
+router.post("/avatar/upload", upload.single('avatar'), uploadAvatar);
 
 // User CRUD routes
 router.get("/", getAllUsers);

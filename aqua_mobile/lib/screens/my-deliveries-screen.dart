@@ -97,29 +97,26 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1a1f3a),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        automaticallyImplyLeading: false,
         title: const Text(
           'My Deliveries',
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: const Icon(Icons.refresh, color: Colors.black),
             onPressed: _fetchDeliveries,
           ),
         ],
       ),
       body: Container(
-        color: const Color(0xFF1a1f3a),
+        color: Colors.grey.shade50,
         child: isLoading
             ? const Center(
                 child: CircularProgressIndicator(
@@ -140,7 +137,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Colors.black,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -148,7 +145,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                           'View and update your assigned deliveries',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey.shade400,
+                            color: Colors.grey.shade600,
                           ),
                         ),
                       ],
@@ -170,7 +167,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                                 style: TextStyle(
                                   color: selectedFilter == filter
                                       ? Colors.white
-                                      : Colors.grey.shade400,
+                                      : Colors.black,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -181,11 +178,11 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                               },
                               backgroundColor: selectedFilter == filter
                                   ? Colors.blue
-                                  : const Color(0xFF252d48),
+                                  : Colors.white,
                               side: BorderSide(
                                 color: selectedFilter == filter
                                     ? Colors.blue
-                                    : Colors.grey.shade700,
+                                    : Colors.grey.shade300,
                                 width: 1,
                               ),
                               padding: const EdgeInsets.symmetric(
@@ -261,26 +258,26 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 60),
         decoration: BoxDecoration(
-          color: const Color(0xFF252d48),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade700, width: 0.5),
+          border: Border.all(color: Colors.grey.shade200, width: 0.5),
         ),
         child: Column(
           children: [
-            Icon(Icons.local_shipping, size: 64, color: Colors.grey.shade600),
+            Icon(Icons.local_shipping, size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
             const Text(
               'No Deliveries Found',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'You don\'t have any $selectedFilter deliveries.',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -321,9 +318,16 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF252d48),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700, width: 0.5),
+        border: Border.all(color: Colors.grey.shade200, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,7 +341,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -366,12 +370,12 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.location_on, size: 14, color: Colors.grey.shade400),
+              Icon(Icons.location_on, size: 14, color: Colors.grey.shade600),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   location,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -381,11 +385,11 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.phone, size: 14, color: Colors.grey.shade400),
+              Icon(Icons.phone, size: 14, color: Colors.grey.shade600),
               const SizedBox(width: 6),
               Text(
                 customerPhone,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ],
           ),
@@ -393,7 +397,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF1a1f3a),
+              color: Colors.grey.shade50,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -415,7 +419,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: Colors.black,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -438,7 +442,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: Colors.black,
                       ),
                     ),
                   ],
@@ -504,9 +508,16 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF252d48),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -519,7 +530,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                 title,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade400,
+                  color: Colors.grey.shade600,
                   fontWeight: FontWeight.w500,
                 ),
               ),

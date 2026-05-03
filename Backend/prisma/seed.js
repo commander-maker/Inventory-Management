@@ -268,6 +268,37 @@ async function main() {
     }
     console.log(`✅ Created ${expenseData.length} expense records.\n`);
 
+    // ─── 9. RECENT TRANSACTIONS ───
+    console.log('📝 Creating recent transactions...');
+    const recentTransactionsData = [
+        { type: 'Sale', productName: 'Water Bottles 500ml', quantity: '10 cases', amount: 2000, customerId: customers[0].id, customerName: customers[0].shopName, agentId: agents[0].id, agentName: agents[0].name, status: 'Completed', description: 'Sale to Saman Grocery', paymentMethod: 'Cash' },
+        { type: 'Sale', productName: 'Water Bottles 1L', quantity: '15 cases', amount: 5250, customerId: customers[1].id, customerName: customers[1].shopName, agentId: agents[0].id, agentName: agents[0].name, status: 'Completed', description: 'Sale to Nimal Supermart', paymentMethod: 'Bank Transfer' },
+        { type: 'Sale', productName: 'Pepsi 300ml', quantity: '20 cases', amount: 12000, customerId: customers[2].id, customerName: customers[2].shopName, agentId: agents[1].id, agentName: agents[1].name, status: 'Completed', description: 'Sale to Lucky Restaurant', paymentMethod: 'Cash' },
+        { type: 'Return', productName: 'Orange Juice 500ml', quantity: '2 cases', amount: 960, customerId: customers[2].id, customerName: customers[2].shopName, agentId: agents[1].id, agentName: agents[1].name, status: 'Completed', description: 'Customer returned 2 cases', paymentMethod: 'Cash' },
+        { type: 'Sale', productName: 'Red Bull Energy 250ml', quantity: '8 cases', amount: 19200, customerId: customers[6].id, customerName: customers[6].shopName, agentId: agents[3].id, agentName: agents[3].name, status: 'Completed', description: 'Sale to Malini Kadey', paymentMethod: 'Cash' }
+    ];
+
+    for (const rt of recentTransactionsData) {
+        await prisma.recentTransaction.create({
+            data: {
+                type: rt.type,
+                productName: rt.productName,
+                quantity: rt.quantity,
+                amount: rt.amount,
+                customerId: rt.customerId,
+                customerName: rt.customerName,
+                agentId: rt.agentId,
+                agentName: rt.agentName,
+                status: rt.status,
+                description: rt.description,
+                paymentMethod: rt.paymentMethod,
+                createdAt: new Date(Date.now() - Math.random() * 14 * 24 * 60 * 60 * 1000),
+                updatedAt: new Date(),
+            }
+        });
+    }
+    console.log(`✅ Created ${recentTransactionsData.length} recent transactions.\n`);
+
     // ─── SUMMARY ───
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🎉 Database seeded successfully!');

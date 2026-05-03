@@ -2,20 +2,26 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
 const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Enable CORS with configuration
 app.use(cors({
-  origin: ['http://localhost:5000', 'http://localhost:5100', 'http://localhost:8080', 'http://192.168.158.133:5000'],
-  credentials: true,
+  origin: '*', // Allow all origins for development (mobile apps, web, etc.)
+  credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
+
+// Serve static files (for uploads)
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // Import routes
 import authRoutes from "./routes/auth.routes.js";

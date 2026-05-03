@@ -45,3 +45,39 @@
 .animate-slideIn {
   animation: slideIn 0.3s ease-out;
 }
+
+/* Dark mode scrollbar styling */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1F2937;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4B5563;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
+}
+
+/* Apply dark mode scrollbar to elements with overflow */
+.dark .overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-track {
+  background: #1F2937;
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #4B5563;
+  border-radius: 4px;
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
+}

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../models/model.dart';
-import 'dashboard-screen.dart';
+import 'navigation-shell-screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -58,7 +58,7 @@ class _AuthScreenState extends State<AuthScreen> {
         if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => DashboardScreen(user: response.user!),
+            builder: (context) => NavigationShellScreen(user: response.user!),
           ),
         );
       } else {
