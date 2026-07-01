@@ -1,7 +1,7 @@
 // API utility for backend communication
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://inventory-management-fn44.onrender.com/api';
 
 export const getAssetUrl = (assetPath) => {
   if (!assetPath) return null;
