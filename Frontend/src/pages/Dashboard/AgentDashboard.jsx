@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { deliveryAPI, userAPI } from '../../utils/api';
 
 export default function AgentDashboard() {
-    const { user } = useAuth();
+    const { user, setUser } = useAuth();
     const navigate = useNavigate();
     const [deliveries, setDeliveries] = useState([]);
     const [deliveryStats, setDeliveryStats] = useState({
