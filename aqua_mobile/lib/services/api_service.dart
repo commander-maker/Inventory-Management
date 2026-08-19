@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl = 'http://192.168.1.173:5000/api';
 
   // Get authorization header
   static Future<Map<String, String>> _getHeaders() async {
@@ -207,3 +207,56 @@ class UserAPI {
     }
   }
 }
+
+// Customer API
+class CustomerAPI {
+  static Future<List<Map<String, dynamic>>> getCustomers() async {
+    try {
+      final response = await ApiService.get("customers");
+      if (response != null && response['success'] == true) {
+        final data = response['data'];
+        if (data is List) {
+          return List<Map<String, dynamic>>.from(data);
+        }
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to fetch customers: $e');
+    }
+  }
+}
+
+// Finance API
+class FinanceAPI {
+  static Future<List<Map<String, dynamic>>> getRecentTransactions({int limit = 50}) async {
+    try {
+      final response = await ApiService.get("finance/recent-transactions?limit=$limit");
+      if (response != null && response['success'] == true) {
+        final data = response['data'];
+        if (data is List) {
+          return List<Map<String, dynamic>>.from(data);
+        }
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to fetch recent transactions: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getAllIncome() async {
+    try {
+      final response = await ApiService.get("finance/income");
+      if (response != null && response['success'] == true) {
+        final data = response['data'];
+        if (data is List) {
+          return List<Map<String, dynamic>>.from(data);
+        }
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to fetch income: $e');
+    }
+  }
+}
+
+

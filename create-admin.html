@@ -145,9 +145,9 @@
                 role: document.getElementById('role').value,
                 phone: document.getElementById('phone').value
             };
-
+   //localhost:5000
             try {
-                const response = await fetch('http://localhost:5000/api/auth/register', {
+                const response = await fetch('https://inventory-management-fn44.onrender.com/api/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -167,7 +167,7 @@
                         <strong>Login Credentials:</strong><br>
                         Email: ${userData.email}<br>
                         Password: ${userData.password}<br><br>
-                        You can now login at: <a href="http://localhost:3000/login" target="_blank">http://localhost:3000/login</a>
+                        You can now login at: <a href="https://inventory-management-frontend-smoky.vercel.app/login" target="_blank">https://inventory-management-frontend-smoky.vercel.app/login</a>
                         <pre>${JSON.stringify(result.data, null, 2)}</pre>
                     `;
                 } else {
@@ -182,9 +182,9 @@
                 messageDiv.className = 'message error';
                 messageDiv.innerHTML = `
                     <strong>❌ Connection Error!</strong><br>
-                    Make sure the backend server is running on port 5000.<br><br>
+                    Unable to connect to the deployed backend.<br><br>
                     Error: ${error.message}
-                `;
+                    `;
             }
         });
     </script>

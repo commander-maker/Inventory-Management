@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/app_theme.dart';
 import '../models/model.dart';
 import '../services/api_service.dart';
 
@@ -49,60 +50,138 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.scaffoldBackground,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 1,
-        automaticallyImplyLeading: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: const Text(
           'Settings',
           style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
+            color: AppColors.textPrimary,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-      body: Container(
-        color: Colors.grey.shade50,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Title
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Account Settings',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Manage your agent profile, credentials & security',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Profile Summary Header Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: AppTheme.cardDecoration,
+              child: Row(
                 children: [
-                  const Text(
-                    'Settings',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 2),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.person_rounded, color: AppColors.primary, size: 30),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Manage your profile and security settings',
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.user.name.isNotEmpty ? widget.user.name : 'Sales Agent',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.user.email,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.badgeBlueBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      widget.user.role.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.badgeBlueIcon,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              // Tab Navigation
-              Row(
+            ),
+            const SizedBox(height: 20),
+            // Tab Switcher Pills
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.borderLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
                 children: [
                   _buildTabButton('Agent Details', 'profile'),
-                  const SizedBox(width: 12),
-                  _buildTabButton('Password', 'security'),
+                  _buildTabButton('Security', 'security'),
                 ],
               ),
-              const SizedBox(height: 24),
-              // Tab Content
-              if (activeTab == 'profile') _buildProfileTab(),
-              if (activeTab == 'security') _buildSecurityTab(),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            // Form Card
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: AppTheme.cardDecoration,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (activeTab == 'profile') _buildProfileTab(),
+                  if (activeTab == 'security') _buildSecurityTab(),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );
@@ -118,23 +197,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
             saveStatus = '';
           });
         },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isActive ? Colors.blue : Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isActive ? Colors.blue : Colors.grey.shade300,
-              width: 1,
-            ),
+            color: isActive ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [],
           ),
           child: Center(
             child: Text(
               label,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isActive ? Colors.white : Colors.black,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                color: isActive ? AppColors.primary : AppColors.textSecondary,
               ),
             ),
           ),
@@ -147,33 +232,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildFormField('Full Name', nameController, Icons.person),
+        _buildFormField('Full Name', nameController, Icons.person_outlined),
         const SizedBox(height: 16),
-        _buildFormField('Email', emailController, Icons.email),
+        _buildFormField('Email Address', emailController, Icons.email_outlined),
         const SizedBox(height: 16),
-        _buildFormField('Phone', phoneController, Icons.phone),
+        _buildFormField('Phone Number', phoneController, Icons.phone_outlined),
         const SizedBox(height: 16),
         _buildFormField(
-          'Role',
+          'Role & Authorization',
           TextEditingController(text: widget.user.role),
-          Icons.badge,
+          Icons.badge_outlined,
           enabled: false,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         if (saveStatus.isNotEmpty) _buildStatusMessage(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
+          height: 46,
           child: ElevatedButton(
             onPressed: isLoading ? null : () => _handleSaveProfile(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              disabledBackgroundColor: Colors.blue.shade300,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
             child: isLoading
                 ? const SizedBox(
                     height: 20,
@@ -183,14 +261,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text(
-                    'Save Changes',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                : const Text('Save Profile Changes'),
           ),
         ),
       ],
@@ -204,38 +275,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _buildFormField(
           'Current Password',
           currentPasswordController,
-          Icons.lock,
+          Icons.lock_outline_rounded,
           isPassword: true,
         ),
         const SizedBox(height: 16),
         _buildFormField(
           'New Password',
           newPasswordController,
-          Icons.lock,
+          Icons.lock_reset_rounded,
           isPassword: true,
         ),
         const SizedBox(height: 16),
         _buildFormField(
-          'Confirm Password',
+          'Confirm New Password',
           confirmPasswordController,
-          Icons.lock,
+          Icons.check_circle_outline_rounded,
           isPassword: true,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         if (saveStatus.isNotEmpty) _buildStatusMessage(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
+          height: 46,
           child: ElevatedButton(
             onPressed: isLoading ? null : () => _handleChangePassword(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              disabledBackgroundColor: Colors.blue.shade300,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
             child: isLoading
                 ? const SizedBox(
                     height: 20,
@@ -245,14 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text(
-                    'Change Password',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                : const Text('Update Security Password'),
           ),
         ),
       ],
@@ -272,26 +329,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextField(
           controller: controller,
           enabled: enabled,
           obscureText: isPassword && !showNewPassword,
           decoration: InputDecoration(
             hintText: 'Enter $label',
-            hintStyle: TextStyle(color: Colors.grey.shade500),
-            prefixIcon: Icon(icon, color: Colors.blue.shade300, size: 18),
+            prefixIcon: Icon(icon, color: AppColors.textMuted, size: 20),
             suffixIcon: isPassword
                 ? IconButton(
                     icon: Icon(
-                      showNewPassword ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.grey.shade600,
-                      size: 18,
+                      showNewPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: AppColors.textMuted,
+                      size: 20,
                     ),
                     onPressed: () {
                       setState(() {
@@ -300,71 +356,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   )
                 : null,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.blue, width: 2),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
-            ),
-            filled: true,
-            fillColor: enabled ? Colors.white : Colors.grey.shade100,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
+            fillColor: enabled ? Colors.white : AppColors.scaffoldBackground,
           ),
-          style: const TextStyle(fontSize: 13, color: Colors.black),
+          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
         ),
       ],
     );
   }
 
   Widget _buildStatusMessage() {
-    late Color statusColor;
+    late Color statusBg;
+    late Color statusFg;
     late IconData statusIcon;
     String statusText = '';
 
     if (saveStatus == 'success') {
-      statusColor = Colors.green;
-      statusIcon = Icons.check_circle;
-      statusText = 'Changes saved successfully!';
+      statusBg = AppColors.badgeGreenBg;
+      statusFg = AppColors.badgeGreenIcon;
+      statusIcon = Icons.check_circle_outline_rounded;
+      statusText = 'Settings updated successfully!';
     } else if (saveStatus == 'error') {
-      statusColor = Colors.red;
-      statusIcon = Icons.error;
-      statusText = 'Failed to save changes';
+      statusBg = AppColors.badgeRedBg;
+      statusFg = AppColors.badgeRedIcon;
+      statusIcon = Icons.error_outline_rounded;
+      statusText = 'Failed to save changes. Please try again.';
     } else {
-      statusColor = Colors.orange;
-      statusIcon = Icons.info;
-      statusText = 'Saving...';
+      statusBg = AppColors.badgeOrangeBg;
+      statusFg = AppColors.badgeOrangeIcon;
+      statusIcon = Icons.sync_rounded;
+      statusText = 'Saving settings...';
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: statusColor.withOpacity(0.3), width: 1),
+        color: statusBg,
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          Icon(statusIcon, color: statusColor, size: 18),
-          const SizedBox(width: 8),
+          Icon(statusIcon, color: statusFg, size: 18),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               statusText,
               style: TextStyle(
-                fontSize: 12,
-                color: statusColor,
+                fontSize: 13,
+                color: statusFg,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -392,12 +430,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         saveStatus = 'success';
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully!'),
+            backgroundColor: AppColors.badgeGreenIcon,
+          ),
+        );
+      }
 
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
@@ -411,17 +451,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         isLoading = false;
         saveStatus = 'error';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: AppColors.badgeRedIcon,
+          ),
+        );
+      }
     }
   }
 
   void _handleChangePassword() async {
-    // Validation
     if (currentPasswordController.text.isEmpty) {
       setState(() {
         saveStatus = 'error';
@@ -429,21 +470,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter current password'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.badgeRedIcon,
         ),
       );
       return;
     }
 
-    if (newPasswordController.text.isEmpty ||
-        newPasswordController.text.length < 6) {
+    if (newPasswordController.text.isEmpty || newPasswordController.text.length < 6) {
       setState(() {
         saveStatus = 'error';
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Password must be at least 6 characters'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.badgeRedIcon,
         ),
       );
       return;
@@ -456,7 +496,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Passwords do not match'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.badgeRedIcon,
         ),
       );
       return;
@@ -481,12 +521,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         confirmPasswordController.clear();
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password changed successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password changed successfully!'),
+            backgroundColor: AppColors.badgeGreenIcon,
+          ),
+        );
+      }
 
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
@@ -500,12 +542,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         isLoading = false;
         saveStatus = 'error';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: AppColors.badgeRedIcon,
+          ),
+        );
+      }
     }
   }
 }

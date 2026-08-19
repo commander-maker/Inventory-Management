@@ -47,6 +47,20 @@ export const getUserById = async (id) => {
   });
   
   if (!user) throw new Error("User not found");
+
+  if (user.role === 'agent') {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthlyIncome = await prisma.income.aggregate({
+      where: {
+        agentId: user.id,
+        date: { gte: monthStart }
+      },
+      _sum: { amount: true }
+    });
+    user.monthlySales = monthlyIncome._sum.amount || 0;
+  }
+
   return user;
 };
 

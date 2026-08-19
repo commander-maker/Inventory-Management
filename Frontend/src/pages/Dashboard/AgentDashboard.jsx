@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Package, Truck, TrendingUp, Clock, MapPin, Fuel, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { deliveryAPI } from '../../utils/api';
+import { deliveryAPI, userAPI } from '../../utils/api';
 
 export default function AgentDashboard() {
     const { user } = useAuth();
@@ -54,6 +54,25 @@ export default function AgentDashboard() {
 
         fetchDeliveries();
     }, []);
+
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const refreshAgentProfile = async () => {
+            try {
+                const response = await userAPI.getById(user.id);
+                if (response.data.success && response.data.data) {
+                    const updatedUser = response.data.data;
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                }
+            } catch (err) {
+                console.error('Failed to refresh agent profile:', err);
+            }
+        };
+
+        refreshAgentProfile();
+    }, [user?.id, setUser]);
 
     // Quick Action Handlers
     const handleUpdateDelivery = () => {
@@ -109,7 +128,7 @@ export default function AgentDashboard() {
     // Agent stats
     const agentStats = [
         { label: 'Assigned Vehicle', value: user?.vehicle || 'GJ-01-AB-1234', icon: Truck, color: 'text-blue-500', bgColor: 'bg-blue-100' },
-        { label: 'Monthly Sales', value: `Rs ${Number(user?.monthlySales || 45000).toLocaleString()}`, icon: TrendingUp, color: 'text-green-500', bgColor: 'bg-green-100' },
+        { label: 'Monthly Sales', value: `Rs ${Number(user?.monthlySales ?? 0).toLocaleString()}`, icon: TrendingUp, color: 'text-green-500', bgColor: 'bg-green-100' },
         { label: 'Deliveries Today', value: deliveryStats.total.toString(), icon: Package, color: 'text-purple-500', bgColor: 'bg-purple-100' },
         { label: 'Completed Today', value: deliveryStats.completed.toString(), icon: CheckCircle, color: 'text-orange-500', bgColor: 'bg-orange-100' }
     ];

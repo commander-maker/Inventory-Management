@@ -12,8 +12,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Enable CORS with configuration
 app.use(cors({
-  origin: '*', // Allow all origins for development (mobile apps, web, etc.)
-  credentials: false,
+  origin: (origin, callback) => {
+    // Allow requests from localhost (development)
+    if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+      callback(null, true);
+    } 
+    // Allow requests from web frontends
+    else if (['https://inventory-management-frontend-smoky.vercel.app', 'http://localhost:5173'].includes(origin)) {
+      callback(null, true);
+    } 
+    // Allow requests from mobile apps (Flutter, etc.) - they don't send origin header
+    else {
+      callback(null, true); // Allow all for now, restrict later if needed
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));

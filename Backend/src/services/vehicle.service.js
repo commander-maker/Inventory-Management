@@ -290,14 +290,27 @@ export const updateVehicleLoad = async (loadId, { quantity, saleData }, userId) 
   const load = await prisma.vehicleLoad.findUnique({ where: { id: parseInt(loadId) } });
   if (!load) throw new Error("Load not found");
 
-  // If saleData is provided, create an income record for the sale
+  // If saleData is provided, create an income record and a RecentTransaction record for the sale
   if (saleData && saleData.customerId && saleData.cashAmount) {
     const now = new Date();
+
+    const customer = await prisma.customer.findUnique({
+      where: { id: parseInt(saleData.customerId) }
+    });
+
+    const agent = userId ? await prisma.user.findUnique({
+      where: { id: parseInt(userId) }
+    }) : null;
+
+    const unitText = saleData.unit ? saleData.unit : 'units';
+    const distQty = saleData.distributedQuantity !== undefined ? saleData.distributedQuantity : 1;
+    const itemName = saleData.itemName || load.item || 'Product';
+
     const incomeData = {
       type: 'Sales',
       category: 'Product Sales',
       amount: parseFloat(saleData.cashAmount),
-      description: `Sale of ${saleData.distributedQuantity} ${saleData.unit} of ${saleData.itemName} to customer`,
+      description: `Sale of ${distQty} ${unitText} of ${itemName} to customer`,
       customerId: parseInt(saleData.customerId),
       agentId: userId ? parseInt(userId) : null,
       paymentMethod: saleData.paymentMethod || 'Cash',
@@ -308,6 +321,26 @@ export const updateVehicleLoad = async (loadId, { quantity, saleData }, userId) 
 
     await prisma.income.create({
       data: incomeData
+    });
+
+    // Create RecentTransaction record so it is stored in Recent Transactions!
+    const custName = customer ? (customer.shopName || customer.ownerName) : 'Customer';
+    await prisma.recentTransaction.create({
+      data: {
+        type: 'Sale',
+        productName: itemName,
+        quantity: `${distQty} ${unitText}`,
+        amount: parseFloat(saleData.cashAmount),
+        customerId: parseInt(saleData.customerId),
+        customerName: custName,
+        agentId: userId ? parseInt(userId) : null,
+        agentName: agent ? agent.name : 'Agent',
+        status: 'Completed',
+        description: `Direct Vehicle Sale of ${distQty} ${unitText}`,
+        paymentMethod: saleData.paymentMethod || 'Cash',
+        createdAt: now,
+        updatedAt: now
+      }
     });
   }
 

@@ -118,37 +118,168 @@ export const createDelivery = async (data) => {
   return delivery;
 };
 
+const getLeadingQuantity = (value) => {
+  const match = String(value ?? '').match(/^\s*(\d+(?:\.\d+)?)/);
+  return match ? parseFloat(match[1]) : 0;
+};
+
+const updateVehicleLoadForDelivery = async (tx, delivery) => {
+  const deliveredQuantity = getLeadingQuantity(delivery.quantity);
+  if (deliveredQuantity <= 0) {
+    throw new Error('Delivery quantity must be a positive number');
+  }
+
+  const load = await tx.vehicleLoad.findFirst({
+    where: {
+      vehicleId: delivery.vehicleId,
+      item: {
+        equals: delivery.productName,
+        mode: 'insensitive'
+      }
+    },
+    orderBy: { createdAt: 'asc' }
+  });
+
+  if (!load) {
+    throw new Error(`No vehicle inventory found for ${delivery.productName}`);
+  }
+
+  const availableQuantity = getLeadingQuantity(load.quantity);
+  if (availableQuantity < deliveredQuantity) {
+    throw new Error(
+      `Insufficient vehicle inventory. Available: ${availableQuantity}, Requested: ${deliveredQuantity}`
+    );
+  }
+
+  const remainingQuantity = availableQuantity - deliveredQuantity;
+  const unit = String(load.quantity).replace(/^\s*\d+(?:\.\d+)?\s*/, '').trim();
+
+  await tx.vehicleLoad.update({
+    where: { id: load.id },
+    data: {
+      quantity: unit
+        ? `${remainingQuantity} ${unit}`
+        : remainingQuantity.toString()
+    }
+  });
+};
+
 // Update delivery status (agent completing delivery)
 export const updateDeliveryStatus = async (id, agentId, data) => {
   const { status, notes } = data;
 
-  const updateData = {
-    status,
-    notes: notes || undefined,
-    updatedAt: new Date()
-  };
+  const updatedDelivery = await prisma.$transaction(async (tx) => {
+    const currentDelivery = await tx.deliveryAssignment.findUnique({
+      where: { id: parseInt(id) },
+      include: { Customer: true, Vehicle: true }
+    });
 
-  // If status is Delivered, set deliveredAt and deliveredBy
-  if (status === "Delivered") {
-    updateData.deliveredAt = new Date();
-    updateData.deliveredBy = parseInt(agentId);
-  }
+    if (!currentDelivery) throw new Error('Delivery not found');
 
-  const updatedDelivery = await prisma.deliveryAssignment.update({
-    where: { id: parseInt(id) },
-    data: updateData,
-    include: {
-      Customer: true,
-      Vehicle: true,
-      User: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true
+    // Completion is idempotent: retrying the mobile request cannot create a second sale.
+    if (status === 'Delivered' && currentDelivery.incomeId == null) {
+      const now = new Date();
+      const quantity = getLeadingQuantity(currentDelivery.quantity);
+      const amount = currentDelivery.totalAmount != null
+        ? parseFloat(currentDelivery.totalAmount)
+        : (parseFloat(currentDelivery.unitPrice) || 0) * quantity;
+
+      if (amount <= 0) {
+        throw new Error('A valid delivery amount is required before completing delivery');
+      }
+
+      await updateVehicleLoadForDelivery(tx, currentDelivery);
+
+      const income = await tx.income.create({
+        data: {
+          type: 'Sales',
+          category: 'Product Sales',
+          amount,
+          description: `Sale of ${currentDelivery.quantity} of ${currentDelivery.productName} to ${currentDelivery.Customer.shopName}`,
+          customerId: currentDelivery.customerId,
+          agentId: parseInt(agentId),
+          paymentMethod: 'Cash',
+          date: now,
+          createdAt: now,
+          updatedAt: now
+        }
+      });
+
+      const agent = await tx.user.findUnique({
+        where: { id: parseInt(agentId) },
+        select: { name: true }
+      });
+
+      await tx.recentTransaction.create({
+        data: {
+          type: 'Sale',
+          productName: currentDelivery.productName,
+          quantity: currentDelivery.quantity,
+          amount,
+          customerId: currentDelivery.customerId,
+          customerName: currentDelivery.Customer.shopName,
+          agentId: parseInt(agentId),
+          agentName: agent?.name || 'Agent',
+          status: 'Completed',
+          description: `Delivery sale to ${currentDelivery.Customer.shopName}`,
+          paymentMethod: 'Cash',
+          createdAt: now,
+          updatedAt: now
+        }
+      });
+
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthlyIncome = await tx.income.aggregate({
+        where: {
+          agentId: parseInt(agentId),
+          date: { gte: monthStart }
+        },
+        _sum: { amount: true }
+      });
+
+      await tx.user.update({
+        where: { id: parseInt(agentId) },
+        data: { monthlySales: monthlyIncome._sum.amount || 0 }
+      });
+
+      return tx.deliveryAssignment.update({
+        where: { id: parseInt(id) },
+        data: {
+          status,
+          notes: notes || undefined,
+          updatedAt: now,
+          deliveredAt: now,
+          deliveredBy: parseInt(agentId),
+          incomeId: income.id
+        },
+        include: {
+          Customer: true,
+          Vehicle: true,
+          User: {
+            select: { id: true, name: true, email: true, phone: true }
+          }
+        }
+      });
+    }
+
+    return tx.deliveryAssignment.update({
+      where: { id: parseInt(id) },
+      data: {
+        status,
+        notes: notes || undefined,
+        updatedAt: new Date(),
+        ...(status === 'Delivered'
+          ? { deliveredAt: new Date(), deliveredBy: parseInt(agentId) }
+          : {})
+      },
+      include: {
+        Customer: true,
+        Vehicle: true,
+        User: {
+          select: { id: true, name: true, email: true, phone: true }
         }
       }
-    }
+    });
   });
 
   // Notify admins about the status update
