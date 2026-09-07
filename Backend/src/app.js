@@ -80,4 +80,13 @@ app.get("/api/", (req, res) => {
   });
 });
 
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "AquaTrack Backend API is running",
+    api: "/api",
+    health: "/api/health"
+  });
+});
+
 export default app;
