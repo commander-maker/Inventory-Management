@@ -158,19 +158,19 @@ export default function Dashboard() {
   };
 
   const getTransactionColor = (productName) => {
-    if (!productName) return 'bg-gray-100';
+    if (!productName) return 'bg-gray-100 dark:bg-[#171b2b]';
     const name = productName.toLowerCase();
-    if (name.includes('water') || name.includes('mineral')) return 'bg-blue-100';
-    if (name.includes('energy') || name.includes('bull') || name.includes('monster')) return 'bg-yellow-100';
-    return 'bg-red-100';
+    if (name.includes('water') || name.includes('mineral')) return 'bg-blue-100 dark:bg-[#1c3048]';
+    if (name.includes('energy') || name.includes('bull') || name.includes('monster')) return 'bg-yellow-100 dark:bg-[#342b1d]';
+    return 'bg-red-100 dark:bg-[#3a1d22]';
   };
 
   const getTransactionIconColor = (productName) => {
-    if (!productName) return 'text-gray-500';
+    if (!productName) return 'text-gray-500 dark:text-gray-200';
     const name = productName.toLowerCase();
-    if (name.includes('water') || name.includes('mineral')) return 'text-blue-500';
-    if (name.includes('energy') || name.includes('bull') || name.includes('monster')) return 'text-yellow-500';
-    return 'text-red-500';
+    if (name.includes('water') || name.includes('mineral')) return 'text-blue-500 dark:text-[#93c5fd]';
+    if (name.includes('energy') || name.includes('bull') || name.includes('monster')) return 'text-yellow-500 dark:text-[#fcd34d]';
+    return 'text-red-500 dark:text-[#fca5a5]';
   };
 
   // Stats data — all from API
@@ -223,7 +223,7 @@ export default function Dashboard() {
       <div className="px-4 xs:px-5 md:px-8 py-4 xs:py-5 md:py-6 grid grid-cols-1 md:grid-cols-4 gap-4 xs:gap-5 md:gap-6">
 
         {/* Recent Transactions — from deliveries API */}
-        <div className="col-span-1 md:col-span-2 bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
+        <div className="col-span-1 md:col-span-2 bg-white dark:bg-[#111827] rounded-lg shadow-sm border border-gray-100 dark:border-[#27334c] p-4 xs:p-5 md:p-6">
           <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-1 xs:mb-2">Recent Transactions</h2>
           <p className="text-gray-600 dark:text-gray-400 text-xs xs:text-sm mb-4 xs:mb-5 md:mb-6">Latest sales and inventory movements</p>
 
@@ -238,7 +238,7 @@ export default function Dashboard() {
                 return (
                   <div
                     key={transaction.id}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 xs:p-4 hover:shadow-md transition cursor-pointer bg-white dark:bg-gray-800"
+                    className="border border-gray-200 dark:border-[#27334c] rounded-lg p-3 xs:p-4 hover:shadow-md transition cursor-pointer bg-white dark:bg-[#161b2d]"
                     onClick={() => setSelectedTransaction(selectedTransaction === transaction.id ? null : transaction.id)}
                   >
                     <div className="flex items-center gap-2.5 xs:gap-3 md:gap-4">
@@ -265,7 +265,7 @@ export default function Dashboard() {
                     </div>
 
                     {selectedTransaction === transaction.id && (
-                      <div className="mt-3 xs:mt-4 pt-3 xs:pt-4 border-t dark:border-gray-700">
+                      <div className="mt-3 xs:mt-4 pt-3 xs:pt-4 border-t dark:border-[#27334c]">
                         <div className="grid grid-cols-1 xs:grid-cols-3 gap-2 xs:gap-4 text-xs xs:text-sm">
                           <div>
                             <p className="text-gray-600 dark:text-gray-400">Handled by</p>
@@ -296,7 +296,7 @@ export default function Dashboard() {
         {/* Low Stock Alert & Delivery Stats */}
         <div className="col-span-1 md:col-span-2 space-y-4 xs:space-y-5 md:space-y-6">
           {/* Low Stock Alert — from inventory API */}
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
+          <div className="bg-white dark:bg-[#111827] rounded-lg shadow-sm border border-gray-100 dark:border-[#27334c] p-4 xs:p-5 md:p-6">
             <div className="flex items-center gap-2 mb-1 xs:mb-2">
               <AlertTriangle className="text-orange-500" size={20} />
               <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white">Low Stock Alert</h2>
@@ -310,7 +310,7 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-3">
                 {lowStockItems.map((item) => (
-                  <div key={item.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-md transition bg-white dark:bg-gray-800">
+                  <div key={item.id} className="border border-gray-200 dark:border-[#27334c] rounded-lg p-3 hover:shadow-md transition bg-white dark:bg-[#161b2d]">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white text-sm">{item.name}</p>
@@ -330,24 +330,24 @@ export default function Dashboard() {
           </div>
 
           {/* Delivery Status Overview — from delivery API */}
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
+          <div className="bg-white dark:bg-[#111827] rounded-lg shadow-sm border border-gray-100 dark:border-[#27334c] p-4 xs:p-5 md:p-6">
             <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-3 xs:mb-4">Delivery Status Overview</h2>
             <div className="grid grid-cols-2 gap-3 xs:gap-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 xs:p-4">
-                <p className="text-xs xs:text-sm text-yellow-700 mb-1">Pending</p>
-                <p className="text-lg xs:text-xl md:text-2xl font-bold text-yellow-800">{loading ? '...' : deliveryStats.pending}</p>
+              <div className="bg-yellow-50 dark:bg-[#1f2430] border border-yellow-200 dark:border-[#384152] rounded-lg p-3 xs:p-4">
+                <p className="text-xs xs:text-sm text-yellow-700 dark:text-yellow-400 mb-1">Pending</p>
+                <p className="text-lg xs:text-xl md:text-2xl font-bold text-yellow-800 dark:text-white">{loading ? '...' : deliveryStats.pending}</p>
               </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 xs:p-4">
-                <p className="text-xs xs:text-sm text-blue-700 mb-1">In Transit</p>
-                <p className="text-lg xs:text-xl md:text-2xl font-bold text-blue-800">{loading ? '...' : deliveryStats.inTransit}</p>
+              <div className="bg-blue-50 dark:bg-[#1f2430] border border-blue-200 dark:border-[#384152] rounded-lg p-3 xs:p-4">
+                <p className="text-xs xs:text-sm text-blue-700 dark:text-blue-400 mb-1">In Transit</p>
+                <p className="text-lg xs:text-xl md:text-2xl font-bold text-blue-800 dark:text-white">{loading ? '...' : deliveryStats.inTransit}</p>
               </div>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 xs:p-4">
-                <p className="text-xs xs:text-sm text-green-700 mb-1">Delivered</p>
-                <p className="text-lg xs:text-xl md:text-2xl font-bold text-green-800">{loading ? '...' : deliveryStats.delivered}</p>
+              <div className="bg-green-50 dark:bg-[#1f2430] border border-green-200 dark:border-[#384152] rounded-lg p-3 xs:p-4">
+                <p className="text-xs xs:text-sm text-green-700 dark:text-green-400 mb-1">Delivered</p>
+                <p className="text-lg xs:text-xl md:text-2xl font-bold text-green-800 dark:text-white">{loading ? '...' : deliveryStats.delivered}</p>
               </div>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 xs:p-4">
-                <p className="text-xs xs:text-sm text-red-700 mb-1">Failed</p>
-                <p className="text-lg xs:text-xl md:text-2xl font-bold text-red-800">{loading ? '...' : deliveryStats.failed}</p>
+              <div className="bg-red-50 dark:bg-[#1f2430] border border-red-200 dark:border-[#384152] rounded-lg p-3 xs:p-4">
+                <p className="text-xs xs:text-sm text-red-700 dark:text-red-400 mb-1">Failed</p>
+                <p className="text-lg xs:text-xl md:text-2xl font-bold text-red-800 dark:text-white">{loading ? '...' : deliveryStats.failed}</p>
               </div>
             </div>
           </div>
