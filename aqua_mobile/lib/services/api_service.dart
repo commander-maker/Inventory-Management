@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.173:5000/api';
+  static const String baseUrl = 'https://inventory-management-fn44.onrender.com/api';
 
   // Get authorization header
   static Future<Map<String, String>> _getHeaders() async {
