@@ -151,8 +151,6 @@ export default function UserManagement() {
           email: email
         });
 
-        // Refresh user list
-        await fetchUsers();
         setShowAddModal(false);
 
         // Reset form
@@ -163,6 +161,9 @@ export default function UserManagement() {
           phone: '',
           vehicle: ''
         });
+
+        // Refresh the list without delaying the successful create response
+        fetchUsers();
       }
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Failed to create user';
@@ -419,9 +420,10 @@ export default function UserManagement() {
                 </button>
                 <button
                   type='submit'
+                  disabled={loading}
                   className='flex-1 px-4 py-2 bg-black dark:bg-blue-600 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-blue-700 transition-colors'
                 >
-                  Add User
+                  {loading ? 'Creating...' : 'Add User'}
                 </button>
               </div>
             </form>
