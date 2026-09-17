@@ -32,6 +32,7 @@ export default function FinanceDashboard() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedExpense, setExpandedExpense] = useState(null);
+  const [expandedIncome, setExpandedIncome] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddRevenueModal, setShowAddRevenueModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -444,9 +445,9 @@ export default function FinanceDashboard() {
           </div>
 
           {/* Main Content */}
-          <div className="px-4 xs:px-5 md:px-8 py-2 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+          <div className="px-4 xs:px-5 md:px-8 py-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Expense Breakdown */}
-            <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
               <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-2">Expense Breakdown</h2>
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
                 {filterLabel} expense distribution by category
@@ -504,9 +505,14 @@ export default function FinanceDashboard() {
                                     <div className="flex-1 min-w-0">
                                       <p className="text-xs xs:text-sm font-medium text-gray-900 dark:text-white truncate">{exp.description}</p>
                                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        {new Date(exp.date).toLocaleDateString()}
+                                        {exp.type} · {new Date(exp.date).toLocaleDateString()}
                                         {exp.billNumber && ` · Bill: ${exp.billNumber}`}
-                                        {exp.User_Expense_agentIdToUser && ` · Agent: ${exp.User_Expense_agentIdToUser.name}`}
+                                        {exp.vehicleId && ` · Vehicle: ${exp.vehicleId}`}
+                                      </p>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {exp.agentId ? `Agent ID: ${exp.agentId}` : 'No agent assigned'}
+                                        {exp.User_Expense_agentIdToUser && ` (${exp.User_Expense_agentIdToUser.name})`}
+                                        {exp.approvedBy && ` · Approved by: ${exp.approvedBy}`}
                                       </p>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -535,31 +541,52 @@ export default function FinanceDashboard() {
               )}
             </div>
 
-            {/* Recent Expenses */}
+            {/* Income Breakdown */}
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
-              <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-2">Recent Expenses</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 md:mb-6">Latest financial transactions</p>
+              <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-2">Income Breakdown</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">Income records for {filterLabel.toLowerCase()}</p>
 
-              {expenses.length === 0 ? (
+              {income.length === 0 ? (
                 <div className="text-center py-8 text-gray-400 dark:text-gray-600">
                   <FileText size={36} className="mx-auto mb-2" />
-                  <p className="text-sm">No recent expenses</p>
+                  <p className="text-sm">No income for this period</p>
                 </div>
               ) : (
                 <div className="space-y-4 max-h-[500px] overflow-y-auto">
-                  {expenses.slice(0, 15).map((expense) => {
-                    const meta = getCategoryMeta(expense.category);
-                    const IconComponent = meta.icon;
+                  {income.map((transaction) => {
                     return (
-                      <div key={expense.id} className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg flex-shrink-0 ${meta.bgLight} dark:bg-opacity-20`}>
-                          <IconComponent className="text-gray-700 dark:text-gray-300" size={20} />
+                      <div
+                        key={transaction.id}
+                        className="border border-gray-200 dark:border-gray-800 rounded-lg p-3 xs:p-4 hover:shadow-md dark:hover:bg-gray-800 transition cursor-pointer"
+                        onClick={() => setExpandedIncome(expandedIncome === transaction.id ? null : transaction.id)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-lg flex-shrink-0 bg-green-100 dark:bg-green-900/30">
+                            <TrendingUp className="text-green-600 dark:text-green-400" size={20} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{transaction.description}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {transaction.type} · {transaction.category} · {new Date(transaction.date).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <p className="text-sm font-semibold text-green-600 dark:text-green-400 flex-shrink-0">
+                            + {formatAmount(transaction.amount)}
+                          </p>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{expense.description}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(expense.date).toLocaleDateString()}</p>
-                        </div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">{formatAmount(expense.amount)}</p>
+                        {expandedIncome === transaction.id && (
+                          <div className="mt-4 pt-4 pl-11 border-t dark:border-gray-800 text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                            <p>
+                              Agent ID: {transaction.agentId || 'Not assigned'}
+                              {transaction.User?.name && ` (${transaction.User.name})`}
+                              {' · '}Customer ID: {transaction.customerId || 'Walk-in'}
+                            </p>
+                            <p>
+                              Payment: {transaction.paymentMethod || 'Not specified'}
+                              {transaction.receiptNumber && ` · Receipt: ${transaction.receiptNumber}`}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
