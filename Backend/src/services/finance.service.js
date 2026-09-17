@@ -190,6 +190,7 @@ export const getAllIncome = async (filters = {}) => {
 
     if (filters.type) where.type = filters.type;
     if (filters.category) where.category = filters.category;
+    if (filters.agentId) where.agentId = filters.agentId;
 
     if (filters.month && filters.year) {
         const startDate = new Date(filters.year, filters.month - 1, 1);

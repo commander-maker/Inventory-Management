@@ -11,6 +11,7 @@ import UserManagement from '../pages/User/User_management';
 import Settings from '../pages/Settings/Settings';
 import MyVehicle from '../pages/Vehicle/MyVehicle';
 import MyDeliveries from '../pages/Delivery/MyDeliveries';
+import MyTransactions from '../pages/Finance/MyTransactions';
 import AdminDeliveries from '../pages/Delivery/AdminDeliveries';
 import CustomerList from '../pages/Customer/CustomerList';
 import DashboardLayout from '../layouts/DashboardLayout';
@@ -102,6 +103,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <MyVehicle />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-transactions"
+        element={
+          <ProtectedRoute>
+            <MyTransactions />
           </ProtectedRoute>
         }
       />
