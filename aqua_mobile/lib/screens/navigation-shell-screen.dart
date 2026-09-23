@@ -24,8 +24,11 @@ class _NavigationShellScreenState extends State<NavigationShellScreen> {
     super.initState();
     _screens = [
       DashboardScreen(user: widget.user, onTabSelect: _onNavItemTapped),
-      MyDeliveriesScreen(user: widget.user),
-      MyVehicleInventoryScreen(user: widget.user),
+      MyDeliveriesScreen(user: widget.user, onTabSelect: _onNavItemTapped),
+      MyVehicleInventoryScreen(
+        user: widget.user,
+        onTabSelect: _onNavItemTapped,
+      ),
       SettingsScreen(user: widget.user),
     ];
   }

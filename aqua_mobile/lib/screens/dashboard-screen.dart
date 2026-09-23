@@ -23,39 +23,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool isLoading = true;
   String? errorMessage;
 
-  // Dark mode state - Dashboard only
-  bool _isDarkMode = false;
+  // Dark mode state - shared across all screens via ThemeController
+  bool get _isDarkMode => ThemeController.isDarkMode.value;
 
   @override
   void initState() {
     super.initState();
-    _loadThemePreference();
+    ThemeController.isDarkMode.addListener(_onThemeChanged);
+    ThemeController.load();
     _fetchDashboardData();
   }
 
-  // Load saved dashboard theme
-  Future<void> _loadThemePreference() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    if (!mounted) return;
-
-    setState(() {
-      _isDarkMode = prefs.getBool('agent_dashboard_dark_mode') ?? false;
-    });
+  @override
+  void dispose() {
+    ThemeController.isDarkMode.removeListener(_onThemeChanged);
+    super.dispose();
   }
 
-  // Save dashboard theme
-  Future<void> _toggleTheme(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setBool('agent_dashboard_dark_mode', value);
-
-    if (!mounted) return;
-
-    setState(() {
-      _isDarkMode = value;
-    });
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
   }
+
+  Future<void> _toggleTheme(bool value) => ThemeController.toggle(value);
 
   Future<void> _fetchDashboardData() async {
     try {

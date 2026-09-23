@@ -25,9 +25,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController newPasswordController;
   late TextEditingController confirmPasswordController;
 
+  // ------------------------------------------------------------
+  // DARK / LIGHT MODE (shared across all screens via ThemeController)
+  // ------------------------------------------------------------
+
+  bool get _isDarkMode => ThemeController.isDarkMode.value;
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _toggleTheme(bool value) => ThemeController.toggle(value);
+
+  Color get _backgroundColor =>
+      _isDarkMode ? const Color(0xFF121212) : AppColors.scaffoldBackground;
+
+  Color get _cardColor => _isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+
+  Color get _primaryTextColor =>
+      _isDarkMode ? Colors.white : AppColors.textPrimary;
+
+  Color get _secondaryTextColor =>
+      _isDarkMode ? Colors.white70 : AppColors.textSecondary;
+
+  Color get _mutedTextColor =>
+      _isDarkMode ? Colors.white54 : AppColors.textMuted;
+
+  Color get _borderColor =>
+      _isDarkMode ? Colors.white12 : AppColors.borderLight;
+
+  BoxDecoration get _cardDecoration => BoxDecoration(
+    color: _cardColor,
+    borderRadius: BorderRadius.circular(16),
+    border: Border.all(color: _borderColor),
+    boxShadow: _isDarkMode
+        ? []
+        : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+  );
+
   @override
   void initState() {
     super.initState();
+    ThemeController.isDarkMode.addListener(_onThemeChanged);
+    ThemeController.load();
     nameController = TextEditingController(text: widget.user.name);
     emailController = TextEditingController(text: widget.user.email);
     phoneController = TextEditingController();
@@ -38,6 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
+    ThemeController.isDarkMode.removeListener(_onThemeChanged);
     nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
@@ -49,139 +96,159 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: const Text(
-          'Settings',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: _isDarkMode ? Brightness.dark : Brightness.light,
+        scaffoldBackgroundColor: _backgroundColor,
+        cardColor: _cardColor,
+        dividerColor: _borderColor,
+      ),
+      child: Scaffold(
+        backgroundColor: _backgroundColor,
+        appBar: AppBar(
+          backgroundColor: _cardColor,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          iconTheme: IconThemeData(color: _primaryTextColor),
+          title: Text(
+            'Settings',
+            style: TextStyle(
+              color: _primaryTextColor,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Title
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Account Settings',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Manage your agent profile, credentials & security',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Profile Summary Header Card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: AppTheme.cardDecoration,
-              child: Row(
-                children: [
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 2),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.person_rounded, color: AppColors.primary, size: 30),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.user.name.isNotEmpty ? widget.user.name : 'Sales Agent',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.user.email,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.badgeBlueBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      widget.user.role.toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.badgeBlueIcon,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Tab Switcher Pills
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.borderLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  _buildTabButton('Agent Details', 'profile'),
-                  _buildTabButton('Security', 'security'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Form Card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: AppTheme.cardDecoration,
-              child: Column(
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Title
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (activeTab == 'profile') _buildProfileTab(),
-                  if (activeTab == 'security') _buildSecurityTab(),
+                  const Text(
+                    'Account Settings',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Manage your agent profile, credentials & security',
+                    style: TextStyle(fontSize: 14, color: _secondaryTextColor),
+                  ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 20),
+              // Profile Summary Header Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: _cardDecoration,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.person_rounded,
+                          color: AppColors.primary,
+                          size: 30,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.user.name.isNotEmpty
+                                ? widget.user.name
+                                : 'Sales Agent',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: _primaryTextColor,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.user.email,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _secondaryTextColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.badgeBlueBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        widget.user.role.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.badgeBlueIcon,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Tab Switcher Pills
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: _isDarkMode
+                      ? const Color(0xFF2A2A2A)
+                      : AppColors.borderLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    _buildTabButton('Agent Details', 'profile'),
+                    _buildTabButton('Security', 'security'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Form Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: _cardDecoration,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (activeTab == 'profile') _buildProfileTab(),
+                    if (activeTab == 'security') _buildSecurityTab(),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -201,7 +268,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
+            color: isActive ? _cardColor : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: isActive
                 ? [
@@ -219,7 +286,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
+                color: isActive ? AppColors.primary : _secondaryTextColor,
               ),
             ),
           ),
@@ -328,10 +395,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: _primaryTextColor,
           ),
         ),
         const SizedBox(height: 6),
@@ -341,12 +408,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           obscureText: isPassword && !showNewPassword,
           decoration: InputDecoration(
             hintText: 'Enter $label',
-            prefixIcon: Icon(icon, color: AppColors.textMuted, size: 20),
+            prefixIcon: Icon(icon, color: _mutedTextColor, size: 20),
             suffixIcon: isPassword
                 ? IconButton(
                     icon: Icon(
-                      showNewPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      color: AppColors.textMuted,
+                      showNewPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: _mutedTextColor,
                       size: 20,
                     ),
                     onPressed: () {
@@ -356,9 +425,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   )
                 : null,
-            fillColor: enabled ? Colors.white : AppColors.scaffoldBackground,
+            fillColor: enabled ? _cardColor : _backgroundColor,
           ),
-          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 14, color: _primaryTextColor),
         ),
       ],
     );
@@ -476,7 +545,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
 
-    if (newPasswordController.text.isEmpty || newPasswordController.text.length < 6) {
+    if (newPasswordController.text.isEmpty ||
+        newPasswordController.text.length < 6) {
       setState(() {
         saveStatus = 'error';
       });

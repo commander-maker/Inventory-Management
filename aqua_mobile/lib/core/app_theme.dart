@@ -1,4 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Single source of truth for the agent app's dark/light mode so every
+/// screen toggles and stays in sync together.
+class ThemeController {
+  static const String _prefsKey = 'agent_dashboard_dark_mode';
+  static final ValueNotifier<bool> isDarkMode = ValueNotifier<bool>(false);
+
+  static Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    isDarkMode.value = prefs.getBool(_prefsKey) ?? false;
+  }
+
+  static Future<void> toggle(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsKey, value);
+    isDarkMode.value = value;
+  }
+}
 
 class AppColors {
   // Brand & Primary Palette
