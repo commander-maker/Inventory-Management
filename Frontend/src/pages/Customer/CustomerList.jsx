@@ -118,9 +118,9 @@ export default function CustomerList() {
     });
 
     const statusColors = {
-        'Active': 'bg-green-100 text-green-800',
-        'Inactive': 'bg-red-100 text-red-800',
-        'On Hold': 'bg-yellow-100 text-yellow-800'
+        'Active': 'bg-green-100 text-green-800 dark:bg-[#142717] dark:text-green-300 dark:border dark:border-[#385d2e]',
+        'Inactive': 'bg-red-100 text-red-800 dark:bg-[#2f1417] dark:text-red-300 dark:border dark:border-[#7d343e]',
+        'On Hold': 'bg-yellow-100 text-yellow-800 dark:bg-[#302617] dark:text-yellow-300 dark:border dark:border-[#69591f]'
     };
 
     const businessTypes = ['Retail', 'Wholesale', 'Restaurant', 'Hotel', 'Supermarket', 'Other'];

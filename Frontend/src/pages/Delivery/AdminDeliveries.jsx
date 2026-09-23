@@ -145,30 +145,30 @@ export default function AdminDeliveries() {
     const getStatusColor = (status) => {
         switch (status) {
             case 'Pending':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-[#302617] dark:text-yellow-400 dark:border-[#69591f]';
             case 'In Transit':
-                return 'bg-blue-100 text-blue-800 border-blue-200';
+                return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-[#101c3a] dark:text-blue-400 dark:border-[#37507d]';
             case 'Delivered':
-                return 'bg-green-100 text-green-800 border-green-200';
+                return 'bg-green-100 text-green-800 border-green-200 dark:bg-[#142717] dark:text-green-400 dark:border-[#385d2e]';
             case 'Failed':
-                return 'bg-red-100 text-red-800 border-red-200';
+                return 'bg-red-100 text-red-800 border-red-200 dark:bg-[#2f1417] dark:text-red-400 dark:border-[#7d343e]';
             default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
+                return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-[#171b2b] dark:text-gray-300 dark:border-[#384152]';
         }
     };
 
     const getStatusIcon = (status) => {
         switch (status) {
             case 'Pending':
-                return <Clock size={16} />;
+                return <Clock size={16} className="text-yellow-600 dark:text-yellow-400" />;
             case 'In Transit':
-                return <Truck size={16} />;
+                return <Truck size={16} className="text-blue-600 dark:text-blue-400" />;
             case 'Delivered':
-                return <CheckCircle size={16} />;
+                return <CheckCircle size={16} className="text-green-600 dark:text-green-400" />;
             case 'Failed':
-                return <XCircle size={16} />;
+                return <XCircle size={16} className="text-red-600 dark:text-red-400" />;
             default:
-                return <Package size={16} />;
+                return <Package size={16} className="text-gray-600 dark:text-gray-400" />;
         }
     };
 
@@ -248,53 +248,53 @@ export default function AdminDeliveries() {
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm border border-yellow-200 p-3 xs:p-4 md:p-5">
+                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-[#302617] dark:to-[#171b1f] rounded-xl shadow-sm border border-yellow-200 dark:border-[#69591f] p-3 xs:p-4 md:p-5">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs xs:text-sm text-yellow-700 mb-1">Pending</p>
-                                <p className="text-lg xs:text-xl md:text-2xl font-bold text-yellow-900">{stats.pending}</p>
+                                <p className="text-xs xs:text-sm text-yellow-700 dark:text-yellow-400 mb-1">Pending</p>
+                                <p className="text-lg xs:text-xl md:text-2xl font-bold text-yellow-900 dark:text-yellow-200">{stats.pending}</p>
                             </div>
-                            <Clock size={28} className="text-yellow-600 hidden xs:block" />
+                            <Clock size={28} className="text-yellow-600 dark:text-yellow-400 hidden xs:block" />
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-3 xs:p-4 md:p-5">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-[#101c3a] dark:to-[#171b26] rounded-xl shadow-sm border border-blue-200 dark:border-[#37507d] p-3 xs:p-4 md:p-5">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs xs:text-sm text-blue-700 mb-1">In Transit</p>
-                                <p className="text-lg xs:text-xl md:text-2xl font-bold text-blue-900">{stats.inTransit}</p>
+                                <p className="text-xs xs:text-sm text-blue-700 dark:text-blue-400 mb-1">In Transit</p>
+                                <p className="text-lg xs:text-xl md:text-2xl font-bold text-blue-900 dark:text-blue-200">{stats.inTransit}</p>
                             </div>
-                            <Truck size={28} className="text-blue-600 hidden xs:block" />
+                            <Truck size={28} className="text-blue-600 dark:text-blue-400 hidden xs:block" />
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-3 xs:p-4 md:p-5">
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-[#142717] dark:to-[#171b1f] rounded-xl shadow-sm border border-green-200 dark:border-[#385d2e] p-3 xs:p-4 md:p-5">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs xs:text-sm text-green-700 mb-1">Delivered</p>
-                                <p className="text-lg xs:text-xl md:text-2xl font-bold text-green-900">{stats.delivered}</p>
+                                <p className="text-xs xs:text-sm text-green-700 dark:text-green-400 mb-1">Delivered</p>
+                                <p className="text-lg xs:text-xl md:text-2xl font-bold text-green-900 dark:text-green-200">{stats.delivered}</p>
                             </div>
-                            <CheckCircle size={28} className="text-green-600 hidden xs:block" />
+                            <CheckCircle size={28} className="text-green-600 dark:text-green-400 hidden xs:block" />
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm border border-red-200 p-3 xs:p-4 md:p-5">
+                    <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-[#2f1417] dark:to-[#171b1f] rounded-xl shadow-sm border border-red-200 dark:border-[#7d343e] p-3 xs:p-4 md:p-5">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs xs:text-sm text-red-700 mb-1">Failed</p>
-                                <p className="text-lg xs:text-xl md:text-2xl font-bold text-red-900">{stats.failed}</p>
+                                <p className="text-xs xs:text-sm text-red-700 dark:text-red-400 mb-1">Failed</p>
+                                <p className="text-lg xs:text-xl md:text-2xl font-bold text-red-900 dark:text-red-200">{stats.failed}</p>
                             </div>
-                            <XCircle size={28} className="text-red-600 hidden xs:block" />
+                            <XCircle size={28} className="text-red-600 dark:text-red-400 hidden xs:block" />
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl shadow-sm border border-indigo-200 p-3 xs:p-4 md:p-5">
+                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-[#221f3f] dark:to-[#171b2b] rounded-xl shadow-sm border border-indigo-200 dark:border-[#4a496c] p-3 xs:p-4 md:p-5">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs xs:text-sm text-indigo-700 mb-1">Revenue</p>
-                                <p className="text-sm xs:text-base md:text-lg font-bold text-indigo-900">LKR {totalRevenue.toLocaleString()}</p>
+                                <p className="text-xs xs:text-sm text-indigo-700 dark:text-indigo-400 mb-1">Revenue</p>
+                                <p className="text-sm xs:text-base md:text-lg font-bold text-indigo-900 dark:text-indigo-200">LKR {totalRevenue.toLocaleString()}</p>
                             </div>
-                            <DollarSign size={28} className="text-indigo-600 hidden xs:block" />
+                            <DollarSign size={28} className="text-indigo-600 dark:text-indigo-400 hidden xs:block" />
                         </div>
                     </div>
                 </div>

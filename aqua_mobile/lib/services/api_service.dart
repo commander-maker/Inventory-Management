@@ -3,7 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.173:5000/api';
+  static const String baseUrl =
+      'https://inventory-management-fn44.onrender.com/api';
 
   // Get authorization header
   static Future<Map<String, String>> _getHeaders() async {
@@ -228,9 +229,13 @@ class CustomerAPI {
 
 // Finance API
 class FinanceAPI {
-  static Future<List<Map<String, dynamic>>> getRecentTransactions({int limit = 50}) async {
+  static Future<List<Map<String, dynamic>>> getRecentTransactions({
+    int limit = 50,
+  }) async {
     try {
-      final response = await ApiService.get("finance/recent-transactions?limit=$limit");
+      final response = await ApiService.get(
+        "finance/recent-transactions?limit=$limit",
+      );
       if (response != null && response['success'] == true) {
         final data = response['data'];
         if (data is List) {
@@ -258,5 +263,3 @@ class FinanceAPI {
     }
   }
 }
-
-

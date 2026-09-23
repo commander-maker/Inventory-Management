@@ -89,11 +89,7 @@ export const createUser = async ({ name, email, role, phone, vehicle }) => {
   });
 
   // Send password via email (don't fail user creation if email fails)
-  try {
-    await sendPasswordEmail(email, name, password);
-  } catch (error) {
-    console.error('Failed to send email:', error);
-  }
+  sendPasswordEmail(email, name, password);
 
   // Return user without password
   const { password: _, ...userWithoutPassword } = user;

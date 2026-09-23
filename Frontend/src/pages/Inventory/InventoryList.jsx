@@ -142,13 +142,13 @@ export default function InventoryList() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'In Stock':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-[#142717] dark:text-green-300 dark:border dark:border-[#385d2e]';
       case 'Low Stock':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-[#302617] dark:text-yellow-300 dark:border dark:border-[#69591f]';
       case 'Out of Stock':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-[#2f1417] dark:text-red-300 dark:border dark:border-[#7d343e]';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-[#171b2b] dark:text-gray-300 dark:border dark:border-[#384152]';
     }
   };
 
@@ -379,9 +379,9 @@ export default function InventoryList() {
           {filteredProducts.map((product) => {
             const value = Number(product.price) * product.stock;
             return (
-              <div key={product.id} className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-md transition">
+              <div key={product.id} className="bg-white dark:bg-[#111827] rounded-lg shadow-sm border border-gray-100 dark:border-[#27334c] overflow-hidden hover:shadow-md transition">
                 {/* Status Badge */}
-                <div className="px-4 xs:px-5 md:px-6 py-3 xs:py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-start gap-2">
+                <div className="px-4 xs:px-5 md:px-6 py-3 xs:py-4 border-b border-gray-100 dark:border-[#27334c] flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     <h3 className="font-semibold text-sm xs:text-base text-gray-900 dark:text-white truncate">{product.name}</h3>
                     <p className="text-xs xs:text-sm text-gray-500 dark:text-gray-400">{product.category}</p>

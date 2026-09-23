@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/app_theme.dart';
 import '../models/model.dart';
 import '../services/api_service.dart';
+import 'auth-screen.dart';
 
 class MyVehicleInventoryScreen extends StatefulWidget {
   final User user;
+  final ValueChanged<int>? onTabSelect;
 
-  const MyVehicleInventoryScreen({super.key, required this.user});
+  const MyVehicleInventoryScreen({
+    super.key,
+    required this.user,
+    this.onTabSelect,
+  });
 
   @override
-  State<MyVehicleInventoryScreen> createState() => _MyVehicleInventoryScreenState();
+  State<MyVehicleInventoryScreen> createState() =>
+      _MyVehicleInventoryScreenState();
 }
 
 class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
@@ -23,15 +31,62 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
   String searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
+  // ------------------------------------------------------------
+  // DARK / LIGHT MODE (shared across all screens via ThemeController)
+  // ------------------------------------------------------------
+
+  bool get _isDarkMode => ThemeController.isDarkMode.value;
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _toggleTheme(bool value) => ThemeController.toggle(value);
+
+  Color get _backgroundColor =>
+      _isDarkMode ? const Color(0xFF121212) : AppColors.scaffoldBackground;
+
+  Color get _cardColor => _isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+
+  Color get _primaryTextColor =>
+      _isDarkMode ? Colors.white : AppColors.textPrimary;
+
+  Color get _secondaryTextColor =>
+      _isDarkMode ? Colors.white70 : AppColors.textSecondary;
+
+  Color get _mutedTextColor =>
+      _isDarkMode ? Colors.white54 : AppColors.textMuted;
+
+  Color get _borderColor =>
+      _isDarkMode ? Colors.white12 : AppColors.borderLight;
+
+  BoxDecoration get _cardDecoration => BoxDecoration(
+    color: _cardColor,
+    borderRadius: BorderRadius.circular(16),
+    border: Border.all(color: _borderColor),
+    boxShadow: _isDarkMode
+        ? []
+        : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+  );
+
   @override
   void initState() {
     super.initState();
+    ThemeController.isDarkMode.addListener(_onThemeChanged);
+    ThemeController.load();
     _fetchVehicleData();
     _fetchCustomers();
   }
 
   @override
   void dispose() {
+    ThemeController.isDarkMode.removeListener(_onThemeChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -58,7 +113,9 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
 
       final vehicleData = await VehicleAPI.getMyVehicle();
       if (vehicleData != null) {
-        final loads = await VehicleAPI.getVehicleLoads(vehicleData['id'].toString());
+        final loads = await VehicleAPI.getVehicleLoads(
+          vehicleData['id'].toString(),
+        );
         if (mounted) {
           setState(() {
             vehicle = vehicleData;
@@ -87,87 +144,359 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
   List<Map<String, dynamic>> get filteredInventory {
     if (searchQuery.trim().isEmpty) return inventory;
     return inventory.where((item) {
-      final name = (item['item'] ?? item['name'] ?? '').toString().toLowerCase();
+      final name = (item['item'] ?? item['name'] ?? '')
+          .toString()
+          .toLowerCase();
       return name.contains(searchQuery.toLowerCase());
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: const Text(
-          'My Vehicle Inventory',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
-            onPressed: () {
-              _fetchVehicleData();
-              _fetchCustomers();
-            },
-          ),
-        ],
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: _isDarkMode ? Brightness.dark : Brightness.light,
+        scaffoldBackgroundColor: _backgroundColor,
+        cardColor: _cardColor,
+        dividerColor: _borderColor,
       ),
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+      child: Scaffold(
+        backgroundColor: _backgroundColor,
+        appBar: AppBar(
+          backgroundColor: _cardColor,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          iconTheme: IconThemeData(color: _primaryTextColor),
+          title: Text(
+            'My Vehicle Inventory',
+            style: TextStyle(
+              color: _primaryTextColor,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.refresh_rounded, color: _primaryTextColor),
+              onPressed: () {
+                _fetchVehicleData();
+                _fetchCustomers();
+              },
+            ),
+          ],
+        ),
+        drawer: _buildDrawer(),
+        body: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              )
+            : errorMessage != null
+            ? _buildErrorState()
+            : vehicle == null
+            ? _buildNoVehicleState()
+            : RefreshIndicator(
+                onRefresh: () async {
+                  await _fetchVehicleData();
+                  await _fetchCustomers();
+                },
+                color: AppColors.primary,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Section matching Web
+                      _buildHeaderWithStatus(),
+                      const SizedBox(height: 16),
+
+                      // 4 Stat Cards Row matching Web Screenshot 1
+                      _buildVehicleStatsGrid(),
+                      const SizedBox(height: 20),
+
+                      // Vehicle Inventory Section
+                      _buildInventorySectionHeader(),
+                      const SizedBox(height: 14),
+
+                      // Inventory items list
+                      filteredInventory.isEmpty
+                          ? _buildEmptyInventory()
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: filteredInventory.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                return _buildInventoryItemCard(
+                                  filteredInventory[index],
+                                );
+                              },
+                            ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
               ),
-            )
-          : errorMessage != null
-              ? _buildErrorState()
-              : vehicle == null
-                  ? _buildNoVehicleState()
-                  : RefreshIndicator(
-                      onRefresh: () async {
-                        await _fetchVehicleData();
-                        await _fetchCustomers();
-                      },
-                      color: AppColors.primary,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Header Section matching Web
-                            _buildHeaderWithStatus(),
-                            const SizedBox(height: 16),
+      ),
+    );
+  }
 
-                            // 4 Stat Cards Row matching Web Screenshot 1
-                            _buildVehicleStatsGrid(),
-                            const SizedBox(height: 20),
+  Widget _buildDrawer() {
+    return Drawer(
+      backgroundColor: _cardColor,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
+              decoration: const BoxDecoration(color: AppColors.primary),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.user.name.isNotEmpty
+                              ? widget.user.name
+                              : 'Agent',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.user.role,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-                            // Vehicle Inventory Section
-                            _buildInventorySectionHeader(),
-                            const SizedBox(height: 14),
+            const SizedBox(height: 16),
 
-                            // Inventory items list
-                            filteredInventory.isEmpty
-                                ? _buildEmptyInventory()
-                                : ListView.separated(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    itemCount: filteredInventory.length,
-                                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                                    itemBuilder: (context, index) {
-                                      return _buildInventoryItemCard(filteredInventory[index]);
-                                    },
-                                  ),
-                            const SizedBox(height: 24),
-                          ],
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  _buildDrawerMenuItem(
+                    'Dashboard',
+                    Icons.dashboard_rounded,
+                    () {
+                      Navigator.pop(context);
+                      widget.onTabSelect?.call(0);
+                    },
+                  ),
+
+                  _buildDrawerMenuItem(
+                    'My Deliveries',
+                    Icons.local_shipping_rounded,
+                    () {
+                      Navigator.pop(context);
+                      widget.onTabSelect?.call(1);
+                    },
+                  ),
+
+                  _buildDrawerMenuItem(
+                    'My Vehicle Inventory',
+                    Icons.directions_car_rounded,
+                    () {
+                      Navigator.pop(context);
+                    },
+                    isSelected: true,
+                  ),
+
+                  _buildDrawerMenuItem('Settings', Icons.settings_rounded, () {
+                    Navigator.pop(context);
+                    widget.onTabSelect?.call(3);
+                  }),
+
+                  const SizedBox(height: 12),
+
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: _isDarkMode
+                          ? Colors.white.withOpacity(0.06)
+                          : Colors.grey.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SwitchListTile(
+                      secondary: Icon(
+                        _isDarkMode
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
+                        color: AppColors.primary,
+                      ),
+                      title: Text(
+                        _isDarkMode ? 'Dark Mode' : 'Light Mode',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: _primaryTextColor,
                         ),
                       ),
+                      subtitle: Text(
+                        _isDarkMode
+                            ? 'Dark theme enabled'
+                            : 'Light theme enabled',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: _secondaryTextColor,
+                        ),
+                      ),
+                      value: _isDarkMode,
+                      activeColor: AppColors.primary,
+                      onChanged: _toggleTheme,
                     ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Logout Button
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildDrawerMenuItem(
+                'Log Out',
+                Icons.logout_rounded,
+                _handleLogout,
+                isLogout: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerMenuItem(
+    String title,
+    IconData icon,
+    VoidCallback onTap, {
+    bool isSelected = false,
+    bool isLogout = false,
+  }) {
+    Color bg = isLogout
+        ? AppColors.badgeRedBg
+        : isSelected
+        ? AppColors.primaryLight
+        : Colors.transparent;
+
+    Color fg = isLogout
+        ? AppColors.badgeRedIcon
+        : isSelected
+        ? AppColors.primary
+        : _primaryTextColor;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: fg, size: 20),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: fg,
+          ),
+        ),
+        trailing: Icon(
+          Icons.chevron_right_rounded,
+          size: 18,
+          color: fg.withOpacity(0.5),
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  void _handleLogout() {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: _cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Logout',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: _primaryTextColor,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(color: _secondaryTextColor),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.badgeRedIcon,
+              ),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+
+                final navigator = Navigator.of(context);
+
+                final prefs = await SharedPreferences.getInstance();
+
+                await prefs.remove('token');
+                await prefs.remove('user_id');
+                await prefs.remove('user_data');
+
+                if (!mounted) return;
+
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const AuthScreen()),
+                  (route) => false,
+                );
+              },
+              child: const Text(
+                'Logout',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -180,22 +509,19 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text(
                 'My Assigned Vehicle',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: _primaryTextColor,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 'Vehicle details and current inventory load',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 13, color: _secondaryTextColor),
               ),
             ],
           ),
@@ -235,9 +561,17 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
 
   // 4 Top Cards matching Web Screenshot 1
   Widget _buildVehicleStatsGrid() {
-    final reg = vehicle?['registration'] ?? vehicle?['registrationNo'] ?? vehicle?['id'] ?? 'V820224993';
-    final capacity = vehicle?['capacity'] != null ? '${vehicle?['capacity']}' : '1 Ton';
-    final fuelLevel = (vehicle != null && vehicle!['fuelLevel'] is int) ? vehicle!['fuelLevel'] as int : 100;
+    final reg =
+        vehicle?['registration'] ??
+        vehicle?['registrationNo'] ??
+        vehicle?['id'] ??
+        'V820224993';
+    final capacity = vehicle?['capacity'] != null
+        ? '${vehicle?['capacity']}'
+        : '1 Ton';
+    final fuelLevel = (vehicle != null && vehicle!['fuelLevel'] is int)
+        ? vehicle!['fuelLevel'] as int
+        : 100;
     final location = vehicle?['location'] ?? 'Main warehouse';
 
     return GridView.count(
@@ -279,7 +613,9 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                 value: fuelLevel / 100,
                 minHeight: 5,
                 backgroundColor: AppColors.borderLight,
-                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.badgeGreenIcon),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.badgeGreenIcon,
+                ),
               ),
             ),
           ),
@@ -306,7 +642,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: AppTheme.cardDecoration,
+      decoration: _cardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -317,7 +653,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: iconBg,
+                  color: _isDarkMode ? iconColor.withOpacity(0.18) : iconBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: iconColor, size: 18),
@@ -327,19 +663,19 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
           const SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: AppColors.textMuted,
+              color: _mutedTextColor,
               letterSpacing: 0.5,
             ),
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: _primaryTextColor,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -353,7 +689,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
   Widget _buildInventorySectionHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration,
+      decoration: _cardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -361,21 +697,28 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                children: const [
-                  Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 20),
-                  SizedBox(width: 8),
+                children: [
+                  const Icon(
+                    Icons.inventory_2_outlined,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
                     'Vehicle Inventory',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: _primaryTextColor,
                     ),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(12),
@@ -400,12 +743,22 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                 searchQuery = val;
               });
             },
+            style: TextStyle(color: _primaryTextColor),
             decoration: InputDecoration(
               hintText: 'Search items...',
-              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textMuted, size: 20),
+              fillColor: _cardColor,
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: _mutedTextColor,
+                size: 20,
+              ),
               suffixIcon: searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear_rounded, size: 18, color: AppColors.textMuted),
+                      icon: Icon(
+                        Icons.clear_rounded,
+                        size: 18,
+                        color: _mutedTextColor,
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         setState(() {
@@ -414,7 +767,10 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                       },
                     )
                   : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
         ],
@@ -432,7 +788,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration,
+      decoration: _cardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -445,11 +801,15 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.scaffoldBackground,
+                        color: _backgroundColor,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.borderLight),
+                        border: Border.all(color: _borderColor),
                       ),
-                      child: const Icon(Icons.blur_on_rounded, color: AppColors.textSecondary, size: 20),
+                      child: Icon(
+                        Icons.blur_on_rounded,
+                        color: _secondaryTextColor,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -458,18 +818,18 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                         children: [
                           Text(
                             itemName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              color: _primaryTextColor,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             '$category  •  Loaded: $date',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: _secondaryTextColor,
                             ),
                           ),
                         ],
@@ -485,10 +845,16 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                     icon: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
+                        color: _isDarkMode
+                            ? AppColors.primary.withOpacity(0.18)
+                            : AppColors.primaryLight,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
                     ),
                     tooltip: 'Record Sale',
                     onPressed: () => _showRecordSaleModal(item),
@@ -497,10 +863,16 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                     icon: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.badgeRedBg,
+                        color: _isDarkMode
+                            ? AppColors.badgeRedIcon.withOpacity(0.18)
+                            : AppColors.badgeRedBg,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.badgeRedIcon),
+                      child: const Icon(
+                        Icons.delete_outline_rounded,
+                        size: 18,
+                        color: AppColors.badgeRedIcon,
+                      ),
                     ),
                     tooltip: 'Remove Load',
                     onPressed: () => _confirmRemoveLoad(item),
@@ -510,17 +882,20 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(color: AppColors.borderLight, height: 1),
+          Divider(color: _borderColor, height: 1),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Available Load Quantity:',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 13, color: _secondaryTextColor),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.badgeBlueBg,
                   borderRadius: BorderRadius.circular(14),
@@ -559,7 +934,9 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
     }
 
     int? selectedCustomerId;
-    final remainingQtyController = TextEditingController(text: currentQtyNum.toString());
+    final remainingQtyController = TextEditingController(
+      text: currentQtyNum.toString(),
+    );
     final saleAmountController = TextEditingController();
     String selectedPaymentMethod = 'Cash';
 
@@ -571,7 +948,9 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               backgroundColor: Colors.white,
               child: SingleChildScrollView(
                 child: Padding(
@@ -606,7 +985,10 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                             ],
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              color: AppColors.textMuted,
+                            ),
                             onPressed: () => Navigator.pop(dialogContext),
                           ),
                         ],
@@ -620,14 +1002,20 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.primaryLight,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.15),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: const [
-                                Icon(Icons.remove_rounded, color: AppColors.primary, size: 16),
+                                Icon(
+                                  Icons.remove_rounded,
+                                  color: AppColors.primary,
+                                  size: 16,
+                                ),
                                 SizedBox(width: 6),
                                 Text(
                                   'Distribution to customer',
@@ -655,7 +1043,11 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                       // 1. Select Customer*
                       Row(
                         children: const [
-                          Icon(Icons.person_outline_rounded, size: 16, color: AppColors.textPrimary),
+                          Icon(
+                            Icons.person_outline_rounded,
+                            size: 16,
+                            color: AppColors.textPrimary,
+                          ),
                           SizedBox(width: 6),
                           Text(
                             'Select Customer*',
@@ -670,13 +1062,27 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                       const SizedBox(height: 8),
                       DropdownButtonFormField<int>(
                         initialValue: selectedCustomerId,
-                        hint: const Text('Choose a customer...', style: TextStyle(fontSize: 14, color: AppColors.textMuted)),
+                        hint: const Text(
+                          'Choose a customer...',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
                         items: customers.map((c) {
-                          final cId = c['id'] is int ? c['id'] as int : int.parse(c['id'].toString());
-                          final shop = c['shopName'] ?? c['ownerName'] ?? 'Customer #$cId';
+                          final cId = c['id'] is int
+                              ? c['id'] as int
+                              : int.parse(c['id'].toString());
+                          final shop =
+                              c['shopName'] ??
+                              c['ownerName'] ??
+                              'Customer #$cId';
                           return DropdownMenuItem<int>(
                             value: cId,
-                            child: Text(shop, style: const TextStyle(fontSize: 14)),
+                            child: Text(
+                              shop,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           );
                         }).toList(),
                         onChanged: (val) {
@@ -685,8 +1091,13 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                           });
                         },
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -705,13 +1116,19 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                         controller: remainingQtyController,
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
                       const Text(
                         'Enter quantity left after distribution',
-                        style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMuted,
+                        ),
                       ),
                       const SizedBox(height: 16),
 
@@ -740,16 +1157,24 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                       const SizedBox(height: 8),
                       TextField(
                         controller: saleAmountController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         decoration: const InputDecoration(
                           hintText: 'Enter cash received',
-                          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
                       const Text(
                         'Total amount received from customer',
-                        style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMuted,
+                        ),
                       ),
                       const SizedBox(height: 16),
 
@@ -767,8 +1192,14 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                         initialValue: selectedPaymentMethod,
                         items: const [
                           DropdownMenuItem(value: 'Cash', child: Text('Cash')),
-                          DropdownMenuItem(value: 'Online', child: Text('Online / Card')),
-                          DropdownMenuItem(value: 'Credit', child: Text('Credit / Cheque')),
+                          DropdownMenuItem(
+                            value: 'Online',
+                            child: Text('Online / Card'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Credit',
+                            child: Text('Credit / Cheque'),
+                          ),
                         ],
                         onChanged: (val) {
                           if (val != null) {
@@ -778,8 +1209,13 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                           }
                         },
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -789,12 +1225,19 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: isSubmitting ? null : () => Navigator.pop(dialogContext),
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () => Navigator.pop(dialogContext),
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(color: AppColors.border),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
-                              child: const Text('Cancel', style: TextStyle(color: AppColors.textPrimary)),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(color: AppColors.textPrimary),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -805,34 +1248,55 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                                   : () async {
                                       // Validate Customer
                                       if (selectedCustomerId == null) {
-                                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          dialogContext,
+                                        ).showSnackBar(
                                           const SnackBar(
-                                            content: Text('Please select a customer'),
-                                            backgroundColor: AppColors.badgeRedIcon,
+                                            content: Text(
+                                              'Please select a customer',
+                                            ),
+                                            backgroundColor:
+                                                AppColors.badgeRedIcon,
                                           ),
                                         );
                                         return;
                                       }
 
                                       // Validate Remaining Qty
-                                      final remQty = int.tryParse(remainingQtyController.text.trim());
-                                      if (remQty == null || remQty < 0 || remQty > currentQtyNum) {
-                                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                      final remQty = int.tryParse(
+                                        remainingQtyController.text.trim(),
+                                      );
+                                      if (remQty == null ||
+                                          remQty < 0 ||
+                                          remQty > currentQtyNum) {
+                                        ScaffoldMessenger.of(
+                                          dialogContext,
+                                        ).showSnackBar(
                                           SnackBar(
-                                            content: Text('Remaining quantity must be between 0 and $currentQtyNum'),
-                                            backgroundColor: AppColors.badgeRedIcon,
+                                            content: Text(
+                                              'Remaining quantity must be between 0 and $currentQtyNum',
+                                            ),
+                                            backgroundColor:
+                                                AppColors.badgeRedIcon,
                                           ),
                                         );
                                         return;
                                       }
 
                                       // Validate Amount
-                                      final amount = double.tryParse(saleAmountController.text.trim());
+                                      final amount = double.tryParse(
+                                        saleAmountController.text.trim(),
+                                      );
                                       if (amount == null || amount < 0) {
-                                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          dialogContext,
+                                        ).showSnackBar(
                                           const SnackBar(
-                                            content: Text('Please enter a valid sale amount'),
-                                            backgroundColor: AppColors.badgeRedIcon,
+                                            content: Text(
+                                              'Please enter a valid sale amount',
+                                            ),
+                                            backgroundColor:
+                                                AppColors.badgeRedIcon,
                                           ),
                                         );
                                         return;
@@ -843,8 +1307,11 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                                       });
 
                                       try {
-                                        final distributedQty = currentQtyNum - remQty;
-                                        final newQtyString = unitStr.isNotEmpty ? '$remQty $unitStr' : '$remQty';
+                                        final distributedQty =
+                                            currentQtyNum - remQty;
+                                        final newQtyString = unitStr.isNotEmpty
+                                            ? '$remQty $unitStr'
+                                            : '$remQty';
 
                                         final saleData = {
                                           'customerId': selectedCustomerId,
@@ -852,7 +1319,8 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                                           'distributedQuantity': distributedQty,
                                           'unit': unitStr,
                                           'itemName': itemName,
-                                          'paymentMethod': selectedPaymentMethod,
+                                          'paymentMethod':
+                                              selectedPaymentMethod,
                                         };
 
                                         await VehicleAPI.updateVehicleLoad(
@@ -863,10 +1331,15 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                                           },
                                         );
 
-                                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          dialogContext,
+                                        ).showSnackBar(
                                           const SnackBar(
-                                            content: Text('Sale recorded successfully!'),
-                                            backgroundColor: AppColors.badgeGreenIcon,
+                                            content: Text(
+                                              'Sale recorded successfully!',
+                                            ),
+                                            backgroundColor:
+                                                AppColors.badgeGreenIcon,
                                           ),
                                         );
                                         Navigator.pop(dialogContext);
@@ -875,25 +1348,40 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                                         setModalState(() {
                                           isSubmitting = false;
                                         });
-                                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          dialogContext,
+                                        ).showSnackBar(
                                           SnackBar(
-                                            content: Text('Failed to record sale: $e'),
-                                            backgroundColor: AppColors.badgeRedIcon,
+                                            content: Text(
+                                              'Failed to record sale: $e',
+                                            ),
+                                            backgroundColor:
+                                                AppColors.badgeRedIcon,
                                           ),
                                         );
                                       }
                                     },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                               child: isSubmitting
                                   ? const SizedBox(
                                       width: 20,
                                       height: 20,
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
                                     )
-                                  : const Text('Record Sale', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  : const Text(
+                                      'Record Sale',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],
@@ -915,16 +1403,28 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Remove Load Item', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text('Are you sure you want to remove "$itemName" from vehicle inventory? Stock will be restored to warehouse.'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Remove Load Item',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Are you sure you want to remove "$itemName" from vehicle inventory? Stock will be restored to warehouse.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.badgeRedIcon),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.badgeRedIcon,
+              ),
               onPressed: () async {
                 Navigator.pop(dialogContext);
                 try {
@@ -952,7 +1452,10 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                   }
                 }
               },
-              child: const Text('Remove', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Remove',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -964,23 +1467,23 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40),
-      decoration: AppTheme.cardDecoration,
+      decoration: _cardDecoration,
       child: Column(
-        children: const [
-          Icon(Icons.inventory_2_outlined, size: 48, color: AppColors.textMuted),
-          SizedBox(height: 12),
+        children: [
+          Icon(Icons.inventory_2_outlined, size: 48, color: _mutedTextColor),
+          const SizedBox(height: 12),
           Text(
             'No Items Found',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: _primaryTextColor,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             'No vehicle inventory items match your search criteria.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: _secondaryTextColor),
           ),
         ],
       ),
@@ -992,24 +1495,28 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
       child: Container(
         padding: const EdgeInsets.all(24),
         margin: const EdgeInsets.all(20),
-        decoration: AppTheme.cardDecoration,
+        decoration: _cardDecoration,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline_rounded, color: AppColors.badgeRedIcon, size: 48),
+            const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.badgeRedIcon,
+              size: 48,
+            ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Error Loading Vehicle',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: _primaryTextColor,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               errorMessage ?? 'Unknown error occurred',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 13, color: _secondaryTextColor),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -1031,24 +1538,28 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
       child: Container(
         padding: const EdgeInsets.all(24),
         margin: const EdgeInsets.all(20),
-        decoration: AppTheme.cardDecoration,
+        decoration: _cardDecoration,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.directions_car_outlined, color: AppColors.textMuted, size: 48),
-            SizedBox(height: 12),
+          children: [
+            Icon(
+              Icons.directions_car_outlined,
+              color: _mutedTextColor,
+              size: 48,
+            ),
+            const SizedBox(height: 12),
             Text(
               'No Vehicle Assigned',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: _primaryTextColor,
               ),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Text(
               'You currently don\'t have a vehicle assigned. Please contact your manager.',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 13, color: _secondaryTextColor),
               textAlign: TextAlign.center,
             ),
           ],
