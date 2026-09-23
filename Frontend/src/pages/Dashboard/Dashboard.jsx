@@ -50,18 +50,12 @@ export default function Dashboard() {
         };
         setDeliveryStats(stats);
 
-        // Calculate total revenue from delivered orders
-        const revenue = deliveryData
-          .filter(d => d.status === 'Delivered' && d.totalAmount)
-          .reduce((sum, d) => sum + parseFloat(d.totalAmount), 0);
-        setTotalRevenue(revenue);
-
         // ── Income ── 
         const incomeData = incomeRes.data.data || [];
 
-        // Add income revenue to total
+        // Income is the source of truth for the dashboard total.
         const incomeRevenue = incomeData.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
-        setTotalRevenue(revenue + incomeRevenue);
+        setTotalRevenue(incomeRevenue);
 
         // ── Recent Transactions ── 
         // Fetch from RecentTransaction table
@@ -94,8 +88,8 @@ export default function Dashboard() {
         const inventoryData = inventoryRes.data.data || [];
         setInventory(inventoryData);
 
-        // Total product count (sum of stock)
-        const productCount = inventoryData.reduce((sum, item) => sum + (item.stock || 0), 0);
+        // Total product count (number of product types)
+        const productCount = inventoryData.length;
         setTotalProducts(productCount);
 
         // Low stock items (stock <= 15)
@@ -175,19 +169,13 @@ export default function Dashboard() {
 
   // Stats data — all from API
   const stats = [
-    { label: 'Total Revenue', value: `LKR ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-green-500', bgColor: 'bg-green-100' },
+    { label: 'Total Income', value: `LKR ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-green-500', bgColor: 'bg-green-100' },
     { label: 'Total Products', value: totalProducts.toLocaleString(), icon: Package, color: 'text-blue-500', bgColor: 'bg-blue-100' },
     { label: 'Sales Agents', value: totalAgents.toString(), icon: Users, color: 'text-red-500', bgColor: 'bg-red-100' },
     { label: 'Total Deliveries', value: deliveryStats.total.toString(), icon: Truck, color: 'text-purple-500', bgColor: 'bg-purple-100' }
   ];
 
-  // Quick actions
-  const quickActions = [
-    { icon: Plus, label: 'Add Inventory', color: 'text-gray-700', path: '/inventory' },
-    { icon: Truck, label: 'Dispatch Vehicle', color: 'text-gray-700', path: '/vehicle' },
-    { icon: DollarSign, label: 'Record Payment', color: 'text-gray-700', path: '/financial' },
-    { icon: User, label: 'Add Agent', color: 'text-gray-700', path: '/users' }
-  ];
+  
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -354,27 +342,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="px-4 xs:px-5 md:px-8 py-4 xs:py-5 md:py-6 bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 mx-4 xs:mx-5 md:mx-8 mb-4 xs:mb-6 md:mb-8">
-        <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-1 xs:mb-2">Quick Actions</h2>
-        <p className="text-gray-600 dark:text-gray-400 text-xs xs:text-sm mb-4 xs:mb-5 md:mb-6">Frequently used actions for faster workflow</p>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xs:gap-4">
-          {quickActions.map((action, index) => {
-            const Icon = action.icon;
-            return (
-              <button
-                key={index}
-                className="flex flex-col items-center justify-center p-4 xs:p-5 md:p-6 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition bg-white dark:bg-gray-800"
-                onClick={() => window.location.href = action.path}
-              >
-                <Icon className={`${action.color} dark:text-gray-400 mb-2 xs:mb-3`} size={32} />
-                <span className="text-xs xs:text-sm font-medium text-gray-900 dark:text-white text-center">{action.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      
     </div>
   );
 }

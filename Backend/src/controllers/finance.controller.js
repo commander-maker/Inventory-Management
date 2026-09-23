@@ -85,6 +85,9 @@ export const getAllIncome = async (req, res) => {
         const filters = {
             type: req.query.type,
             category: req.query.category,
+            agentId: req.user.role === 'agent'
+                ? req.user.id
+                : (req.query.agentId ? parseInt(req.query.agentId) : undefined),
             month: req.query.month ? parseInt(req.query.month) : undefined,
             year: req.query.year ? parseInt(req.query.year) : undefined
         };
