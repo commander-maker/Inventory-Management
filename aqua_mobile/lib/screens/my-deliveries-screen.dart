@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/app_theme.dart';
 import '../models/model.dart';
 import '../services/api_service.dart';
@@ -13,11 +14,10 @@ class MyDeliveriesScreen extends StatefulWidget {
 }
 
 class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
-  // Active main tab: 'deliveries' or 'transactions'
   String activeMainTab = 'deliveries';
 
-  // Delivery filters
   String selectedFilter = 'All';
+
   final List<String> filterOptions = [
     'All',
     'Pending',
@@ -28,19 +28,100 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
 
   late List<Map<String, dynamic>> allDeliveries = [];
   late List<Map<String, dynamic>> transactions = [];
+
   bool isLoading = true;
   String? errorMessage;
   String? updatingDeliveryId;
 
-  // Search filter for transactions
   String txSearchQuery = '';
-  final TextEditingController _txSearchController = TextEditingController();
+  final TextEditingController _txSearchController =
+      TextEditingController();
+
+  // ------------------------------------------------------------
+  // DARK / LIGHT MODE
+  // ------------------------------------------------------------
+
+  bool _isDarkMode = false;
 
   @override
   void initState() {
     super.initState();
+
+    _loadThemePreference();
     _fetchData();
   }
+
+  Future<void> _loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isDarkMode =
+          prefs.getBool('agent_dashboard_dark_mode') ?? false;
+    });
+  }
+
+  Future<void> _toggleTheme(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool(
+      'agent_dashboard_dark_mode',
+      value,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isDarkMode = value;
+    });
+  }
+
+  // ------------------------------------------------------------
+  // DARK MODE COLORS
+  // ------------------------------------------------------------
+
+  Color get _backgroundColor => _isDarkMode
+      ? const Color(0xFF121212)
+      : AppColors.scaffoldBackground;
+
+  Color get _cardColor =>
+      _isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+
+  Color get _primaryTextColor =>
+      _isDarkMode ? Colors.white : AppColors.textPrimary;
+
+  Color get _secondaryTextColor =>
+      _isDarkMode ? Colors.white70 : AppColors.textSecondary;
+
+  Color get _mutedTextColor =>
+      _isDarkMode ? Colors.white54 : AppColors.textMuted;
+
+  Color get _borderColor =>
+      _isDarkMode ? Colors.white12 : AppColors.borderLight;
+
+  BoxDecoration get _cardDecoration {
+    return BoxDecoration(
+      color: _cardColor,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: _borderColor,
+      ),
+      boxShadow: _isDarkMode
+          ? []
+          : [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+    );
+  }
+
+  // ------------------------------------------------------------
+  // DATA
+  // ------------------------------------------------------------
 
   @override
   void dispose() {
@@ -56,37 +137,54 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
       });
 
       final deliveries = await DeliveryAPI.getMyDeliveries();
+
       List<Map<String, dynamic>> txList = [];
       List<Map<String, dynamic>> incomeList = [];
 
       try {
-        txList = await FinanceAPI.getRecentTransactions(limit: 50);
+        txList =
+            await FinanceAPI.getRecentTransactions(limit: 50);
       } catch (e) {
-        debugPrint('Failed to load recent transactions: $e');
+        debugPrint(
+          'Failed to load recent transactions: $e',
+        );
       }
 
       try {
         incomeList = await FinanceAPI.getAllIncome();
       } catch (e) {
-        debugPrint('Failed to load income: $e');
+        debugPrint(
+          'Failed to load income: $e',
+        );
       }
 
-      // Build unified transaction list from incomeList and txList
       final List<Map<String, dynamic>> transactionList = [];
 
-      // 1. Process all income records from the backend database
       for (var inc in incomeList) {
-        final cust = inc['Customer'] as Map<String, dynamic>?;
+        final cust =
+            inc['Customer'] as Map<String, dynamic>?;
+
         String custName = 'Walk-in Customer';
+
         if (cust != null) {
-          custName = (cust['shopName'] ?? cust['ownerName'] ?? 'Customer')
-              .toString();
+          custName =
+              (cust['shopName'] ??
+                      cust['ownerName'] ??
+                      'Customer')
+                  .toString();
         }
 
-        final desc = (inc['description'] ?? 'Product Sale').toString();
+        final desc =
+            (inc['description'] ?? 'Product Sale')
+                .toString();
+
         final amt = inc['amount'];
-        final payMethod = (inc['paymentMethod'] ?? 'Cash').toString();
-        final date = inc['date'] ?? inc['createdAt'];
+
+        final payMethod =
+            (inc['paymentMethod'] ?? 'Cash').toString();
+
+        final date =
+            inc['date'] ?? inc['createdAt'];
 
         transactionList.add({
           'id': inc['id'],
@@ -101,21 +199,29 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
         });
       }
 
-      // 2. Merge any recentTransactions items if present
       for (var tx in txList) {
         final txId = tx['id'];
-        bool exists = transactionList.any((t) => t['id'] == txId);
+
+        bool exists = transactionList.any(
+          (t) => t['id'] == txId,
+        );
+
         if (!exists) {
           transactionList.add({
             'id': txId,
             'type': tx['type'] ?? 'Sale',
-            'productName': tx['productName'] ?? 'Product Sale',
+            'productName':
+                tx['productName'] ?? 'Product Sale',
             'quantity': tx['quantity'] ?? '1',
             'amount': tx['amount'],
-            'customerName': tx['customerName'] ?? 'Walk-in Customer',
-            'paymentMethod': tx['paymentMethod'] ?? 'Cash',
+            'customerName':
+                tx['customerName'] ??
+                    'Walk-in Customer',
+            'paymentMethod':
+                tx['paymentMethod'] ?? 'Cash',
             'createdAt': tx['createdAt'],
-            'status': tx['status'] ?? 'Completed',
+            'status':
+                tx['status'] ?? 'Completed',
           });
         }
       }
@@ -130,13 +236,21 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          errorMessage = e.toString().replaceFirst('Exception: ', '');
+          errorMessage =
+              e.toString().replaceFirst(
+                'Exception: ',
+                '',
+              );
           isLoading = false;
         });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load data: $errorMessage'),
-            backgroundColor: AppColors.badgeRedIcon,
+            content: Text(
+              'Failed to load data: $errorMessage',
+            ),
+            backgroundColor:
+                AppColors.badgeRedIcon,
           ),
         );
       }
@@ -147,27 +261,42 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
     Map<String, dynamic> delivery,
     String status,
   ) async {
-    final deliveryId = delivery['id']?.toString();
-    if (deliveryId == null || updatingDeliveryId != null) return;
+    final deliveryId =
+        delivery['id']?.toString();
+
+    if (deliveryId == null ||
+        updatingDeliveryId != null) {
+      return;
+    }
 
     setState(() {
       updatingDeliveryId = deliveryId;
     });
 
     try {
-      await DeliveryAPI.updateDeliveryStatus(deliveryId, {'status': status});
+      await DeliveryAPI.updateDeliveryStatus(
+        deliveryId,
+        {'status': status},
+      );
+
       await _fetchData();
+
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Delivery marked as $status')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('Delivery marked as $status'),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update delivery: $e'),
-            backgroundColor: AppColors.badgeRedIcon,
+            content:
+                Text('Failed to update delivery: $e'),
+            backgroundColor:
+                AppColors.badgeRedIcon,
           ),
         );
       }
@@ -184,22 +313,43 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
     if (selectedFilter == 'All') {
       return allDeliveries;
     }
+
     return allDeliveries
         .where(
           (d) =>
-              (d['status'] ?? '').toString().toLowerCase() ==
+              (d['status'] ?? '')
+                  .toString()
+                  .toLowerCase() ==
               selectedFilter.toLowerCase(),
         )
         .toList();
   }
 
-  List<Map<String, dynamic>> _getFilteredTransactions() {
-    if (txSearchQuery.trim().isEmpty) return transactions;
-    final query = txSearchQuery.toLowerCase();
+  List<Map<String, dynamic>>
+      _getFilteredTransactions() {
+    if (txSearchQuery.trim().isEmpty) {
+      return transactions;
+    }
+
+    final query =
+        txSearchQuery.toLowerCase();
+
     return transactions.where((tx) {
-      final cust = (tx['customerName'] ?? '').toString().toLowerCase();
-      final prod = (tx['productName'] ?? '').toString().toLowerCase();
-      final method = (tx['paymentMethod'] ?? '').toString().toLowerCase();
+      final cust =
+          (tx['customerName'] ?? '')
+              .toString()
+              .toLowerCase();
+
+      final prod =
+          (tx['productName'] ?? '')
+              .toString()
+              .toLowerCase();
+
+      final method =
+          (tx['paymentMethod'] ?? '')
+              .toString()
+              .toLowerCase();
+
       return cust.contains(query) ||
           prod.contains(query) ||
           method.contains(query);
@@ -211,22 +361,38 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
       'Total': allDeliveries.length,
       'Pending': allDeliveries
           .where(
-            (d) => (d['status'] ?? '').toString().toLowerCase() == 'pending',
+            (d) =>
+                (d['status'] ?? '')
+                    .toString()
+                    .toLowerCase() ==
+                'pending',
           )
           .length,
       'In Transit': allDeliveries
           .where(
-            (d) => (d['status'] ?? '').toString().toLowerCase() == 'in transit',
+            (d) =>
+                (d['status'] ?? '')
+                    .toString()
+                    .toLowerCase() ==
+                'in transit',
           )
           .length,
       'Delivered': allDeliveries
           .where(
-            (d) => (d['status'] ?? '').toString().toLowerCase() == 'delivered',
+            (d) =>
+                (d['status'] ?? '')
+                    .toString()
+                    .toLowerCase() ==
+                'delivered',
           )
           .length,
       'Failed': allDeliveries
           .where(
-            (d) => (d['status'] ?? '').toString().toLowerCase() == 'failed',
+            (d) =>
+                (d['status'] ?? '')
+                    .toString()
+                    .toLowerCase() ==
+                'failed',
           )
           .length,
     };
@@ -234,174 +400,325 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
 
   double _calculateTotalRevenue() {
     double total = 0.0;
+
     for (var tx in transactions) {
       if (tx['amount'] != null) {
-        final val = double.tryParse(tx['amount'].toString()) ?? 0.0;
+        final val =
+            double.tryParse(
+                  tx['amount'].toString(),
+                ) ??
+                0.0;
+
         total += val;
       }
     }
+
     return total;
   }
 
+  // ------------------------------------------------------------
+  // BUILD
+  // ------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: const Text(
-          'Deliveries & Sales',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.refresh_rounded,
-              color: AppColors.textPrimary,
-            ),
-            onPressed: _fetchData,
-          ),
-        ],
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: _isDarkMode
+            ? Brightness.dark
+            : Brightness.light,
+        scaffoldBackgroundColor:
+            _backgroundColor,
+        cardColor: _cardColor,
+        dividerColor: _borderColor,
       ),
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+      child: Scaffold(
+        backgroundColor: _backgroundColor,
+
+        appBar: AppBar(
+          backgroundColor: _cardColor,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+
+          iconTheme: IconThemeData(
+            color: _primaryTextColor,
+          ),
+
+          title: Text(
+            'Deliveries & Sales',
+            style: TextStyle(
+              color: _primaryTextColor,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.refresh_rounded,
+                color: _primaryTextColor,
               ),
-            )
-          : RefreshIndicator(
-              onRefresh: _fetchData,
-              color: AppColors.primary,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Segmented Tab Switcher (Deliveries vs Transactions)
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.borderLight,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        children: [
-                          _buildMainTabButton(
-                            'Delivery Schedule',
-                            'deliveries',
-                            Icons.local_shipping_rounded,
-                          ),
-                          _buildMainTabButton(
-                            'Sales Transactions',
-                            'transactions',
-                            Icons.receipt_long_rounded,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+              onPressed: _fetchData,
+            ),
+          ],
+        ),
 
-                    // Active Tab View Content
-                    if (activeMainTab == 'deliveries') ...[
-                      // Header Section
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Delivery Schedule',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Track & manage your assigned customer orders',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
+        drawer: _buildDrawer(),
 
-                      // Stats Cards Section
-                      _buildStatsSection(),
-                      const SizedBox(height: 18),
+        body: isLoading
+            ? const Center(
+                child:
+                    CircularProgressIndicator(
+                  valueColor:
+                      AlwaysStoppedAnimation<
+                          Color>(
+                    AppColors.primary,
+                  ),
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _fetchData,
+                color: AppColors.primary,
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      _buildMainTabs(),
 
-                      // Filter Chips Bar
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: filterOptions.map((filter) {
-                            final isSelected = selectedFilter == filter;
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: FilterChip(
-                                label: Text(filter),
-                                selected: isSelected,
-                                onSelected: (_) {
-                                  setState(() {
-                                    selectedFilter = filter;
-                                  });
-                                },
-                                selectedColor: AppColors.primary,
-                                backgroundColor: Colors.white,
-                                labelStyle: TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.w500,
-                                  fontSize: 13,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                side: BorderSide(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : AppColors.border,
-                                  width: 1,
-                                ),
-                                showCheckmark: false,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 20),
 
-                      // Deliveries List
-                      _buildDeliveriesSection(),
-                    ] else ...[
-                      // Sales Transactions View
-                      _buildTransactionsTabContent(),
+                      if (activeMainTab ==
+                          'deliveries') ...[
+                        _buildDeliveryHeader(),
+
+                        const SizedBox(height: 18),
+
+                        _buildStatsSection(),
+
+                        const SizedBox(height: 18),
+
+                        _buildFilterBar(),
+
+                        const SizedBox(height: 18),
+
+                        _buildDeliveriesSection(),
+                      ] else ...[
+                        _buildTransactionsTabContent(),
+                      ],
+
+                      const SizedBox(height: 24),
                     ],
-
-                    const SizedBox(height: 24),
-                  ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
-  Widget _buildMainTabButton(String label, String tabId, IconData icon) {
-    final isActive = activeMainTab == tabId;
+  // ------------------------------------------------------------
+  // DRAWER WITH DARK / LIGHT MODE
+  // ------------------------------------------------------------
+
+  Widget _buildDrawer() {
+    return Drawer(
+      backgroundColor: _cardColor,
+      child: Column(
+        children: [
+          Container(
+            padding:
+                const EdgeInsets.fromLTRB(
+              20,
+              50,
+              20,
+              20,
+            ),
+            decoration:
+                const BoxDecoration(
+              color: AppColors.primary,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration:
+                      BoxDecoration(
+                    color: Colors.white
+                        .withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child:
+                      const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+
+                const SizedBox(width: 14),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.user.name.isNotEmpty
+                            ? widget.user.name
+                            : 'Agent',
+                        style:
+                            const TextStyle(
+                          fontSize: 16,
+                          fontWeight:
+                              FontWeight.bold,
+                          color:
+                              Colors.white,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 2,
+                      ),
+                      Text(
+                        widget.user.role,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors
+                              .white
+                              .withOpacity(
+                            0.8,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Expanded(
+            child: ListView(
+              padding:
+                  const EdgeInsets.symmetric(
+                horizontal: 12,
+              ),
+              children: [
+                // Theme switch
+                Container(
+                  margin:
+                      const EdgeInsets.only(
+                    bottom: 10,
+                  ),
+                  decoration:
+                      BoxDecoration(
+                    color: _isDarkMode
+                        ? Colors.white
+                            .withOpacity(
+                            0.06,
+                          )
+                        : Colors.grey
+                            .withOpacity(
+                            0.06,
+                          ),
+                    borderRadius:
+                        BorderRadius.circular(
+                      12,
+                    ),
+                  ),
+                  child:
+                      SwitchListTile(
+                    secondary: Icon(
+                      _isDarkMode
+                          ? Icons
+                              .dark_mode_rounded
+                          : Icons
+                              .light_mode_rounded,
+                      color:
+                          AppColors.primary,
+                    ),
+                    title: Text(
+                      _isDarkMode
+                          ? 'Dark Mode'
+                          : 'Light Mode',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight:
+                            FontWeight.w600,
+                        color:
+                            _primaryTextColor,
+                      ),
+                    ),
+                    subtitle: Text(
+                      _isDarkMode
+                          ? 'Dark theme enabled'
+                          : 'Light theme enabled',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color:
+                            _secondaryTextColor,
+                      ),
+                    ),
+                    value: _isDarkMode,
+                    activeColor:
+                        AppColors.primary,
+                    onChanged:
+                        _toggleTheme,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // MAIN TABS
+  // ------------------------------------------------------------
+
+  Widget _buildMainTabs() {
+    return Container(
+      padding:
+          const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _isDarkMode
+            ? const Color(0xFF2A2A2A)
+            : AppColors.borderLight,
+        borderRadius:
+            BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          _buildMainTabButton(
+            'Delivery Schedule',
+            'deliveries',
+            Icons.local_shipping_rounded,
+          ),
+          _buildMainTabButton(
+            'Sales Transactions',
+            'transactions',
+            Icons.receipt_long_rounded,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainTabButton(
+    String label,
+    String tabId,
+    IconData icon,
+  ) {
+    final isActive =
+        activeMainTab == tabId;
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -410,36 +727,54 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
           });
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isActive
+          duration:
+              const Duration(milliseconds: 200),
+          padding:
+              const EdgeInsets.symmetric(
+            vertical: 10,
+          ),
+          decoration:
+              BoxDecoration(
+            color: isActive
+                ? _cardColor
+                : Colors.transparent,
+            borderRadius:
+                BorderRadius.circular(10),
+            boxShadow: isActive &&
+                    !_isDarkMode
                 ? const [
                     BoxShadow(
-                      color: Color(0x0A000000),
+                      color:
+                          Color(0x0A000000),
                       blurRadius: 8,
-                      offset: Offset(0, 2),
+                      offset:
+                          Offset(0, 2),
                     ),
                   ]
                 : [],
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment:
+                MainAxisAlignment.center,
             children: [
               Icon(
                 icon,
                 size: 18,
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
+                color: isActive
+                    ? AppColors.primary
+                    : _secondaryTextColor,
               ),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                  color: isActive ? AppColors.primary : AppColors.textSecondary,
+                  fontWeight: isActive
+                      ? FontWeight.bold
+                      : FontWeight.w500,
+                  color: isActive
+                      ? AppColors.primary
+                      : _secondaryTextColor,
                 ),
               ),
             ],
@@ -449,10 +784,41 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
     );
   }
 
+  Widget _buildDeliveryHeader() {
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Delivery Schedule',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Track & manage your assigned customer orders',
+          style: TextStyle(
+            fontSize: 13,
+            color: _secondaryTextColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ------------------------------------------------------------
+  // STATS
+  // ------------------------------------------------------------
+
   Widget _buildStatsSection() {
     final stats = _calculateStats();
+
     return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+      scrollDirection:
+          Axis.horizontal,
       child: Row(
         children: [
           _buildStatCard(
@@ -507,36 +873,54 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
     IconData icon,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: AppTheme.cardDecoration,
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+      decoration: _cardDecoration,
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
+            padding:
+                const EdgeInsets.all(10),
+            decoration:
+                BoxDecoration(
               color: bg,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius:
+                  BorderRadius.circular(
+                10,
+              ),
             ),
-            child: Icon(icon, size: 18, color: fg),
+            child: Icon(
+              icon,
+              size: 18,
+              color: fg,
+            ),
           ),
           const SizedBox(width: 12),
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            mainAxisSize:
+                MainAxisSize.min,
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
+                  color:
+                      _secondaryTextColor,
+                  fontWeight:
+                      FontWeight.w500,
                 ),
               ),
               Text(
                 value,
                 style: TextStyle(
                   fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontWeight:
+                      FontWeight.bold,
                   color: fg,
                 ),
               ),
@@ -547,36 +931,116 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
     );
   }
 
+  // ------------------------------------------------------------
+  // FILTER
+  // ------------------------------------------------------------
+
+  Widget _buildFilterBar() {
+    return SingleChildScrollView(
+      scrollDirection:
+          Axis.horizontal,
+      child: Row(
+        children:
+            filterOptions.map((filter) {
+          final isSelected =
+              selectedFilter == filter;
+
+          return Padding(
+            padding:
+                const EdgeInsets.only(
+              right: 8,
+            ),
+            child: FilterChip(
+              label: Text(filter),
+              selected: isSelected,
+              onSelected: (_) {
+                setState(() {
+                  selectedFilter =
+                      filter;
+                });
+              },
+              selectedColor:
+                  AppColors.primary,
+              backgroundColor:
+                  _cardColor,
+              labelStyle: TextStyle(
+                color: isSelected
+                    ? Colors.white
+                    : _primaryTextColor,
+                fontWeight: isSelected
+                    ? FontWeight.bold
+                    : FontWeight.w500,
+                fontSize: 13,
+              ),
+              shape:
+                  RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(
+                  20,
+                ),
+              ),
+              side: BorderSide(
+                color: isSelected
+                    ? AppColors.primary
+                    : _borderColor,
+                width: 1,
+              ),
+              showCheckmark: false,
+              padding:
+                  const EdgeInsets
+                      .symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // DELIVERIES
+  // ------------------------------------------------------------
+
   Widget _buildDeliveriesSection() {
-    final filteredDeliveries = _getFilteredDeliveries();
+    final filteredDeliveries =
+        _getFilteredDeliveries();
 
     if (filteredDeliveries.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 48),
-        decoration: AppTheme.cardDecoration,
+        padding:
+            const EdgeInsets.symmetric(
+          vertical: 48,
+        ),
+        decoration: _cardDecoration,
         child: Column(
           children: [
-            const Icon(
-              Icons.local_shipping_outlined,
+            Icon(
+              Icons
+                  .local_shipping_outlined,
               size: 48,
-              color: AppColors.textMuted,
+              color: _mutedTextColor,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'No Deliveries Found',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                fontWeight:
+                    FontWeight.bold,
+                color:
+                    _primaryTextColor,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'There are no $selectedFilter deliveries right now.',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color:
+                    _secondaryTextColor,
               ),
             ),
           ],
@@ -586,150 +1050,232 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
 
     return ListView.separated(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: filteredDeliveries.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final delivery = filteredDeliveries[index];
-        return _buildDeliveryCard(delivery);
+      physics:
+          const NeverScrollableScrollPhysics(),
+      itemCount:
+          filteredDeliveries.length,
+      separatorBuilder: (_, __) =>
+          const SizedBox(height: 12),
+      itemBuilder:
+          (context, index) {
+        return _buildDeliveryCard(
+          filteredDeliveries[index],
+        );
       },
     );
   }
 
-  Widget _buildDeliveryCard(Map<String, dynamic> delivery) {
-    final deliveryId = delivery['id']?.toString();
-    final status = (delivery['status'] ?? 'Pending').toString();
-    final customer = delivery['Customer'] as Map<String, dynamic>? ?? {};
-    final customerName =
-        customer['shopName'] ?? customer['name'] ?? 'Unknown Customer';
-    final customerAddress = customer['address'] ?? 'N/A';
-    final customerCity = customer['city'] ?? '';
-    final customerPhone = customer['phone'] ?? 'N/A';
+  Widget _buildDeliveryCard(
+    Map<String, dynamic> delivery,
+  ) {
+    final deliveryId =
+        delivery['id']?.toString();
 
-    final productName = delivery['productName'] ?? 'Aqua Water Container';
-    final quantity = delivery['quantity']?.toString() ?? '0';
+    final status =
+        (delivery['status'] ??
+                'Pending')
+            .toString();
+
+    final customer =
+        delivery['Customer']
+            as Map<String, dynamic>? ??
+        {};
+
+    final customerName =
+        customer['shopName'] ??
+            customer['name'] ??
+            'Unknown Customer';
+
+    final customerAddress =
+        customer['address'] ?? 'N/A';
+
+    final customerCity =
+        customer['city'] ?? '';
+
+    final customerPhone =
+        customer['phone'] ?? 'N/A';
+
+    final productName =
+        delivery['productName'] ??
+            'Aqua Water Container';
+
+    final quantity =
+        delivery['quantity']
+                ?.toString() ??
+            '0';
 
     final location =
         '$customerAddress${customerCity.isNotEmpty ? ', $customerCity' : ''}';
 
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration,
+      padding:
+          const EdgeInsets.all(16),
+      decoration: _cardDecoration,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment:
+                MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Text(
-                  customerName,
-                  style: const TextStyle(
+                  customerName.toString(),
+                  style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    fontWeight:
+                        FontWeight.bold,
+                    color:
+                        _primaryTextColor,
                   ),
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  overflow:
+                      TextOverflow.ellipsis,
                 ),
               ),
-              _buildStatusBadge(status),
+              _buildStatusBadge(
+                status,
+              ),
             ],
           ),
+
           const SizedBox(height: 10),
+
           Row(
             children: [
               const Icon(
-                Icons.location_on_outlined,
+                Icons
+                    .location_on_outlined,
                 size: 15,
-                color: AppColors.primary,
+                color:
+                    AppColors.primary,
               ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   location,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color:
+                        _secondaryTextColor,
                   ),
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  overflow:
+                      TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
+
           const SizedBox(height: 6),
+
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.phone_outlined,
                 size: 15,
-                color: AppColors.textMuted,
+                color:
+                    _mutedTextColor,
               ),
               const SizedBox(width: 6),
               Text(
-                customerPhone,
-                style: const TextStyle(
+                customerPhone.toString(),
+                style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color:
+                      _secondaryTextColor,
                 ),
               ),
             ],
           ),
+
           const SizedBox(height: 14),
-          // Product Details Inner Container
+
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.scaffoldBackground,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.borderLight),
+            padding:
+                const EdgeInsets.all(12),
+            decoration:
+                BoxDecoration(
+              color: _isDarkMode
+                  ? const Color(
+                      0xFF292929,
+                    )
+                  : AppColors
+                      .scaffoldBackground,
+              borderRadius:
+                  BorderRadius.circular(
+                12,
+              ),
+              border: Border.all(
+                color: _borderColor,
+              ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment:
+                  MainAxisAlignment
+                      .spaceBetween,
               children: [
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
                   children: [
-                    const Text(
+                    Text(
                       'PRODUCT',
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
-                        letterSpacing: 0.5,
+                        fontWeight:
+                            FontWeight.w600,
+                        color:
+                            _mutedTextColor,
+                        letterSpacing:
+                            0.5,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(
+                      height: 2,
+                    ),
                     Text(
-                      productName,
-                      style: const TextStyle(
+                      productName.toString(),
+                      style: TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        fontWeight:
+                            FontWeight.bold,
+                        color:
+                            _primaryTextColor,
                       ),
                     ),
                   ],
                 ),
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment:
+                      CrossAxisAlignment
+                          .end,
                   children: [
-                    const Text(
+                    Text(
                       'QUANTITY',
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
-                        letterSpacing: 0.5,
+                        fontWeight:
+                            FontWeight.w600,
+                        color:
+                            _mutedTextColor,
+                        letterSpacing:
+                            0.5,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(
+                      height: 2,
+                    ),
                     Text(
                       '$quantity Units',
                       style: const TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                        fontWeight:
+                            FontWeight.bold,
+                        color:
+                            AppColors.primary,
                       ),
                     ),
                   ],
@@ -737,67 +1283,152 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
               ],
             ),
           ),
-          if (status.toLowerCase() == 'pending')
+
+          if (status.toLowerCase() ==
+              'pending')
             Padding(
-              padding: const EdgeInsets.only(top: 14),
+              padding:
+                  const EdgeInsets.only(
+                top: 14,
+              ),
               child: SizedBox(
                 width: double.infinity,
                 height: 44,
-                child: ElevatedButton.icon(
-                  onPressed: updatingDeliveryId == deliveryId
-                      ? null
-                      : () => _updateDeliveryStatus(delivery, 'In Transit'),
-                  icon: const Icon(Icons.navigation_rounded, size: 18),
-                  label: const Text('Start Delivery'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                child:
+                    ElevatedButton.icon(
+                  onPressed:
+                      updatingDeliveryId ==
+                              deliveryId
+                          ? null
+                          : () =>
+                              _updateDeliveryStatus(
+                                delivery,
+                                'In Transit',
+                              ),
+                  icon: const Icon(
+                    Icons
+                        .navigation_rounded,
+                    size: 18,
+                  ),
+                  label: const Text(
+                    'Start Delivery',
+                  ),
+                  style: ElevatedButton
+                      .styleFrom(
+                    backgroundColor:
+                        AppColors.primary,
+                    shape:
+                        RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius
+                              .circular(
+                        10,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          if (status.toLowerCase() == 'in transit')
+
+          if (status.toLowerCase() ==
+              'in transit')
             Padding(
-              padding: const EdgeInsets.only(top: 14),
+              padding:
+                  const EdgeInsets.only(
+                top: 14,
+              ),
               child: Row(
                 children: [
                   Expanded(
                     child: SizedBox(
                       height: 44,
-                      child: ElevatedButton.icon(
-                        onPressed: updatingDeliveryId == deliveryId
-                            ? null
-                            : () =>
-                                  _updateDeliveryStatus(delivery, 'Delivered'),
-                        icon: const Icon(Icons.check_circle_outline, size: 18),
-                        label: const Text('Mark Delivered'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.badgeGreenIcon,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      child:
+                          ElevatedButton
+                              .icon(
+                        onPressed:
+                            updatingDeliveryId ==
+                                    deliveryId
+                                ? null
+                                : () =>
+                                    _updateDeliveryStatus(
+                                      delivery,
+                                      'Delivered',
+                                    ),
+                        icon:
+                            const Icon(
+                          Icons
+                              .check_circle_outline,
+                          size: 18,
+                        ),
+                        label:
+                            const Text(
+                          'Mark Delivered',
+                        ),
+                        style:
+                            ElevatedButton
+                                .styleFrom(
+                          backgroundColor:
+                              AppColors
+                                  .badgeGreenIcon,
+                          foregroundColor:
+                              Colors.white,
+                          shape:
+                              RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius
+                                    .circular(
+                              10,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+
+                  const SizedBox(
+                    width: 10,
+                  ),
+
                   Expanded(
                     child: SizedBox(
                       height: 44,
-                      child: ElevatedButton.icon(
-                        onPressed: updatingDeliveryId == deliveryId
-                            ? null
-                            : () => _updateDeliveryStatus(delivery, 'Failed'),
-                        icon: const Icon(Icons.cancel_outlined, size: 18),
-                        label: const Text('Mark Failed'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.badgeRedIcon,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      child:
+                          ElevatedButton
+                              .icon(
+                        onPressed:
+                            updatingDeliveryId ==
+                                    deliveryId
+                                ? null
+                                : () =>
+                                    _updateDeliveryStatus(
+                                      delivery,
+                                      'Failed',
+                                    ),
+                        icon:
+                            const Icon(
+                          Icons
+                              .cancel_outlined,
+                          size: 18,
+                        ),
+                        label:
+                            const Text(
+                          'Mark Failed',
+                        ),
+                        style:
+                            ElevatedButton
+                                .styleFrom(
+                          backgroundColor:
+                              AppColors
+                                  .badgeRedIcon,
+                          foregroundColor:
+                              Colors.white,
+                          shape:
+                              RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius
+                                    .circular(
+                              10,
+                            ),
                           ),
                         ),
                       ),
@@ -811,141 +1442,229 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
     );
   }
 
-  // --- Transactions Tab Content ---
+  // ------------------------------------------------------------
+  // TRANSACTIONS
+  // ------------------------------------------------------------
+
   Widget _buildTransactionsTabContent() {
-    final filteredTx = _getFilteredTransactions();
-    final totalRev = _calculateTotalRevenue();
+    final filteredTx =
+        _getFilteredTransactions();
+
+    final totalRev =
+        _calculateTotalRevenue();
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
       children: [
-        // Title Header
         Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            const Text(
               'Sales Transactions History',
               style: TextStyle(
                 fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                fontWeight:
+                    FontWeight.bold,
+                color:
+                    AppColors.primary,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               'View all customer sales, distributions & cash receipts',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: 13,
+                color:
+                    _secondaryTextColor,
+              ),
             ),
           ],
         ),
+
         const SizedBox(height: 18),
 
-        // Summary Cards (Total Count & Total Revenue)
         Row(
           children: [
             Expanded(
               child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: AppTheme.cardDecoration,
+                padding:
+                    const EdgeInsets.all(
+                  16,
+                ),
+                decoration:
+                    _cardDecoration,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment:
+                          MainAxisAlignment
+                              .spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'TOTAL SALES',
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textMuted,
-                            letterSpacing: 0.5,
+                            fontWeight:
+                                FontWeight
+                                    .bold,
+                            color:
+                                _mutedTextColor,
+                            letterSpacing:
+                                0.5,
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppColors.badgeGreenBg,
-                            borderRadius: BorderRadius.circular(8),
+                          padding:
+                              const EdgeInsets
+                                  .all(6),
+                          decoration:
+                              BoxDecoration(
+                            color: AppColors
+                                .badgeGreenBg,
+                            borderRadius:
+                                BorderRadius
+                                    .circular(
+                              8,
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.receipt_rounded,
+                          child:
+                              const Icon(
+                            Icons
+                                .receipt_rounded,
                             size: 16,
-                            color: AppColors.badgeGreenIcon,
+                            color: AppColors
+                                .badgeGreenIcon,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+
+                    const SizedBox(
+                      height: 8,
+                    ),
+
                     Text(
                       '${transactions.length}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        fontWeight:
+                            FontWeight.bold,
+                        color:
+                            _primaryTextColor,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    const Text(
+
+                    const SizedBox(
+                      height: 2,
+                    ),
+
+                    Text(
                       'Completed Transactions',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textSecondary,
+                        color:
+                            _secondaryTextColor,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
+
             const SizedBox(width: 12),
+
             Expanded(
               child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: AppTheme.cardDecoration,
+                padding:
+                    const EdgeInsets.all(
+                  16,
+                ),
+                decoration:
+                    _cardDecoration,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment:
+                          MainAxisAlignment
+                              .spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'TOTAL REVENUE',
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textMuted,
-                            letterSpacing: 0.5,
+                            fontWeight:
+                                FontWeight
+                                    .bold,
+                            color:
+                                _mutedTextColor,
+                            letterSpacing:
+                                0.5,
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppColors.badgeBlueBg,
-                            borderRadius: BorderRadius.circular(8),
+                          padding:
+                              const EdgeInsets
+                                  .all(6),
+                          decoration:
+                              BoxDecoration(
+                            color: AppColors
+                                .badgeBlueBg,
+                            borderRadius:
+                                BorderRadius
+                                    .circular(
+                              8,
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.payments_rounded,
+                          child:
+                              const Icon(
+                            Icons
+                                .payments_rounded,
                             size: 16,
-                            color: AppColors.badgeBlueIcon,
+                            color: AppColors
+                                .badgeBlueIcon,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+
+                    const SizedBox(
+                      height: 8,
+                    ),
+
+                    const Text(
+                      '',
+                    ),
+
                     Text(
                       'Rs ${totalRev.toStringAsFixed(0)}',
-                      style: const TextStyle(
+                      style:
+                          const TextStyle(
                         fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                        fontWeight:
+                            FontWeight.bold,
+                        color:
+                            AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    const Text(
+
+                    const SizedBox(
+                      height: 2,
+                    ),
+
+                    Text(
                       'Collected Cash / Credit',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textSecondary,
+                        color:
+                            _secondaryTextColor,
                       ),
                     ),
                   ],
@@ -954,74 +1673,110 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
             ),
           ],
         ),
+
         const SizedBox(height: 18),
 
-        // Search Bar for Transactions
         TextField(
-          controller: _txSearchController,
+          controller:
+              _txSearchController,
           onChanged: (val) {
             setState(() {
               txSearchQuery = val;
             });
           },
-          decoration: InputDecoration(
-            hintText: 'Search customer, product or payment...',
-            prefixIcon: const Icon(
+          style: TextStyle(
+            color: _primaryTextColor,
+          ),
+          decoration:
+              InputDecoration(
+            hintText:
+                'Search customer, product or payment...',
+            hintStyle: TextStyle(
+              color:
+                  _secondaryTextColor,
+            ),
+            prefixIcon:
+                Icon(
               Icons.search_rounded,
-              color: AppColors.textMuted,
+              color:
+                  _mutedTextColor,
               size: 20,
             ),
-            suffixIcon: txSearchQuery.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(
-                      Icons.clear_rounded,
-                      size: 18,
-                      color: AppColors.textMuted,
-                    ),
-                    onPressed: () {
-                      _txSearchController.clear();
-                      setState(() {
-                        txSearchQuery = '';
-                      });
-                    },
-                  )
-                : null,
-            contentPadding: const EdgeInsets.symmetric(
+            suffixIcon:
+                txSearchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(
+                          Icons
+                              .clear_rounded,
+                          size: 18,
+                          color:
+                              _mutedTextColor,
+                        ),
+                        onPressed: () {
+                          _txSearchController
+                              .clear();
+
+                          setState(() {
+                            txSearchQuery =
+                                '';
+                          });
+                        },
+                      )
+                    : null,
+            filled: true,
+            fillColor: _cardColor,
+            contentPadding:
+                const EdgeInsets
+                    .symmetric(
               horizontal: 14,
               vertical: 12,
             ),
           ),
         ),
+
         const SizedBox(height: 18),
 
-        // Transactions List
         if (filteredTx.isEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 48),
-            decoration: AppTheme.cardDecoration,
+            padding:
+                const EdgeInsets
+                    .symmetric(
+              vertical: 48,
+            ),
+            decoration:
+                _cardDecoration,
             child: Column(
-              children: const [
+              children: [
                 Icon(
-                  Icons.receipt_long_outlined,
+                  Icons
+                      .receipt_long_outlined,
                   size: 48,
-                  color: AppColors.textMuted,
+                  color:
+                      _mutedTextColor,
                 ),
-                SizedBox(height: 12),
+                const SizedBox(
+                  height: 12,
+                ),
                 Text(
                   'No Transactions Found',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    fontWeight:
+                        FontWeight.bold,
+                    color:
+                        _primaryTextColor,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(
+                  height: 4,
+                ),
                 Text(
                   'No recorded sales match your search.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color:
+                        _secondaryTextColor,
                   ),
                 ),
               ],
@@ -1030,76 +1785,149 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
         else
           ListView.separated(
             shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: filteredTx.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              return _buildTransactionCard(filteredTx[index]);
+            physics:
+                const NeverScrollableScrollPhysics(),
+            itemCount:
+                filteredTx.length,
+            separatorBuilder:
+                (_, __) =>
+                    const SizedBox(
+              height: 12,
+            ),
+            itemBuilder:
+                (context, index) {
+              return _buildTransactionCard(
+                filteredTx[index],
+              );
             },
           ),
       ],
     );
   }
 
-  Widget _buildTransactionCard(Map<String, dynamic> tx) {
-    final custName = (tx['customerName'] ?? 'Walk-in Customer').toString();
-    final pName = (tx['productName'] ?? 'Product Sale').toString();
-    final qty = (tx['quantity'] ?? '1').toString();
-    final amountVal = tx['amount'] != null
-        ? double.tryParse(tx['amount'].toString()) ?? 0.0
-        : 0.0;
-    final amountStr = 'Rs ${amountVal.toStringAsFixed(2)}';
-    final payMethod = (tx['paymentMethod'] ?? 'Cash').toString();
-    final dateRaw = (tx['createdAt'] ?? tx['date'] ?? '').toString();
-    final dateStr = dateRaw.contains('T')
-        ? dateRaw.split('T')[0]
-        : (dateRaw.isNotEmpty ? dateRaw : 'Today');
+  Widget _buildTransactionCard(
+    Map<String, dynamic> tx,
+  ) {
+    final custName =
+        (tx['customerName'] ??
+                'Walk-in Customer')
+            .toString();
+
+    final pName =
+        (tx['productName'] ??
+                'Product Sale')
+            .toString();
+
+    final qty =
+        (tx['quantity'] ?? '1')
+            .toString();
+
+    final amountVal =
+        tx['amount'] != null
+            ? double.tryParse(
+                  tx['amount'].toString(),
+                ) ??
+                0.0
+            : 0.0;
+
+    final amountStr =
+        'Rs ${amountVal.toStringAsFixed(2)}';
+
+    final payMethod =
+        (tx['paymentMethod'] ??
+                'Cash')
+            .toString();
+
+    final dateRaw =
+        (tx['createdAt'] ??
+                tx['date'] ??
+                '')
+            .toString();
+
+    final dateStr =
+        dateRaw.contains('T')
+            ? dateRaw.split('T')[0]
+            : (dateRaw.isNotEmpty
+                ? dateRaw
+                : 'Today');
 
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration,
+      padding:
+          const EdgeInsets.all(16),
+      decoration:
+          _cardDecoration,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment:
+                MainAxisAlignment
+                    .spaceBetween,
             children: [
               Expanded(
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.badgeGreenBg,
-                        borderRadius: BorderRadius.circular(10),
+                      padding:
+                          const EdgeInsets
+                              .all(10),
+                      decoration:
+                          BoxDecoration(
+                        color: AppColors
+                            .badgeGreenBg,
+                        borderRadius:
+                            BorderRadius
+                                .circular(
+                          10,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.shopping_bag_outlined,
-                        color: AppColors.badgeGreenIcon,
+                      child:
+                          const Icon(
+                        Icons
+                            .shopping_bag_outlined,
+                        color: AppColors
+                            .badgeGreenIcon,
                         size: 20,
                       ),
                     ),
-                    const SizedBox(width: 12),
+
+                    const SizedBox(
+                      width: 12,
+                    ),
+
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment:
+                            CrossAxisAlignment
+                                .start,
                         children: [
                           Text(
                             custName,
-                            style: const TextStyle(
+                            style:
+                                TextStyle(
                               fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              fontWeight:
+                                  FontWeight
+                                      .bold,
+                              color:
+                                  _primaryTextColor,
                             ),
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            overflow:
+                                TextOverflow
+                                    .ellipsis,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(
+                            height: 2,
+                          ),
                           Text(
                             'Date: $dateStr',
-                            style: const TextStyle(
+                            style:
+                                TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color:
+                                  _secondaryTextColor,
                             ),
                           ),
                         ],
@@ -1108,91 +1936,158 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                   ],
                 ),
               ),
+
               Container(
-                padding: const EdgeInsets.symmetric(
+                padding:
+                    const EdgeInsets
+                        .symmetric(
                   horizontal: 10,
                   vertical: 4,
                 ),
-                decoration: BoxDecoration(
-                  color: AppColors.badgeGreenBg,
-                  borderRadius: BorderRadius.circular(12),
+                decoration:
+                    BoxDecoration(
+                  color: AppColors
+                      .badgeGreenBg,
+                  borderRadius:
+                      BorderRadius
+                          .circular(
+                    12,
+                  ),
                 ),
-                child: const Text(
+                child:
+                    const Text(
                   'COMPLETED',
-                  style: TextStyle(
+                  style:
+                      TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.badgeGreenText,
+                    fontWeight:
+                        FontWeight
+                            .bold,
+                    color: AppColors
+                        .badgeGreenText,
                   ),
                 ),
               ),
             ],
           ),
+
           const SizedBox(height: 12),
-          const Divider(color: AppColors.borderLight, height: 1),
+
+          Divider(
+            color: _borderColor,
+            height: 1,
+          ),
+
           const SizedBox(height: 12),
-          // Product & Amount Details
+
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment
+                    .start,
             children: [
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
                   children: [
-                    const Text(
+                    Text(
                       'PRODUCT & QTY',
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
-                        letterSpacing: 0.5,
+                        fontWeight:
+                            FontWeight
+                                .w600,
+                        color:
+                            _mutedTextColor,
+                        letterSpacing:
+                            0.5,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(
+                      height: 2,
+                    ),
                     Text(
                       '$pName ($qty)',
-                      style: const TextStyle(
+                      style:
+                          TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        fontWeight:
+                            FontWeight
+                                .w600,
+                        color:
+                            _primaryTextColor,
                       ),
                       maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      overflow:
+                          TextOverflow
+                              .ellipsis,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+
+              const SizedBox(
+                width: 12,
+              ),
+
               Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment:
+                    CrossAxisAlignment
+                        .end,
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
                           horizontal: 8,
                           vertical: 2,
                         ),
-                        margin: const EdgeInsets.only(right: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryLight,
-                          borderRadius: BorderRadius.circular(6),
+                        margin:
+                            const EdgeInsets
+                                .only(
+                          right: 6,
+                        ),
+                        decoration:
+                            BoxDecoration(
+                          color: AppColors
+                              .primaryLight,
+                          borderRadius:
+                              BorderRadius
+                                  .circular(
+                            6,
+                          ),
                         ),
                         child: Text(
                           payMethod,
-                          style: const TextStyle(
+                          style:
+                              const TextStyle(
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            fontWeight:
+                                FontWeight
+                                    .bold,
+                            color: AppColors
+                                .primary,
                           ),
                         ),
                       ),
+
+                      const SizedBox(
+                        width: 4,
+                      ),
+
                       Text(
                         amountStr,
-                        style: const TextStyle(
+                        style:
+                            const TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                          fontWeight:
+                              FontWeight
+                                  .bold,
+                          color: AppColors
+                              .primary,
                         ),
                       ),
                     ],
@@ -1206,38 +2101,68 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
     );
   }
 
-  Widget _buildStatusBadge(String status) {
+  // ------------------------------------------------------------
+  // STATUS BADGE
+  // ------------------------------------------------------------
+
+  Widget _buildStatusBadge(
+    String status,
+  ) {
     Color bg;
     Color fg;
 
     switch (status.toLowerCase()) {
       case 'delivered':
-        bg = AppColors.badgeGreenBg;
-        fg = AppColors.badgeGreenIcon;
+        bg =
+            AppColors.badgeGreenBg;
+        fg =
+            AppColors.badgeGreenIcon;
         break;
+
       case 'in transit':
-        bg = AppColors.badgePurpleBg;
-        fg = AppColors.badgePurpleIcon;
+        bg =
+            AppColors.badgePurpleBg;
+        fg =
+            AppColors.badgePurpleIcon;
         break;
+
       case 'failed':
-        bg = AppColors.badgeRedBg;
-        fg = AppColors.badgeRedIcon;
+        bg =
+            AppColors.badgeRedBg;
+        fg =
+            AppColors.badgeRedIcon;
         break;
+
       default:
-        bg = AppColors.badgeOrangeBg;
-        fg = AppColors.badgeOrangeIcon;
+        bg =
+            AppColors.badgeOrangeBg;
+        fg =
+            AppColors.badgeOrangeIcon;
         break;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 4,
+      ),
+      decoration:
+          BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius:
+            BorderRadius.circular(
+          12,
+        ),
       ),
       child: Text(
         status.toUpperCase(),
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: fg),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight:
+              FontWeight.bold,
+          color: fg,
+        ),
       ),
     );
   }

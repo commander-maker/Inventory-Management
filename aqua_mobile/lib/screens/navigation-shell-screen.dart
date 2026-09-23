@@ -23,7 +23,7 @@ class _NavigationShellScreenState extends State<NavigationShellScreen> {
   void initState() {
     super.initState();
     _screens = [
-      DashboardScreen(user: widget.user),
+      DashboardScreen(user: widget.user, onTabSelect: _onNavItemTapped),
       MyDeliveriesScreen(user: widget.user),
       MyVehicleInventoryScreen(user: widget.user),
       SettingsScreen(user: widget.user),
@@ -39,16 +39,11 @@ class _NavigationShellScreenState extends State<NavigationShellScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          border: Border(
-            top: BorderSide(color: AppColors.border, width: 1),
-          ),
+          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
           boxShadow: [
             BoxShadow(
               color: Color(0x08000000),
@@ -70,7 +65,9 @@ class _NavigationShellScreenState extends State<NavigationShellScreen> {
               selectedFontSize: 12,
               unselectedFontSize: 12,
               selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+              ),
               items: const [
                 BottomNavigationBarItem(
                   icon: Padding(
@@ -79,7 +76,10 @@ class _NavigationShellScreenState extends State<NavigationShellScreen> {
                   ),
                   activeIcon: Padding(
                     padding: EdgeInsets.only(bottom: 4),
-                    child: Icon(Icons.dashboard_rounded, color: AppColors.primary),
+                    child: Icon(
+                      Icons.dashboard_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                   label: 'Dashboard',
                 ),
@@ -101,7 +101,10 @@ class _NavigationShellScreenState extends State<NavigationShellScreen> {
                   ),
                   activeIcon: Padding(
                     padding: EdgeInsets.only(bottom: 4),
-                    child: Icon(Icons.directions_car_rounded, color: AppColors.primary),
+                    child: Icon(
+                      Icons.directions_car_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                   label: 'Vehicle',
                 ),
@@ -112,7 +115,10 @@ class _NavigationShellScreenState extends State<NavigationShellScreen> {
                   ),
                   activeIcon: Padding(
                     padding: EdgeInsets.only(bottom: 4),
-                    child: Icon(Icons.settings_rounded, color: AppColors.primary),
+                    child: Icon(
+                      Icons.settings_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                   label: 'Settings',
                 ),

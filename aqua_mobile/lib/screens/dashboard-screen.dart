@@ -4,14 +4,12 @@ import '../core/app_theme.dart';
 import '../models/model.dart';
 import '../services/api_service.dart';
 import 'auth-screen.dart';
-import 'my-deliveries-screen.dart';
-import 'my-vehicle-inventory-screen.dart';
-import 'settings-screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final User user;
+  final ValueChanged<int>? onTabSelect;
 
-  const DashboardScreen({super.key, required this.user});
+  const DashboardScreen({super.key, required this.user, this.onTabSelect});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -134,8 +132,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _isDarkMode ? const Color(0xFF121212) : AppColors.scaffoldBackground;
 
   // Dashboard card background
-  Color get _cardColor =>
-      _isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+  Color get _cardColor => _isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
 
   // Primary text
   Color get _primaryTextColor =>
@@ -154,9 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return BoxDecoration(
       color: _cardColor,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: _borderColor,
-      ),
+      border: Border.all(color: _borderColor),
       boxShadow: _isDarkMode
           ? []
           : [
@@ -178,10 +173,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         cardColor: _cardColor,
         dividerColor: _borderColor,
         colorScheme: Theme.of(context).colorScheme.copyWith(
-              brightness:
-                  _isDarkMode ? Brightness.dark : Brightness.light,
-              surface: _cardColor,
-            ),
+          brightness: _isDarkMode ? Brightness.dark : Brightness.light,
+          surface: _cardColor,
+        ),
       ),
       child: Scaffold(
         backgroundColor: _backgroundColor,
@@ -189,9 +183,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           backgroundColor: _cardColor,
           elevation: 0,
           scrolledUnderElevation: 0,
-          iconTheme: IconThemeData(
-            color: _primaryTextColor,
-          ),
+          iconTheme: IconThemeData(color: _primaryTextColor),
           title: Row(
             children: [
               Container(
@@ -227,10 +219,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onPressed: () {},
             ),
             IconButton(
-              icon: Icon(
-                Icons.refresh_rounded,
-                color: _primaryTextColor,
-              ),
+              icon: Icon(Icons.refresh_rounded, color: _primaryTextColor),
               onPressed: _fetchDashboardData,
             ),
           ],
@@ -239,8 +228,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         body: isLoading
             ? const Center(
                 child: CircularProgressIndicator(
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                 ),
               )
             : RefreshIndicator(
@@ -304,10 +292,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             // Date Badge
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(20),
@@ -429,11 +414,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: iconBgColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 18,
-                ),
+                child: Icon(icon, color: iconColor, size: 18),
               ),
             ],
           ),
@@ -477,10 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 2),
                   Text(
                     'Your scheduled deliveries for today',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _secondaryTextColor,
-                    ),
+                    style: TextStyle(fontSize: 12, color: _secondaryTextColor),
                   ),
                 ],
               ),
@@ -492,9 +470,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.2),
-                  ),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
                 ),
                 child: Text(
                   '${stats['total']} Total',
@@ -538,18 +514,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: todayDeliveries.take(3).length,
-              separatorBuilder: (_, __) => Divider(
-                color: _borderColor,
-                height: 16,
-              ),
+              separatorBuilder: (_, __) =>
+                  Divider(color: _borderColor, height: 16),
               itemBuilder: (context, index) {
                 final d = todayDeliveries[index];
 
-                final customer =
-                    d['Customer'] as Map<String, dynamic>? ?? {};
+                final customer = d['Customer'] as Map<String, dynamic>? ?? {};
 
-                final status =
-                    (d['status'] ?? 'Pending').toString();
+                final status = (d['status'] ?? 'Pending').toString();
 
                 return Row(
                   children: [
@@ -582,8 +554,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            customer['address'] ??
-                                'No address listed',
+                            customer['address'] ?? 'No address listed',
                             style: TextStyle(
                               fontSize: 12,
                               color: _secondaryTextColor,
@@ -645,10 +616,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Text(
                 'Location',
-                style: TextStyle(
-                  color: _secondaryTextColor,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: _secondaryTextColor, fontSize: 13),
               ),
               Row(
                 children: [
@@ -678,10 +646,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Text(
                 'Status',
-                style: TextStyle(
-                  color: _secondaryTextColor,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: _secondaryTextColor, fontSize: 13),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -710,15 +675,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'Fuel Level',
-                    style: TextStyle(
-                      color: _secondaryTextColor,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: _secondaryTextColor, fontSize: 13),
                   ),
                   Text(
                     '75%',
@@ -737,8 +698,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   value: 0.75,
                   minHeight: 8,
                   backgroundColor: AppColors.borderLight,
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(
+                  valueColor: AlwaysStoppedAnimation<Color>(
                     AppColors.badgeGreenIcon,
                   ),
                 ),
@@ -759,8 +719,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Recent Transactions',
@@ -794,49 +753,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             ListView.separated(
               shrinkWrap: true,
-              physics:
-                  const NeverScrollableScrollPhysics(),
-              itemCount:
-                  recentTransactions.take(4).length,
-              separatorBuilder: (_, __) => Divider(
-                color: _borderColor,
-                height: 16,
-              ),
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: recentTransactions.take(4).length,
+              separatorBuilder: (_, __) =>
+                  Divider(color: _borderColor, height: 16),
               itemBuilder: (context, index) {
                 final tx = recentTransactions[index];
 
-                final custName =
-                    tx['customerName'] ?? 'Customer';
+                final custName = tx['customerName'] ?? 'Customer';
 
-                final pName =
-                    tx['productName'] ?? 'Product';
+                final pName = tx['productName'] ?? 'Product';
 
                 final qty = tx['quantity'] ?? '1';
 
                 final amountVal = tx['amount'] != null
-                    ? double.tryParse(
-                            tx['amount'].toString()) ??
-                        0.0
+                    ? double.tryParse(tx['amount'].toString()) ?? 0.0
                     : 0.0;
 
-                final amountStr =
-                    'Rs ${amountVal.toStringAsFixed(0)}';
+                final amountStr = 'Rs ${amountVal.toStringAsFixed(0)}';
 
                 return Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             custName.toString(),
                             style: TextStyle(
                               fontSize: 14,
-                              fontWeight:
-                                  FontWeight.w600,
+                              fontWeight: FontWeight.w600,
                               color: _primaryTextColor,
                             ),
                           ),
@@ -845,12 +792,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             '$pName • Qty: $qty',
                             style: TextStyle(
                               fontSize: 12,
-                              color:
-                                  _secondaryTextColor,
+                              color: _secondaryTextColor,
                             ),
                             maxLines: 1,
-                            overflow:
-                                TextOverflow.ellipsis,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -882,8 +827,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.all(18),
       decoration: _dashboardCardDecoration,
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Recent Activity',
@@ -897,55 +841,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           ListView.separated(
             shrinkWrap: true,
-            physics:
-                const NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: recent.length,
-            separatorBuilder: (_, __) => Divider(
-              color: _borderColor,
-              height: 16,
-            ),
+            separatorBuilder: (_, __) =>
+                Divider(color: _borderColor, height: 16),
             itemBuilder: (context, index) {
               final d = recent[index];
 
-              final customer =
-                  d['Customer']
-                      as Map<String, dynamic>? ??
-                  {};
+              final customer = d['Customer'] as Map<String, dynamic>? ?? {};
 
-              final status =
-                  (d['status'] ?? 'Pending').toString();
+              final status = (d['status'] ?? 'Pending').toString();
 
               return Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          customer['shopName'] ??
-                              'Customer Order',
+                          customer['shopName'] ?? 'Customer Order',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight:
-                                FontWeight.w600,
+                            fontWeight: FontWeight.w600,
                             color: _primaryTextColor,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          customer['address'] ??
-                              'Colombo, Sri Lanka',
+                          customer['address'] ?? 'Colombo, Sri Lanka',
                           style: TextStyle(
                             fontSize: 12,
-                            color:
-                                _secondaryTextColor,
+                            color: _secondaryTextColor,
                           ),
                           maxLines: 1,
-                          overflow:
-                              TextOverflow.ellipsis,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -962,16 +892,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildDetailRow(String label, String value) {
     return Row(
-      mainAxisAlignment:
-          MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: _secondaryTextColor,
-            fontSize: 13,
-          ),
-        ),
+        Text(label, style: TextStyle(color: _secondaryTextColor, fontSize: 13)),
         Text(
           value,
           style: TextStyle(
@@ -986,10 +909,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildStatusPill(String status) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: _getStatusBgColor(status),
         borderRadius: BorderRadius.circular(12),
@@ -1051,38 +971,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           // Drawer Header
           Container(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              50,
-              20,
-              20,
-            ),
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+            decoration: const BoxDecoration(color: AppColors.primary),
             child: Row(
               children: [
                 Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color:
-                        Colors.white.withOpacity(0.2),
+                    color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
-                    child: Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 26,
-                    ),
+                    child: Icon(Icons.person, color: Colors.white, size: 26),
                   ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         widget.user.name.isNotEmpty
@@ -1099,10 +1006,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         widget.user.role,
                         style: TextStyle(
                           fontSize: 12,
-                          color:
-                              Colors.white.withOpacity(
-                            0.8,
-                          ),
+                          color: Colors.white.withOpacity(0.8),
                         ),
                       ),
                     ],
@@ -1116,35 +1020,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           Expanded(
             child: ListView(
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               children: [
-                _buildDrawerMenuItem(
-                  'Dashboard',
-                  Icons.dashboard_rounded,
-                  () {
-                    Navigator.pop(context);
-                  },
-                  isSelected: true,
-                ),
+                _buildDrawerMenuItem('Dashboard', Icons.dashboard_rounded, () {
+                  Navigator.pop(context);
+                }, isSelected: true),
 
                 _buildDrawerMenuItem(
                   'My Deliveries',
                   Icons.local_shipping_rounded,
                   () {
                     Navigator.pop(context);
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            MyDeliveriesScreen(
-                          user: widget.user,
-                        ),
-                      ),
-                    );
+                    widget.onTabSelect?.call(1);
                   },
                 ),
 
@@ -1153,36 +1040,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Icons.directions_car_rounded,
                   () {
                     Navigator.pop(context);
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            MyVehicleInventoryScreen(
-                          user: widget.user,
-                        ),
-                      ),
-                    );
+                    widget.onTabSelect?.call(2);
                   },
                 ),
 
-                _buildDrawerMenuItem(
-                  'Settings',
-                  Icons.settings_rounded,
-                  () {
-                    Navigator.pop(context);
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            SettingsScreen(
-                          user: widget.user,
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                _buildDrawerMenuItem('Settings', Icons.settings_rounded, () {
+                  Navigator.pop(context);
+                  widget.onTabSelect?.call(3);
+                }),
 
                 const SizedBox(height: 12),
 
@@ -1190,14 +1055,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // DARK / LIGHT MODE OPTION
                 // =========================================
                 Container(
-                  margin:
-                      const EdgeInsets.only(bottom: 6),
+                  margin: const EdgeInsets.only(bottom: 6),
                   decoration: BoxDecoration(
                     color: _isDarkMode
                         ? Colors.white.withOpacity(0.06)
                         : Colors.grey.withOpacity(0.06),
-                    borderRadius:
-                        BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: SwitchListTile(
                     secondary: Icon(
@@ -1207,9 +1070,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: AppColors.primary,
                     ),
                     title: Text(
-                      _isDarkMode
-                          ? 'Dark Mode'
-                          : 'Light Mode',
+                      _isDarkMode ? 'Dark Mode' : 'Light Mode',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -1259,14 +1120,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Color bg = isLogout
         ? AppColors.badgeRedBg
         : isSelected
-            ? AppColors.primaryLight
-            : Colors.transparent;
+        ? AppColors.primaryLight
+        : Colors.transparent;
 
     Color fg = isLogout
         ? AppColors.badgeRedIcon
         : isSelected
-            ? AppColors.primary
-            : _primaryTextColor;
+        ? AppColors.primary
+        : _primaryTextColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -1275,18 +1136,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: fg,
-          size: 20,
-        ),
+        leading: Icon(icon, color: fg, size: 20),
         title: Text(
           title,
           style: TextStyle(
             fontSize: 14,
-            fontWeight: isSelected
-                ? FontWeight.bold
-                : FontWeight.w500,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             color: fg,
           ),
         ),
@@ -1318,35 +1173,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           content: Text(
             'Are you sure you want to logout?',
-            style: TextStyle(
-              color: _secondaryTextColor,
-            ),
+            style: TextStyle(color: _secondaryTextColor),
           ),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(dialogContext),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text(
                 'Cancel',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    AppColors.badgeRedIcon,
+                backgroundColor: AppColors.badgeRedIcon,
               ),
               onPressed: () async {
                 Navigator.pop(dialogContext);
 
-                final navigator =
-                    Navigator.of(context);
+                final navigator = Navigator.of(context);
 
-                final prefs =
-                    await SharedPreferences
-                        .getInstance();
+                final prefs = await SharedPreferences.getInstance();
 
                 await prefs.remove('token');
                 await prefs.remove('user_id');
@@ -1355,18 +1201,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (!mounted) return;
 
                 navigator.pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        const AuthScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const AuthScreen()),
                   (route) => false,
                 );
               },
               child: const Text(
                 'Logout',
-                style: TextStyle(
-                  color: Colors.white,
-                ),
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ],
