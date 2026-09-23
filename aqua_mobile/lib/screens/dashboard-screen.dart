@@ -400,7 +400,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: iconBgColor,
+                  color: _isDarkMode
+                      ? iconColor.withOpacity(0.18)
+                      : iconBgColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: iconColor, size: 18),

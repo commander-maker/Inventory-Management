@@ -839,7 +839,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: bg,
+              color: _isDarkMode ? fg.withOpacity(0.18) : bg,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 18, color: fg),

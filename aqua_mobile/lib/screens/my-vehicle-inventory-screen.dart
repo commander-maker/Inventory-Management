@@ -653,7 +653,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: iconBg,
+                  color: _isDarkMode ? iconColor.withOpacity(0.18) : iconBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: iconColor, size: 18),
@@ -845,7 +845,9 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                     icon: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
+                        color: _isDarkMode
+                            ? AppColors.primary.withOpacity(0.18)
+                            : AppColors.primaryLight,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -861,7 +863,9 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                     icon: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.badgeRedBg,
+                        color: _isDarkMode
+                            ? AppColors.badgeRedIcon.withOpacity(0.18)
+                            : AppColors.badgeRedBg,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
