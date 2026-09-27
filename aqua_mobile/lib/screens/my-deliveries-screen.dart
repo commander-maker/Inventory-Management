@@ -37,6 +37,14 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
 
   String txSearchQuery = '';
   final TextEditingController _txSearchController = TextEditingController();
+  String selectedTransactionPeriod = 'All time';
+
+  static const List<String> _transactionPeriods = [
+    'All time',
+    'This week',
+    'This month',
+    'This year',
+  ];
 
   // ------------------------------------------------------------
   // DARK / LIGHT MODE (shared across all screens via ThemeController)
@@ -266,13 +274,37 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
   }
 
   List<Map<String, dynamic>> _getFilteredTransactions() {
-    if (txSearchQuery.trim().isEmpty) {
-      return transactions;
-    }
-
     final query = txSearchQuery.toLowerCase();
+    final now = DateTime.now();
+    final startOfWeek = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: now.weekday - 1));
 
     return transactions.where((tx) {
+      if (selectedTransactionPeriod != 'All time') {
+        final rawDate = (tx['createdAt'] ?? tx['date'] ?? '').toString();
+        final transactionDate = DateTime.tryParse(rawDate);
+        if (transactionDate == null) return false;
+
+        final inSelectedPeriod = switch (selectedTransactionPeriod) {
+          'This week' =>
+            !transactionDate.isBefore(startOfWeek) &&
+                transactionDate.isBefore(
+                  startOfWeek.add(const Duration(days: 7)),
+                ),
+          'This month' =>
+            transactionDate.year == now.year &&
+                transactionDate.month == now.month,
+          'This year' => transactionDate.year == now.year,
+          _ => true,
+        };
+        if (!inSelectedPeriod) return false;
+      }
+
+      if (query.isEmpty) return true;
+
       final cust = (tx['customerName'] ?? '').toString().toLowerCase();
 
       final prod = (tx['productName'] ?? '').toString().toLowerCase();
@@ -311,10 +343,12 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
     };
   }
 
-  double _calculateTotalRevenue() {
+  double _calculateTotalRevenue(
+    List<Map<String, dynamic>> filteredTransactions,
+  ) {
     double total = 0.0;
 
-    for (var tx in transactions) {
+    for (var tx in filteredTransactions) {
       if (tx['amount'] != null) {
         final val = double.tryParse(tx['amount'].toString()) ?? 0.0;
 
@@ -1195,7 +1229,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
   Widget _buildTransactionsTabContent() {
     final filteredTx = _getFilteredTransactions();
 
-    final totalRev = _calculateTotalRevenue();
+    final totalRev = _calculateTotalRevenue(filteredTx);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1260,7 +1294,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                     const SizedBox(height: 8),
 
                     Text(
-                      '${transactions.length}',
+                      '${filteredTx.length}',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -1349,6 +1383,55 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
 
         const SizedBox(height: 18),
 
+        Text(
+          'PERIOD',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: _mutedTextColor,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _transactionPeriods.map((period) {
+              final isSelected = selectedTransactionPeriod == period;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(period),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    setState(() {
+                      selectedTransactionPeriod = period;
+                    });
+                  },
+                  selectedColor: AppColors.primary,
+                  backgroundColor: _cardColor,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : _secondaryTextColor,
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                  side: BorderSide(
+                    color: isSelected ? AppColors.primary : _borderColor,
+                  ),
+                  showCheckmark: false,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
         TextField(
           controller: _txSearchController,
           onChanged: (val) {
@@ -1415,7 +1498,7 @@ class _MyDeliveriesScreenState extends State<MyDeliveriesScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'No recorded sales match your search.',
+                  'No recorded sales match the selected period or search.',
                   style: TextStyle(fontSize: 13, color: _secondaryTextColor),
                 ),
               ],
