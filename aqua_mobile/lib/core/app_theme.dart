@@ -1,4 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Single source of truth for the agent app's dark/light mode so every
+/// screen toggles and stays in sync together.
+class ThemeController {
+  static const String _prefsKey = 'agent_dashboard_dark_mode';
+  static final ValueNotifier<bool> isDarkMode = ValueNotifier<bool>(false);
+
+  static Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    isDarkMode.value = prefs.getBool(_prefsKey) ?? false;
+  }
+
+  static Future<void> toggle(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsKey, value);
+    isDarkMode.value = value;
+  }
+}
 
 class AppColors {
   // Brand & Primary Palette
@@ -77,7 +96,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.border),
@@ -95,7 +117,10 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.badgeRedIcon),
         ),
         hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
-        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+        labelStyle: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 14,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -106,10 +131,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -120,10 +142,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -135,11 +154,7 @@ class AppTheme {
     borderRadius: BorderRadius.circular(16),
     border: Border.all(color: AppColors.border, width: 1),
     boxShadow: const [
-      BoxShadow(
-        color: Color(0x08000000),
-        blurRadius: 10,
-        offset: Offset(0, 4),
-      ),
+      BoxShadow(color: Color(0x08000000), blurRadius: 10, offset: Offset(0, 4)),
     ],
   );
 
@@ -147,7 +162,9 @@ class AppTheme {
     return BoxDecoration(
       color: bgColor,
       borderRadius: BorderRadius.circular(12),
-      border: borderColor != null ? Border.all(color: borderColor, width: 1) : null,
+      border: borderColor != null
+          ? Border.all(color: borderColor, width: 1)
+          : null,
     );
   }
 }

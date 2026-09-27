@@ -195,7 +195,7 @@ export default function AgentDashboard() {
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Today's Deliveries</h2>
                             <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Your scheduled deliveries for today</p>
                         </div>
-                        <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm">
+                        <span className="px-4 py-2 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg font-semibold text-sm">
                             {deliveryStats.total} Total
                         </span>
                     </div>
@@ -210,10 +210,10 @@ export default function AgentDashboard() {
                         ) : (
                             deliveries.map((delivery) => {
                                 const statusColor = 
-                                    delivery.status === 'Delivered' ? 'bg-green-100 text-green-800' :
-                                    delivery.status === 'In Transit' ? 'bg-blue-100 text-blue-800' :
-                                    delivery.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-red-100 text-red-800';
+                                    delivery.status === 'Delivered' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' :
+                                    delivery.status === 'In Transit' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300' :
+                                    delivery.status === 'Pending' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300' :
+                                    'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300';
 
                                 return (
                                     <div
@@ -295,7 +295,7 @@ export default function AgentDashboard() {
                                 </div>
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-sm text-gray-600 dark:text-gray-400">Status</span>
-                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                                    <span className="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-full text-xs font-semibold">
                                         {vehicleStatus.status}
                                     </span>
                                 </div>

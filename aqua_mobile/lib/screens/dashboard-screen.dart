@@ -4,14 +4,12 @@ import '../core/app_theme.dart';
 import '../models/model.dart';
 import '../services/api_service.dart';
 import 'auth-screen.dart';
-import 'my-deliveries-screen.dart';
-import 'my-vehicle-inventory-screen.dart';
-import 'settings-screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final User user;
+  final ValueChanged<int>? onTabSelect;
 
-  const DashboardScreen({super.key, required this.user});
+  const DashboardScreen({super.key, required this.user, this.onTabSelect});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -25,11 +23,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool isLoading = true;
   String? errorMessage;
 
+  // Dark mode state - shared across all screens via ThemeController
+  bool get _isDarkMode => ThemeController.isDarkMode.value;
+
   @override
   void initState() {
     super.initState();
+    ThemeController.isDarkMode.addListener(_onThemeChanged);
+    ThemeController.load();
     _fetchDashboardData();
   }
+
+  @override
+  void dispose() {
+    ThemeController.isDarkMode.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _toggleTheme(bool value) => ThemeController.toggle(value);
 
   Future<void> _fetchDashboardData() async {
     try {
@@ -40,10 +55,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       final deliveriesResult = await DeliveryAPI.getMyDeliveries();
       final vehicleResult = await VehicleAPI.getMyVehicle();
-      
+
       // Fetch recent finance transactions & income
       List<Map<String, dynamic>> txList = [];
       List<Map<String, dynamic>> incomeList = [];
+
       try {
         txList = await FinanceAPI.getRecentTransactions(limit: 5);
         incomeList = await FinanceAPI.getAllIncome();
@@ -52,10 +68,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
 
       double totalSales = 0.0;
+
       for (var item in incomeList) {
         final amt = item['amount'] != null
             ? double.tryParse(item['amount'].toString()) ?? 0.0
             : 0.0;
+
         totalSales += amt;
       }
 
@@ -98,81 +116,133 @@ class _DashboardScreenState extends State<DashboardScreen> {
     };
   }
 
+  // Dashboard background
+  Color get _backgroundColor =>
+      _isDarkMode ? const Color(0xFF121212) : AppColors.scaffoldBackground;
+
+  // Dashboard card background
+  Color get _cardColor => _isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+
+  // Primary text
+  Color get _primaryTextColor =>
+      _isDarkMode ? Colors.white : AppColors.textPrimary;
+
+  // Secondary text
+  Color get _secondaryTextColor =>
+      _isDarkMode ? Colors.white70 : AppColors.textSecondary;
+
+  // Divider/border
+  Color get _borderColor =>
+      _isDarkMode ? Colors.white12 : AppColors.borderLight;
+
+  // Dashboard card decoration
+  BoxDecoration get _dashboardCardDecoration {
+    return BoxDecoration(
+      color: _cardColor,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: _borderColor),
+      boxShadow: _isDarkMode
+          ? []
+          : [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(8),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: _isDarkMode ? Brightness.dark : Brightness.light,
+        scaffoldBackgroundColor: _backgroundColor,
+        cardColor: _cardColor,
+        dividerColor: _borderColor,
+        colorScheme: Theme.of(context).colorScheme.copyWith(
+          brightness: _isDarkMode ? Brightness.dark : Brightness.light,
+          surface: _cardColor,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: _backgroundColor,
+        appBar: AppBar(
+          backgroundColor: _cardColor,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          iconTheme: IconThemeData(color: _primaryTextColor),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.water_drop_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
               ),
-              child: const Icon(Icons.water_drop_rounded, color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'AQUA',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.notifications_none_rounded,
+                color: _primaryTextColor,
+              ),
+              onPressed: () {},
             ),
-            const SizedBox(width: 8),
-            const Text(
-              'AQUA',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
-              ),
+            IconButton(
+              icon: Icon(Icons.refresh_rounded, color: _primaryTextColor),
+              onPressed: _fetchDashboardData,
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
-            onPressed: _fetchDashboardData,
-          ),
-        ],
-      ),
-      drawer: _buildDrawerMenu(),
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _fetchDashboardData,
-              color: AppColors.primary,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header with Welcome and Date Pill
-                    _buildWelcomeHeader(),
-                    const SizedBox(height: 20),
-                    // Grid of 4 Stat Cards matching web screenshot
-                    _buildWebStyleStatGrid(),
-                    const SizedBox(height: 20),
-                    // Today's Deliveries Card
-                    _buildTodaysDeliveriesCard(),
-                    const SizedBox(height: 20),
-                    // Vehicle Status Card
-                    _buildVehicleStatusCard(),
-                    const SizedBox(height: 20),
-                    // Recent Activity & Sales Section
-                    _buildRecentDeliveriesSection(),
-                    const SizedBox(height: 24),
-                  ],
+        drawer: _buildDrawerMenu(),
+        body: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _fetchDashboardData,
+                color: AppColors.primary,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildWelcomeHeader(),
+                      const SizedBox(height: 20),
+                      _buildWebStyleStatGrid(),
+                      const SizedBox(height: 20),
+                      _buildTodaysDeliveriesCard(),
+                      const SizedBox(height: 20),
+                      _buildVehicleStatusCard(),
+                      const SizedBox(height: 20),
+                      _buildRecentDeliveriesSection(),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
@@ -188,7 +258,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Agent Dashboard',
                     style: TextStyle(
                       fontSize: 24,
@@ -199,16 +269,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 4),
                   Text(
                     'Welcome back, ${widget.user.name}!',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondary,
+                      color: _secondaryTextColor,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
             ),
-            // Date Badge Pill (Matching Web Dashboard)
+
+            // Date Badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -222,10 +293,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.access_time_rounded, color: Colors.white, size: 14),
+                children: [
+                  Icon(
+                    Icons.access_time_rounded,
+                    color: Colors.white,
+                    size: 14,
+                  ),
                   SizedBox(width: 6),
                   Text(
                     'Monday, August 17, 2026',
@@ -247,7 +322,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildWebStyleStatGrid() {
     final stats = _calculateStats();
     final vehicleReg = vehicleData?['registration'] ?? 'V7';
-    final salesText = monthlySales > 0 ? 'Rs ${monthlySales.toStringAsFixed(0)}' : 'Rs 0';
+
+    final salesText = monthlySales > 0
+        ? 'Rs ${monthlySales.toStringAsFixed(0)}'
+        : 'Rs 0';
 
     return GridView.count(
       crossAxisCount: 2,
@@ -257,7 +335,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [
-        // 1. Assigned Vehicle (Blue)
         _buildMiniStatCard(
           label: 'Assigned Vehicle',
           value: vehicleReg,
@@ -265,7 +342,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           iconBgColor: AppColors.badgeBlueBg,
           iconColor: AppColors.badgeBlueIcon,
         ),
-        // 2. Monthly Sales (Green)
         _buildMiniStatCard(
           label: 'Monthly Sales',
           value: salesText,
@@ -273,7 +349,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           iconBgColor: AppColors.badgeGreenBg,
           iconColor: AppColors.badgeGreenIcon,
         ),
-        // 3. Deliveries Today (Purple)
         _buildMiniStatCard(
           label: 'Deliveries Today',
           value: stats['total'].toString(),
@@ -281,7 +356,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           iconBgColor: AppColors.badgePurpleBg,
           iconColor: AppColors.badgePurpleIcon,
         ),
-        // 4. Completed Today (Orange)
         _buildMiniStatCard(
           label: 'Completed Today',
           value: stats['delivered'].toString(),
@@ -302,7 +376,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: AppTheme.cardDecoration,
+      decoration: _dashboardCardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -314,9 +388,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: _secondaryTextColor,
                     fontWeight: FontWeight.w500,
                   ),
                   maxLines: 1,
@@ -326,7 +400,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: iconBgColor,
+                  color: _isDarkMode
+                      ? iconColor.withOpacity(0.18)
+                      : iconBgColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: iconColor, size: 18),
@@ -335,10 +411,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: _primaryTextColor,
             ),
           ),
         ],
@@ -352,7 +428,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: AppTheme.cardDecoration,
+      decoration: _dashboardCardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -361,27 +437,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     "Today's Deliveries",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: _primaryTextColor,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     'Your scheduled deliveries for today',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: TextStyle(fontSize: 12, color: _secondaryTextColor),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(12),
@@ -399,19 +475,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
+
           if (todayDeliveries.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.inventory_outlined, size: 40, color: AppColors.textMuted),
-                    SizedBox(height: 8),
+                    Icon(
+                      Icons.inventory_outlined,
+                      size: 40,
+                      color: _secondaryTextColor,
+                    ),
+                    const SizedBox(height: 8),
                     Text(
                       'No deliveries assigned yet',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textMuted,
+                        color: _secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -424,11 +505,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: todayDeliveries.take(3).length,
-              separatorBuilder: (_, __) => const Divider(color: AppColors.borderLight, height: 16),
+              separatorBuilder: (_, __) =>
+                  Divider(color: _borderColor, height: 16),
               itemBuilder: (context, index) {
                 final d = todayDeliveries[index];
+
                 final customer = d['Customer'] as Map<String, dynamic>? ?? {};
+
                 final status = (d['status'] ?? 'Pending').toString();
+
                 return Row(
                   children: [
                     Container(
@@ -449,19 +534,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            customer['shopName'] ?? customer['name'] ?? 'Customer #${d['id']}',
-                            style: const TextStyle(
+                            customer['shopName'] ??
+                                customer['name'] ??
+                                'Customer #${d['id']}',
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: _primaryTextColor,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             customer['address'] ?? 'No address listed',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: _secondaryTextColor,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -487,13 +574,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: AppTheme.cardDecoration,
+      decoration: _dashboardCardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: const [
-              Icon(Icons.local_shipping_rounded, color: AppColors.primary, size: 20),
+              Icon(
+                Icons.local_shipping_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
               SizedBox(width: 8),
               Text(
                 'Vehicle Status',
@@ -506,22 +597,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildDetailRow('Registration', reg),
+          _buildDetailRow('Registration', reg.toString()),
           const SizedBox(height: 10),
-          _buildDetailRow('Type', type),
+          _buildDetailRow('Type', type.toString()),
           const SizedBox(height: 10),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Location', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              Text(
+                'Location',
+                style: TextStyle(color: _secondaryTextColor, fontSize: 13),
+              ),
               Row(
                 children: [
-                  const Icon(Icons.location_on_outlined, size: 14, color: AppColors.primary),
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(width: 2),
                   Text(
-                    location,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    location.toString(),
+                    style: TextStyle(
+                      color: _primaryTextColor,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
@@ -530,19 +629,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
+
           const SizedBox(height: 10),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Status', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              Text(
+                'Status',
+                style: TextStyle(color: _secondaryTextColor, fontSize: 13),
+              ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.badgeGreenBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  status,
+                  status.toString(),
                   style: const TextStyle(
                     color: AppColors.badgeGreenText,
                     fontSize: 11,
@@ -552,16 +659,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
+
           const SizedBox(height: 14),
-          // Fuel Level Progress Bar matching web
+
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text('Fuel Level', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  Text('75%', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
+                children: [
+                  Text(
+                    'Fuel Level',
+                    style: TextStyle(color: _secondaryTextColor, fontSize: 13),
+                  ),
+                  Text(
+                    '75%',
+                    style: TextStyle(
+                      color: _primaryTextColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -571,7 +689,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   value: 0.75,
                   minHeight: 8,
                   backgroundColor: AppColors.borderLight,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.badgeGreenIcon),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.badgeGreenIcon,
+                  ),
                 ),
               ),
             ],
@@ -585,23 +705,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (recentTransactions.isNotEmpty) {
       return Container(
         padding: const EdgeInsets.all(18),
-        decoration: AppTheme.cardDecoration,
+        decoration: _dashboardCardDecoration,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Recent Transactions',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: _primaryTextColor,
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.badgeGreenBg,
                     borderRadius: BorderRadius.circular(12),
@@ -618,17 +741,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             const SizedBox(height: 12),
+
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: recentTransactions.take(4).length,
-              separatorBuilder: (_, __) => const Divider(color: AppColors.borderLight, height: 16),
+              separatorBuilder: (_, __) =>
+                  Divider(color: _borderColor, height: 16),
               itemBuilder: (context, index) {
                 final tx = recentTransactions[index];
+
                 final custName = tx['customerName'] ?? 'Customer';
+
                 final pName = tx['productName'] ?? 'Product';
+
                 final qty = tx['quantity'] ?? '1';
-                final amountVal = tx['amount'] != null ? double.tryParse(tx['amount'].toString()) ?? 0.0 : 0.0;
+
+                final amountVal = tx['amount'] != null
+                    ? double.tryParse(tx['amount'].toString()) ?? 0.0
+                    : 0.0;
+
                 final amountStr = 'Rs ${amountVal.toStringAsFixed(0)}';
 
                 return Row(
@@ -639,17 +771,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            custName,
-                            style: const TextStyle(
+                            custName.toString(),
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: _primaryTextColor,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             '$pName • Qty: $qty',
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _secondaryTextColor,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -674,32 +809,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     final recent = deliveries.take(3).toList();
-    if (recent.isEmpty) return const SizedBox.shrink();
+
+    if (recent.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: AppTheme.cardDecoration,
+      decoration: _dashboardCardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Recent Activity',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: _primaryTextColor,
             ),
           ),
           const SizedBox(height: 12),
+
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: recent.length,
-            separatorBuilder: (_, __) => const Divider(color: AppColors.borderLight, height: 16),
+            separatorBuilder: (_, __) =>
+                Divider(color: _borderColor, height: 16),
             itemBuilder: (context, index) {
               final d = recent[index];
+
               final customer = d['Customer'] as Map<String, dynamic>? ?? {};
+
               final status = (d['status'] ?? 'Pending').toString();
+
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -709,16 +852,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Text(
                           customer['shopName'] ?? 'Customer Order',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: _primaryTextColor,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           customer['address'] ?? 'Colombo, Sri Lanka',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _secondaryTextColor,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -739,8 +885,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-        Text(value, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
+        Text(label, style: TextStyle(color: _secondaryTextColor, fontSize: 13)),
+        Text(
+          value,
+          style: TextStyle(
+            color: _primaryTextColor,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
       ],
     );
   }
@@ -804,15 +957,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildDrawerMenu() {
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: _cardColor,
       child: Column(
         children: [
           // Drawer Header
           Container(
             padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-            ),
+            decoration: const BoxDecoration(color: AppColors.primary),
             child: Row(
               children: [
                 Container(
@@ -832,7 +983,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.user.name.isNotEmpty ? widget.user.name : 'Agent',
+                        widget.user.name.isNotEmpty
+                            ? widget.user.name
+                            : 'Agent',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -853,8 +1006,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+
           const SizedBox(height: 16),
-          // Menu Items
+
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -862,36 +1016,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _buildDrawerMenuItem('Dashboard', Icons.dashboard_rounded, () {
                   Navigator.pop(context);
                 }, isSelected: true),
-                _buildDrawerMenuItem('My Deliveries', Icons.local_shipping_rounded, () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MyDeliveriesScreen(user: widget.user),
-                    ),
-                  );
-                }),
-                _buildDrawerMenuItem('My Vehicle Inventory', Icons.directions_car_rounded, () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MyVehicleInventoryScreen(user: widget.user),
-                    ),
-                  );
-                }),
+
+                _buildDrawerMenuItem(
+                  'My Deliveries',
+                  Icons.local_shipping_rounded,
+                  () {
+                    Navigator.pop(context);
+                    widget.onTabSelect?.call(1);
+                  },
+                ),
+
+                _buildDrawerMenuItem(
+                  'My Vehicle Inventory',
+                  Icons.directions_car_rounded,
+                  () {
+                    Navigator.pop(context);
+                    widget.onTabSelect?.call(2);
+                  },
+                ),
+
                 _buildDrawerMenuItem('Settings', Icons.settings_rounded, () {
                   Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SettingsScreen(user: widget.user),
-                    ),
-                  );
+                  widget.onTabSelect?.call(3);
                 }),
+
+                const SizedBox(height: 12),
+
+                // =========================================
+                // DARK / LIGHT MODE OPTION
+                // =========================================
+                Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  decoration: BoxDecoration(
+                    color: _isDarkMode
+                        ? Colors.white.withOpacity(0.06)
+                        : Colors.grey.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: SwitchListTile(
+                    secondary: Icon(
+                      _isDarkMode
+                          ? Icons.dark_mode_rounded
+                          : Icons.light_mode_rounded,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      _isDarkMode ? 'Dark Mode' : 'Light Mode',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _primaryTextColor,
+                      ),
+                    ),
+                    subtitle: Text(
+                      _isDarkMode
+                          ? 'Dark theme enabled'
+                          : 'Light theme enabled',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _secondaryTextColor,
+                      ),
+                    ),
+                    value: _isDarkMode,
+                    activeColor: AppColors.primary,
+                    onChanged: _toggleTheme,
+                  ),
+                ),
               ],
             ),
           ),
+
           // Logout Button
           Padding(
             padding: const EdgeInsets.all(16),
@@ -917,13 +1111,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Color bg = isLogout
         ? AppColors.badgeRedBg
         : isSelected
-            ? AppColors.primaryLight
-            : Colors.transparent;
+        ? AppColors.primaryLight
+        : Colors.transparent;
+
     Color fg = isLogout
         ? AppColors.badgeRedIcon
         : isSelected
-            ? AppColors.primary
-            : AppColors.textPrimary;
+        ? AppColors.primary
+        : _primaryTextColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -956,13 +1151,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text('Are you sure you want to logout?'),
+          backgroundColor: _cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Logout',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: _primaryTextColor,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(color: _secondaryTextColor),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -970,18 +1180,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               onPressed: () async {
                 Navigator.pop(dialogContext);
+
                 final navigator = Navigator.of(context);
+
                 final prefs = await SharedPreferences.getInstance();
+
                 await prefs.remove('token');
                 await prefs.remove('user_id');
                 await prefs.remove('user_data');
+
                 if (!mounted) return;
+
                 navigator.pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const AuthScreen()),
                   (route) => false,
                 );
               },
-              child: const Text('Logout', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Logout',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );

@@ -140,12 +140,12 @@ export default function MyVehicle() {
 
     if (!vehicle) {
         return (
-            <div className='p-8 flex flex-col items-center justify-center bg-white rounded-2xl shadow-sm border border-gray-100 min-h-[400px] text-center'>
-                <div className='w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4'>
-                    <Truck className='w-10 h-10 text-gray-300' />
+            <div className='p-8 flex flex-col items-center justify-center bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 min-h-[400px] text-center'>
+                <div className='w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4'>
+                    <Truck className='w-10 h-10 text-gray-300 dark:text-gray-600' />
                 </div>
-                <h2 className='text-xl font-bold text-gray-800 mb-2'>No Vehicle Assigned</h2>
-                <p className='text-gray-500 max-w-sm'>
+                <h2 className='text-xl font-bold text-gray-800 dark:text-white mb-2'>No Vehicle Assigned</h2>
+                <p className='text-gray-500 dark:text-gray-400 max-w-sm'>
                     You currently don't have a vehicle assigned to you. Please contact your administrator for assignment.
                 </p>
                 <button

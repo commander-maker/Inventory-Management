@@ -133,29 +133,29 @@ export default function MyDeliveries() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
             {/* Header */}
-            <div className="bg-white border-b shadow-sm sticky top-0 z-10">
+            <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 shadow-sm sticky top-0 z-10">
                 <div className="px-8 py-6">
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                         My Deliveries
                     </h1>
-                    <p className="text-gray-600 mt-1">View and update your assigned deliveries</p>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">View and update your assigned deliveries</p>
                 </div>
             </div>
 
             <div className="px-8 py-6">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-5 gap-4 mb-6">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600 mb-1">Total</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
                             </div>
                             <Package size={32} className="text-gray-400" />
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm border border-yellow-200 p-6">
+                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950/40 dark:to-yellow-900/30 rounded-xl shadow-sm border border-yellow-200 dark:border-yellow-800 p-6">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-yellow-700 mb-1">Pending</p>
@@ -165,7 +165,7 @@ export default function MyDeliveries() {
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-6">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/30 rounded-xl shadow-sm border border-blue-200 dark:border-blue-800 p-6">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-blue-700 mb-1">In Transit</p>
@@ -175,7 +175,7 @@ export default function MyDeliveries() {
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-6">
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/40 dark:to-green-900/30 rounded-xl shadow-sm border border-green-200 dark:border-green-800 p-6">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-green-700 mb-1">Delivered</p>
@@ -185,7 +185,7 @@ export default function MyDeliveries() {
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm border border-red-200 p-6">
+                    <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/40 dark:to-red-900/30 rounded-xl shadow-sm border border-red-200 dark:border-red-800 p-6">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-red-700 mb-1">Failed</p>
@@ -197,7 +197,7 @@ export default function MyDeliveries() {
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 p-4">
+                <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 mb-6 p-4">
                     <div className="flex gap-2">
                         {['All', 'Pending', 'In Transit', 'Delivered', 'Failed'].map(status => (
                             <button
@@ -205,7 +205,7 @@ export default function MyDeliveries() {
                                 onClick={() => setStatusFilter(status)}
                                 className={`px-4 py-2 rounded-lg font-medium transition ${statusFilter === status
                                     ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                                     }`}
                             >
                                 {status}
@@ -220,15 +220,15 @@ export default function MyDeliveries() {
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                     </div>
                 ) : filteredDeliveries.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                        <Package size={64} className="mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Deliveries Found</h3>
-                        <p className="text-gray-600">You don't have any {statusFilter.toLowerCase()} deliveries.</p>
+                    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-12 text-center">
+                        <Package size={64} className="mx-auto text-gray-300 dark:text-gray-700 mb-4" />
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Deliveries Found</h3>
+                        <p className="text-gray-600 dark:text-gray-400">You don't have any {statusFilter.toLowerCase()} deliveries.</p>
                     </div>
                 ) : (
                     <div className="grid gap-4">
                         {filteredDeliveries.map((delivery) => (
-                            <div key={delivery.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+                            <div key={delivery.id} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 hover:shadow-md transition">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-start gap-4 flex-1">
                                         <div className={`p-3 rounded-lg ${getStatusColor(delivery.status).replace('text-', 'bg-').replace('100', '200')}`}>
@@ -237,7 +237,7 @@ export default function MyDeliveries() {
 
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
-                                                <h3 className="text-lg font-bold text-gray-900">{delivery.Customer?.shopName}</h3>
+                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{delivery.Customer?.shopName}</h3>
                                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(delivery.status)}`}>
                                                     {delivery.status}
                                                 </span>
@@ -245,25 +245,25 @@ export default function MyDeliveries() {
 
                                             <div className="grid grid-cols-2 gap-4 text-sm">
                                                 <div className="flex items-center gap-2 text-gray-600">
-                                                    <MapPin size={16} />
+                                                    <MapPin size={16} className="dark:text-gray-400" />
                                                     <span>{delivery.Customer?.address}, {delivery.Customer?.city}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-gray-600">
-                                                    <Phone size={16} />
+                                                    <Phone size={16} className="dark:text-gray-400" />
                                                     <span>{delivery.Customer?.phone}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-gray-600">
-                                                    <Package size={16} />
+                                                    <Package size={16} className="dark:text-gray-400" />
                                                     <span>{delivery.productName} - {delivery.quantity}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-gray-600">
-                                                    <Calendar size={16} />
+                                                    <Calendar size={16} className="dark:text-gray-400" />
                                                     <span>{new Date(delivery.createdAt).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
 
                                             {delivery.notes && (
-                                                <div className="mt-3 flex items-start gap-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                                                <div className="mt-3 flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                                                     <FileText size={16} className="mt-0.5" />
                                                     <span>{delivery.notes}</span>
                                                 </div>
@@ -305,7 +305,7 @@ export default function MyDeliveries() {
                                     )}
 
                                     {delivery.status === 'Delivered' && delivery.deliveredAt && (
-                                        <div className="text-sm text-green-600 flex items-center gap-2">
+                                        <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
                                             <CheckCircle size={16} />
                                             Delivered on {new Date(delivery.deliveredAt).toLocaleString()}
                                         </div>

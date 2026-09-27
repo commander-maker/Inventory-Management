@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'core/app_theme.dart';
 import 'routes/routes.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ThemeController.load();
   runApp(const MyApp());
 }
 
@@ -20,4 +22,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
