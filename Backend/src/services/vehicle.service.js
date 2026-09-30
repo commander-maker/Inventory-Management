@@ -287,67 +287,110 @@ export const getVehicleLoads = async (vehicleId) => {
 
 // Update vehicle load quantity (without affecting inventory - for distribution tracking)
 export const updateVehicleLoad = async (loadId, { quantity, saleData }, userId) => {
-  const load = await prisma.vehicleLoad.findUnique({ where: { id: parseInt(loadId) } });
-  if (!load) throw new Error("Load not found");
-
-  // If saleData is provided, create an income record and a RecentTransaction record for the sale
-  if (saleData && saleData.customerId && saleData.cashAmount) {
-    const now = new Date();
-
-    const customer = await prisma.customer.findUnique({
-      where: { id: parseInt(saleData.customerId) }
+  return prisma.$transaction(async (tx) => {
+    const load = await tx.vehicleLoad.findUnique({
+      where: { id: parseInt(loadId) }
     });
+    if (!load) throw new Error("Load not found");
 
-    const agent = userId ? await prisma.user.findUnique({
-      where: { id: parseInt(userId) }
-    }) : null;
-
-    const unitText = saleData.unit ? saleData.unit : 'units';
-    const distQty = saleData.distributedQuantity !== undefined ? saleData.distributedQuantity : 1;
-    const itemName = saleData.itemName || load.item || 'Product';
-
-    const incomeData = {
-      type: 'Sales',
-      category: 'Product Sales',
-      amount: parseFloat(saleData.cashAmount),
-      description: `Sale of ${distQty} ${unitText} of ${itemName} to customer`,
-      customerId: parseInt(saleData.customerId),
-      agentId: userId ? parseInt(userId) : null,
-      paymentMethod: saleData.paymentMethod || 'Cash',
-      date: now,
-      createdAt: now,
-      updatedAt: now
+    const parseQuantity = (value) => {
+      const match = String(value ?? '').match(/^\s*(\d+(?:\.\d+)?)/);
+      return match ? parseFloat(match[1]) : NaN;
     };
+    const currentQuantity = parseQuantity(load.quantity);
+    const remainingQuantity = parseQuantity(quantity);
+    if (!Number.isFinite(remainingQuantity) || remainingQuantity < 0) {
+      throw new Error('Remaining quantity must be a valid non-negative number');
+    }
+    if (remainingQuantity > currentQuantity) {
+      throw new Error('Remaining quantity cannot exceed the current vehicle inventory');
+    }
 
-    await prisma.income.create({
-      data: incomeData
+    const assignedDeliveries = await tx.deliveryAssignment.findMany({
+      where: {
+        vehicleId: load.vehicleId,
+        productName: { equals: load.item, mode: 'insensitive' },
+        status: { in: ['Pending', 'In Transit'] }
+      },
+      select: { quantity: true }
     });
+    const reservedQuantity = assignedDeliveries.reduce(
+      (total, delivery) => total + (parseQuantity(delivery.quantity) || 0),
+      0
+    );
+    if (remainingQuantity < reservedQuantity) {
+      throw new Error(
+        `Cannot sell assigned stock. Keep at least ${reservedQuantity} units for pending or in-transit deliveries.`
+      );
+    }
 
-    // Create RecentTransaction record so it is stored in Recent Transactions!
-    const custName = customer ? (customer.shopName || customer.ownerName) : 'Customer';
-    await prisma.recentTransaction.create({
+    if (saleData && saleData.customerId && saleData.cashAmount) {
+      const distributedQuantity = currentQuantity - remainingQuantity;
+      if (distributedQuantity <= 0) {
+        throw new Error('Sale quantity must be greater than zero');
+      }
+      const saleAmount = parseFloat(saleData.cashAmount);
+      if (!Number.isFinite(saleAmount) || saleAmount <= 0) {
+        throw new Error('Sale amount must be greater than zero');
+      }
+
+      const now = new Date();
+      const customer = await tx.customer.findUnique({
+        where: { id: parseInt(saleData.customerId) }
+      });
+      const agent = userId
+        ? await tx.user.findUnique({ where: { id: parseInt(userId) } })
+        : null;
+      const unitText = saleData.unit || 'units';
+      const itemName = load.item || 'Product';
+
+      await tx.income.create({
+        data: {
+          type: 'Sales',
+          category: 'Product Sales',
+          amount: saleAmount,
+          description: `Sale of ${distributedQuantity} ${unitText} of ${itemName} to customer`,
+          customerId: parseInt(saleData.customerId),
+          agentId: userId ? parseInt(userId) : null,
+          paymentMethod: saleData.paymentMethod || 'Cash',
+          date: now,
+          createdAt: now,
+          updatedAt: now
+        }
+      });
+
+      const customerName = customer
+        ? customer.shopName || customer.ownerName
+        : 'Customer';
+      await tx.recentTransaction.create({
+        data: {
+          type: 'Sale',
+          productName: itemName,
+          quantity: `${distributedQuantity} ${unitText}`,
+          amount: saleAmount,
+          customerId: parseInt(saleData.customerId),
+          customerName,
+          agentId: userId ? parseInt(userId) : null,
+          agentName: agent?.name || 'Agent',
+          status: 'Completed',
+          description: `Direct Vehicle Sale of ${distributedQuantity} ${unitText}`,
+          paymentMethod: saleData.paymentMethod || 'Cash',
+          createdAt: now,
+          updatedAt: now
+        }
+      });
+    }
+
+    const unit = String(load.quantity)
+      .replace(/^\s*\d+(?:\.\d+)?\s*/, '')
+      .trim();
+    return tx.vehicleLoad.update({
+      where: { id: parseInt(loadId) },
       data: {
-        type: 'Sale',
-        productName: itemName,
-        quantity: `${distQty} ${unitText}`,
-        amount: parseFloat(saleData.cashAmount),
-        customerId: parseInt(saleData.customerId),
-        customerName: custName,
-        agentId: userId ? parseInt(userId) : null,
-        agentName: agent ? agent.name : 'Agent',
-        status: 'Completed',
-        description: `Direct Vehicle Sale of ${distQty} ${unitText}`,
-        paymentMethod: saleData.paymentMethod || 'Cash',
-        createdAt: now,
-        updatedAt: now
+        quantity: unit
+          ? `${remainingQuantity} ${unit}`
+          : remainingQuantity.toString()
       }
     });
-  }
-
-  const updatedLoad = await prisma.vehicleLoad.update({
-    where: { id: parseInt(loadId) },
-    data: { quantity }
   });
-
-  return updatedLoad;
 };

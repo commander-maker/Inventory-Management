@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Truck, Package, MapPin, Gauge, Fuel, Calendar, AlertCircle, Search, RefreshCw, BarChart3, Boxes, Edit, Trash2, X, Minus, DollarSign, User } from 'lucide-react';
-import { vehicleAPI, customerAPI } from '../../utils/api';
+import { vehicleAPI, customerAPI, inventoryAPI, deliveryAPI } from '../../utils/api';
 import { toast } from 'react-toastify';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 
@@ -12,6 +12,7 @@ export default function MyVehicle() {
     const [selectedLoad, setSelectedLoad] = useState(null);
     const [editQuantity, setEditQuantity] = useState('');
     const [customers, setCustomers] = useState([]);
+    const [deliveryReservationsLoaded, setDeliveryReservationsLoaded] = useState(false);
     const [saleData, setSaleData] = useState({
         customerId: '',
         cashAmount: '',
@@ -27,9 +28,50 @@ export default function MyVehicle() {
     const fetchMyVehicle = async () => {
         try {
             setLoading(true);
+            setDeliveryReservationsLoaded(false);
             const response = await vehicleAPI.getMyVehicle();
             if (response.data.success) {
-                setVehicle(response.data.data);
+                const vehicleData = response.data.data;
+                let reservedByItem = {};
+                try {
+                    const deliveryResponse = await deliveryAPI.getMyDeliveries();
+                    const assignments = deliveryResponse.data.data || [];
+                    assignments
+                        .filter((delivery) => ['pending', 'in transit'].includes(String(delivery.status).toLowerCase()))
+                        .forEach((delivery) => {
+                            const itemName = String(delivery.productName || '').trim().toLowerCase();
+                            const quantity = Number.parseFloat(String(delivery.quantity || '').match(/^\s*(\d+(?:\.\d+)?)/)?.[1] || '0');
+                            reservedByItem[itemName] = (reservedByItem[itemName] || 0) + quantity;
+                        });
+                    setDeliveryReservationsLoaded(true);
+                } catch (deliveryError) {
+                    console.error('Error fetching delivery reservations:', deliveryError);
+                    toast.error('Could not verify assigned delivery quantities. Refresh before recording a sale.');
+                }
+                let priceByName = {};
+                try {
+                    const inventoryResponse = await inventoryAPI.getAll();
+                    const inventoryItems = inventoryResponse.data.data || [];
+                    priceByName = Object.fromEntries(
+                        inventoryItems.map((item) => [item.name.trim().toLowerCase(), item])
+                    );
+                } catch (inventoryError) {
+                    console.error('Error fetching inventory prices:', inventoryError);
+                }
+                vehicleData.loads = (vehicleData.loads || []).map((load) => {
+                    const itemName = load.item.trim().toLowerCase();
+                    const inventoryItem = priceByName[itemName];
+                    const loadedQuantity = Number.parseFloat(String(load.quantity).match(/^\s*(\d+(?:\.\d+)?)/)?.[1] || '0');
+                    const reservedQuantity = reservedByItem[itemName] || 0;
+                    return {
+                        ...load,
+                        unitPrice: inventoryItem?.price ?? null,
+                        category: inventoryItem?.category ?? load.category,
+                        reservedQuantity,
+                        sellableQuantity: Math.max(0, loadedQuantity - reservedQuantity)
+                    };
+                });
+                setVehicle(vehicleData);
             }
         } catch (error) {
             console.error('Error fetching vehicle:', error);
@@ -49,16 +91,32 @@ export default function MyVehicle() {
     };
 
     const handleEditLoad = (load) => {
+        if (!deliveryReservationsLoaded) {
+            toast.error('Assigned delivery quantities are not available. Refresh and try again.');
+            return;
+        }
+        if (load.sellableQuantity <= 0) {
+            toast.info('All remaining stock is reserved for assigned deliveries.');
+            return;
+        }
         setSelectedLoad(load);
         // Extract numeric value from quantity string (e.g., "100 Bottles" -> "100")
         const quantityMatch = load.quantity.match(/^(\d+)/);
         setEditQuantity(quantityMatch ? quantityMatch[1] : '');
         setSaleData({
             customerId: '',
-            cashAmount: '',
+            cashAmount: '0',
             paymentMethod: 'Cash'
         });
         setShowEditModal(true);
+    };
+
+    const getSuggestedSaleAmount = (load, remainingQuantity) => {
+        const unitPrice = Number(load?.unitPrice);
+        const originalQuantity = parseInt(load?.quantity?.match(/^\d+/)?.[0] || '0', 10);
+        const remaining = parseInt(remainingQuantity || '0', 10);
+        if (!Number.isFinite(unitPrice) || remaining > originalQuantity) return '';
+        return (unitPrice * Math.max(0, originalQuantity - remaining)).toFixed(2);
     };
 
     const handleUpdateLoad = async (e) => {
@@ -80,7 +138,13 @@ export default function MyVehicle() {
             const originalQuantity = parseInt(selectedLoad.quantity.match(/^(\d+)/)[1]);
             const newQuantity = parseInt(editQuantity);
             const distributedQuantity = originalQuantity - newQuantity;
-            
+
+            if (newQuantity < selectedLoad.reservedQuantity) {
+                toast.error(`Keep at least ${selectedLoad.reservedQuantity} units for assigned deliveries`);
+                setLoading(false);
+                return;
+            }
+
             if (distributedQuantity < 0) {
                 toast.error('New quantity cannot be greater than original quantity');
                 setLoading(false);
@@ -269,11 +333,11 @@ export default function MyVehicle() {
                     <table className='w-full'>
                         <thead className='bg-gray-50/50 dark:bg-gray-900/50'>
                             <tr>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Item Name</th>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Quantity</th>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Category</th>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Loaded At</th>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Actions</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Item Name</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Quantity</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Category</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Loaded At</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Actions</th>
                             </tr>
                         </thead>
                         <tbody className='divide-y divide-gray-50 dark:divide-gray-700'>
@@ -289,9 +353,19 @@ export default function MyVehicle() {
                                             </div>
                                         </td>
                                         <td className='px-6 py-4 whitespace-nowrap'>
-                                            <span className='px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg'>
-                                                {load.quantity}
-                                            </span>
+                                            <div className='flex flex-col items-start gap-1'>
+                                                <span className='px-2.5 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg'>
+                                                    {load.quantity}
+                                                </span>
+                                                <span className='text-[11px] text-gray-500'>
+                                                    {load.reservedQuantity} reserved · {load.sellableQuantity} sellable
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700'>
+                                            {load.unitPrice != null
+                                                ? `LKR ${Number(load.unitPrice).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                : 'Price unavailable'}
                                         </td>
                                         <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400'>
                                             {load.category || 'Product'}
@@ -303,7 +377,7 @@ export default function MyVehicle() {
                                             <div className='flex items-center gap-2'>
                                                 <button
                                                     onClick={() => handleEditLoad(load)}
-                                                    className='p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors'
+                                                    className='p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors'
                                                     title='Update quantity'
                                                 >
                                                     <Edit className='w-4 h-4' />
@@ -321,7 +395,7 @@ export default function MyVehicle() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan='5' className='px-6 py-12 text-center text-gray-400 dark:text-gray-500'>
+                                    <td colSpan='5' className='px-6 py-12 text-center text-gray-400'>
                                         <div className='mb-2'>
                                             <Search className='w-8 h-8 mx-auto opacity-20' />
                                         </div>
@@ -361,7 +435,7 @@ export default function MyVehicle() {
                                     <Minus className='w-4 h-4 text-blue-600 dark:text-blue-400' />
                                     <span>Distribution to customer</span>
                                 </div>
-                                <p className='text-xs text-gray-500 dark:text-gray-400'>Current: {selectedLoad.quantity}</p>
+                                <p className='text-xs text-gray-500'>Current: {selectedLoad.quantity}</p>
                             </div>
 
                             <div>
@@ -371,7 +445,7 @@ export default function MyVehicle() {
                                 </label>
                                 <select
                                     value={saleData.customerId}
-                                    onChange={(e) => setSaleData({...saleData, customerId: e.target.value})}
+                                    onChange={(e) => setSaleData({ ...saleData, customerId: e.target.value })}
                                     className='w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500'
                                     required
                                 >
@@ -389,10 +463,17 @@ export default function MyVehicle() {
                                 <input
                                     type='number'
                                     value={editQuantity}
-                                    onChange={(e) => setEditQuantity(e.target.value)}
+                                    onChange={(e) => {
+                                        const remainingQuantity = e.target.value;
+                                        setEditQuantity(remainingQuantity);
+                                        const suggestedAmount = getSuggestedSaleAmount(selectedLoad, remainingQuantity);
+                                        if (suggestedAmount !== '') {
+                                            setSaleData((current) => ({ ...current, cashAmount: suggestedAmount }));
+                                        }
+                                    }}
                                     placeholder='Enter remaining quantity'
                                     min='0'
-                                    className='w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                                     required
                                 />
                                 <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>Enter quantity left after distribution</p>
@@ -406,21 +487,21 @@ export default function MyVehicle() {
                                 <input
                                     type='number'
                                     value={saleData.cashAmount}
-                                    onChange={(e) => setSaleData({...saleData, cashAmount: e.target.value})}
+                                    onChange={(e) => setSaleData({ ...saleData, cashAmount: e.target.value })}
                                     placeholder='Enter cash received'
                                     min='0'
                                     step='0.01'
                                     className='w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500'
                                     required
                                 />
-                                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>Total amount received from customer</p>
+                                <p className='text-xs text-gray-500 mt-1'>Total amount received from customer</p>
                             </div>
 
                             <div>
                                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>Payment Method</label>
                                 <select
                                     value={saleData.paymentMethod}
-                                    onChange={(e) => setSaleData({...saleData, paymentMethod: e.target.value})}
+                                    onChange={(e) => setSaleData({ ...saleData, paymentMethod: e.target.value })}
                                     className='w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500'
                                 >
                                     <option value='Cash'>Cash</option>
