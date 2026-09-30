@@ -9,7 +9,7 @@ import {
   updatePassword,
   uploadAvatar
 } from "../controllers/user.controller.js";
-import { authenticate } from "../middlewares/auth.middleware.js";
+import { authenticate, isAdmin, isAdminOrSelf } from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
 
 const router = express.Router();
@@ -24,10 +24,10 @@ router.put("/password/update", updatePassword);
 router.post("/avatar/upload", upload.single('avatar'), uploadAvatar);
 
 // User CRUD routes
-router.get("/", getAllUsers);
-router.get("/:id", getUserById);
-router.post("/", createUser);
-router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
+router.get("/", isAdmin, getAllUsers);
+router.get("/:id", isAdminOrSelf, getUserById);
+router.post("/", isAdmin, createUser);
+router.put("/:id", isAdminOrSelf, updateUser);
+router.delete("/:id", isAdmin, deleteUser);
 
 export default router;

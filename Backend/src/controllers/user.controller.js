@@ -54,7 +54,15 @@ export const createUser = async (req, res) => {
 // Update user
 export const updateUser = async (req, res) => {
   try {
-    const user = await UserService.updateUser(req.params.id, req.body);
+    const isAdmin = req.user.role?.toLowerCase() === 'admin';
+    const updateData = isAdmin
+      ? req.body
+      : {
+          name: req.body.name,
+          email: req.body.email,
+          phone: req.body.phone
+        };
+    const user = await UserService.updateUser(req.params.id, updateData);
     res.status(200).json({
       success: true,
       message: "User updated successfully",
