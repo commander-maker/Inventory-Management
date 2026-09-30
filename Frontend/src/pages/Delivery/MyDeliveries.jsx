@@ -91,30 +91,30 @@ export default function MyDeliveries() {
     const getStatusColor = (status) => {
         switch (status) {
             case 'Pending':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-[#302617] dark:text-yellow-400 dark:border-[#69591f]';
             case 'In Transit':
-                return 'bg-blue-100 text-blue-800 border-blue-200';
+                return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-[#101c3a] dark:text-blue-400 dark:border-[#37507d]';
             case 'Delivered':
-                return 'bg-green-100 text-green-800 border-green-200';
+                return 'bg-green-100 text-green-800 border-green-200 dark:bg-[#142717] dark:text-green-400 dark:border-[#385d2e]';
             case 'Failed':
-                return 'bg-red-100 text-red-800 border-red-200';
+                return 'bg-red-100 text-red-800 border-red-200 dark:bg-[#2f1417] dark:text-red-400 dark:border-[#7d343e]';
             default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
+                return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-[#171b2b] dark:text-gray-300 dark:border-[#384152]';
         }
     };
 
     const getStatusIcon = (status) => {
         switch (status) {
             case 'Pending':
-                return <Clock size={18} />;
+                return <Clock size={18} className="text-yellow-600 dark:text-yellow-400" />;
             case 'In Transit':
-                return <Truck size={18} />;
+                return <Truck size={18} className="text-blue-600 dark:text-blue-400" />;
             case 'Delivered':
-                return <CheckCircle size={18} />;
+                return <CheckCircle size={18} className="text-green-600 dark:text-green-400" />;
             case 'Failed':
-                return <XCircle size={18} />;
+                return <XCircle size={18} className="text-red-600 dark:text-red-400" />;
             default:
-                return <Package size={18} />;
+                return <Package size={18} className="text-gray-600 dark:text-gray-400" />;
         }
     };
 
@@ -155,43 +155,43 @@ export default function MyDeliveries() {
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950/40 dark:to-yellow-900/30 rounded-xl shadow-sm border border-yellow-200 dark:border-yellow-800 p-4 sm:p-6">
+                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-[#2a2215] dark:to-[#382d17] rounded-xl shadow-sm border border-yellow-200 dark:border-[#69591f] p-4 sm:p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs sm:text-sm text-yellow-700 mb-1">Pending</p>
-                                <p className="text-xl sm:text-2xl font-bold text-yellow-900">{stats.pending}</p>
+                                <p className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-400 mb-1">Pending</p>
+                                <p className="text-xl sm:text-2xl font-bold text-yellow-900 dark:text-yellow-200">{stats.pending}</p>
                             </div>
-                            <Clock size={28} className="text-yellow-600 sm:w-8 sm:h-8" />
+                            <Clock size={28} className="text-yellow-600 dark:text-yellow-400 sm:w-8 sm:h-8" />
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/30 rounded-xl shadow-sm border border-blue-200 dark:border-blue-800 p-4 sm:p-6">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-[#111e3b] dark:to-[#17274f] rounded-xl shadow-sm border border-blue-200 dark:border-[#37507d] p-4 sm:p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs sm:text-sm text-blue-700 mb-1">In Transit</p>
-                                <p className="text-xl sm:text-2xl font-bold text-blue-900">{stats.inTransit}</p>
+                                <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-400 mb-1">In Transit</p>
+                                <p className="text-xl sm:text-2xl font-bold text-blue-900 dark:text-blue-200">{stats.inTransit}</p>
                             </div>
-                            <Truck size={28} className="text-blue-600 sm:w-8 sm:h-8" />
+                            <Truck size={28} className="text-blue-600 dark:text-blue-400 sm:w-8 sm:h-8" />
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/40 dark:to-green-900/30 rounded-xl shadow-sm border border-green-200 dark:border-green-800 p-4 sm:p-6">
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-[#122415] dark:to-[#17331c] rounded-xl shadow-sm border border-green-200 dark:border-[#385d2e] p-4 sm:p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs sm:text-sm text-green-700 mb-1">Delivered</p>
-                                <p className="text-xl sm:text-2xl font-bold text-green-900">{stats.delivered}</p>
+                                <p className="text-xs sm:text-sm text-green-700 dark:text-green-400 mb-1">Delivered</p>
+                                <p className="text-xl sm:text-2xl font-bold text-green-900 dark:text-green-200">{stats.delivered}</p>
                             </div>
-                            <CheckCircle size={28} className="text-green-600 sm:w-8 sm:h-8" />
+                            <CheckCircle size={28} className="text-green-600 dark:text-green-400 sm:w-8 sm:h-8" />
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/40 dark:to-red-900/30 rounded-xl shadow-sm border border-red-200 dark:border-red-800 p-4 sm:p-6">
+                    <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-[#2a1316] dark:to-[#38181d] rounded-xl shadow-sm border border-red-200 dark:border-[#7d343e] p-4 sm:p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs sm:text-sm text-red-700 mb-1">Failed</p>
-                                <p className="text-xl sm:text-2xl font-bold text-red-900">{stats.failed}</p>
+                                <p className="text-xs sm:text-sm text-red-700 dark:text-red-400 mb-1">Failed</p>
+                                <p className="text-xl sm:text-2xl font-bold text-red-900 dark:text-red-200">{stats.failed}</p>
                             </div>
-                            <XCircle size={28} className="text-red-600 sm:w-8 sm:h-8" />
+                            <XCircle size={28} className="text-red-600 dark:text-red-400 sm:w-8 sm:h-8" />
                         </div>
                     </div>
                 </div>
@@ -231,7 +231,7 @@ export default function MyDeliveries() {
                             <div key={delivery.id} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 sm:p-6 hover:shadow-md transition">
                                 <div className="flex flex-col lg:flex-row lg:items-center items-start justify-between gap-4">
                                     <div className="flex items-start gap-3 sm:gap-4 flex-1 w-full">
-                                        <div className={`p-2 sm:p-3 rounded-lg flex-shrink-0 ${getStatusColor(delivery.status).replace('text-', 'bg-').replace('100', '200')}`}>
+                                        <div className={`p-2 sm:p-3 rounded-lg flex-shrink-0 border ${getStatusColor(delivery.status)}`}>
                                             {getStatusIcon(delivery.status)}
                                         </div>
 

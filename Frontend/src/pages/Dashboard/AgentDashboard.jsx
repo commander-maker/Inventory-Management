@@ -351,12 +351,12 @@ export default function AgentDashboard() {
 
                                 const statusColor =
                                     delivery.status === 'Delivered'
-                                        ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+                                        ? 'bg-green-100 text-green-800 border-green-200 dark:bg-[#142717] dark:text-green-400 dark:border-[#385d2e]'
                                         : delivery.status === 'In Transit'
-                                            ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300'
+                                            ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-[#101c3a] dark:text-blue-400 dark:border-[#37507d]'
                                             : delivery.status === 'Pending'
-                                                ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300'
-                                                : 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300';
+                                                ? 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-[#302617] dark:text-yellow-400 dark:border-[#69591f]'
+                                                : 'bg-red-100 text-red-800 border-red-200 dark:bg-[#2f1417] dark:text-red-400 dark:border-[#7d343e]';
 
                                 return (
                                     <div
