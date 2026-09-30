@@ -585,15 +585,14 @@ export default function AgentDashboard() {
                                             </span>
 
                                             <span
-                                                className={`w-fit shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
-                                                    delivery.status === 'Delivered'
+                                                className={`w-fit shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${delivery.status === 'Delivered'
                                                         ? 'bg-green-400 text-green-900'
                                                         : delivery.status === 'In Transit'
                                                             ? 'bg-blue-400 text-blue-900'
                                                             : delivery.status === 'Pending'
                                                                 ? 'bg-yellow-400 text-yellow-900'
                                                                 : 'bg-red-400 text-red-900'
-                                                }`}
+                                                    }`}
                                             >
                                                 {delivery.status}
                                             </span>

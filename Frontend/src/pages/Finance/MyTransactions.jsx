@@ -47,6 +47,9 @@ export default function MyTransactions() {
   const periodLabel = filterMonth
     ? `${MONTHS[parseInt(filterMonth) - 1]} ${filterYear}`
     : `Year ${filterYear}`;
+  const salesPeriod = filterMonth
+    ? `in ${MONTHS[parseInt(filterMonth) - 1]} ${filterYear}`
+    : `in ${filterYear}`;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -112,9 +115,9 @@ export default function MyTransactions() {
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 xs:p-5 md:p-6">
           <div className="flex items-center gap-2 mb-1">
             <FileText className="text-blue-600 dark:text-blue-400" size={20} />
-            <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white">Income Records</h2>
+            <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white">Sales Transactions</h2>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 text-sm mb-5">Sales assigned to you for {periodLabel.toLowerCase()}</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-5">Your sales {salesPeriod}</p>
 
           {loading ? (
             <div className="py-12 text-center text-gray-500 dark:text-gray-400">Loading transactions...</div>

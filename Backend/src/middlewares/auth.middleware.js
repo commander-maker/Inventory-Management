@@ -41,3 +41,16 @@ export const isAdmin = (req, res, next) => {
     });
   }
 };
+
+export const isAdminOrSelf = (req, res, next) => {
+  const isSelf = Number(req.user?.id) === Number(req.params.id);
+
+  if (req.user?.role?.toLowerCase() === 'admin' || isSelf) {
+    return next();
+  }
+
+  return res.status(403).json({
+    success: false,
+    message: 'Access denied. Admin privileges or access to your own account is required.'
+  });
+};

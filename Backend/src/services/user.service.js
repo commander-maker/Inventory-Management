@@ -65,7 +65,7 @@ export const getUserById = async (id) => {
 };
 
 // Create new user with auto-generated password
-export const createUser = async ({ name, email, role, phone, vehicle }) => {
+export const createUser = async ({ name, email, phone, vehicle }) => {
   // Check if user already exists
   const exists = await prisma.user.findUnique({ where: { email } });
   if (exists) throw new Error("User with this email already exists");
@@ -80,10 +80,10 @@ export const createUser = async ({ name, email, role, phone, vehicle }) => {
       name,
       email,
       password: hashedPassword,
-      role,
+      role: 'agent',
       phone,
       vehicle: vehicle || null,
-      monthlySales: role === 'agent' ? 0 : null,
+      monthlySales: 0,
       joinedDate: new Date()
     }
   });
