@@ -12,13 +12,14 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { deliveryAPI, userAPI } from '../../utils/api';
+import { deliveryAPI, userAPI, vehicleAPI } from '../../utils/api';
 
 export default function AgentDashboard() {
     const { user, setUser } = useAuth();
     const navigate = useNavigate();
 
     const [deliveries, setDeliveries] = useState([]);
+    const [vehicle, setVehicle] = useState(null);
     const [deliveryStats, setDeliveryStats] = useState({
         total: 0,
         completed: 0,
@@ -78,6 +79,22 @@ export default function AgentDashboard() {
         };
 
         fetchDeliveries();
+    }, []);
+
+    // Fetch agent assigned vehicle
+    useEffect(() => {
+        const fetchAssignedVehicle = async () => {
+            try {
+                const response = await vehicleAPI.getMyVehicle();
+                if (response.data.success && response.data.data) {
+                    setVehicle(response.data.data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch assigned vehicle:', err);
+            }
+        };
+
+        fetchAssignedVehicle();
     }, []);
 
     useEffect(() => {
@@ -164,7 +181,7 @@ export default function AgentDashboard() {
     const agentStats = [
         {
             label: 'Assigned Vehicle',
-            value: user?.vehicle || 'GJ-01-AB-1234',
+            value: vehicle?.id || user?.vehicle || 'None',
             icon: Truck,
             color: 'text-blue-500',
             bgColor: 'bg-blue-100'
@@ -196,12 +213,12 @@ export default function AgentDashboard() {
 
     // Vehicle status
     const vehicleStatus = {
-        registrationNo: user?.vehicle || 'GJ-01-AB-1234',
-        type: 'Tata Ace',
-        fuelLevel: 75,
-        location: 'Colombo 07',
-        status: 'Active',
-        lastService: '5 days ago'
+        registrationNo: vehicle?.id || user?.vehicle || 'Not Assigned',
+        type: vehicle?.vehicleType || 'Standard',
+        fuelLevel: vehicle?.fuelLevel !== undefined ? vehicle.fuelLevel : 0,
+        location: vehicle?.location || 'Main warehouse',
+        status: vehicle?.status || 'Active',
+        lastService: vehicle?.updatedAt ? new Date(vehicle.updatedAt).toLocaleDateString() : 'Recent'
     };
 
     // Get recent deliveries

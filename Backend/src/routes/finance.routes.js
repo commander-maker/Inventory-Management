@@ -32,8 +32,8 @@ router.post("/income", createIncome);
 // Expenses CRUD
 router.get("/expenses", getAllExpenses);
 router.get("/expenses/:id", getExpenseById);
-router.post("/expenses", authorize(['admin']), createExpense);
-router.put("/expenses/:id", authorize(['admin']), updateExpense);
-router.delete("/expenses/:id", authorize(['admin']), deleteExpense);
+router.post("/expenses", createExpense);
+router.put("/expenses/:id", updateExpense);
+router.delete("/expenses/:id", deleteExpense);
 
 export default router;

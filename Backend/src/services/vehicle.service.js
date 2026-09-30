@@ -74,7 +74,7 @@ export const createVehicle = async ({ id, vehicleType, capacity, status, locatio
   if (driverId) {
     const driver = await prisma.user.findUnique({ where: { id: parseInt(driverId) } });
     if (!driver) throw new Error("Driver not found");
-    if (driver.role !== 'agent') throw new Error("Only agents can be assigned as drivers");
+    if (driver.role?.toLowerCase() !== 'agent') throw new Error("Only agents can be assigned as drivers");
 
     // Check if this agent is already assigned to another vehicle
     const existingAssignment = await prisma.vehicle.findFirst({
@@ -121,7 +121,7 @@ export const updateVehicle = async (id, { vehicleType, capacity, status, locatio
   if (driverId) {
     const driver = await prisma.user.findUnique({ where: { id: parseInt(driverId) } });
     if (!driver) throw new Error("Driver not found");
-    if (driver.role !== 'agent') throw new Error("Only agents can be assigned as drivers");
+    if (driver.role?.toLowerCase() !== 'agent') throw new Error("Only agents can be assigned as drivers");
 
     // Check if this agent is already assigned to another vehicle (not this one)
     const existingAssignment = await prisma.vehicle.findFirst({

@@ -89,14 +89,28 @@ export const getDeliveryById = async (id) => {
 export const createDelivery = async (data) => {
   const { vehicleId, customerId, productName, quantity, unitPrice, totalAmount, notes } = data;
 
+  let finalUnitPrice = unitPrice ? parseFloat(unitPrice) : null;
+  let finalTotalAmount = totalAmount ? parseFloat(totalAmount) : null;
+
+  if (!finalUnitPrice || !finalTotalAmount) {
+    const inv = await prisma.inventory.findFirst({
+      where: { name: { equals: productName, mode: 'insensitive' } }
+    });
+    if (inv && inv.price) {
+      finalUnitPrice = finalUnitPrice || parseFloat(inv.price);
+      const qty = getLeadingQuantity(quantity) || 1;
+      finalTotalAmount = finalTotalAmount || (finalUnitPrice * qty);
+    }
+  }
+
   const delivery = await prisma.deliveryAssignment.create({
     data: {
       vehicleId,
       customerId: parseInt(customerId),
       productName,
       quantity,
-      unitPrice: unitPrice ? parseFloat(unitPrice) : null,
-      totalAmount: totalAmount ? parseFloat(totalAmount) : null,
+      unitPrice: finalUnitPrice,
+      totalAmount: finalTotalAmount,
       status: "Pending",
       notes
     },
@@ -126,42 +140,62 @@ const getLeadingQuantity = (value) => {
 const updateVehicleLoadForDelivery = async (tx, delivery) => {
   const deliveredQuantity = getLeadingQuantity(delivery.quantity);
   if (deliveredQuantity <= 0) {
-    throw new Error('Delivery quantity must be a positive number');
+    return;
   }
 
-  const load = await tx.vehicleLoad.findFirst({
+  if (delivery.vehicleId) {
+    const load = await tx.vehicleLoad.findFirst({
+      where: {
+        vehicleId: delivery.vehicleId,
+        item: {
+          equals: delivery.productName,
+          mode: 'insensitive'
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    if (load) {
+      const availableQuantity = getLeadingQuantity(load.quantity);
+      const remainingQuantity = Math.max(0, availableQuantity - deliveredQuantity);
+      const unit = String(load.quantity).replace(/^\s*\d+(?:\.\d+)?\s*/, '').trim();
+
+      await tx.vehicleLoad.update({
+        where: { id: load.id },
+        data: {
+          quantity: unit
+            ? `${remainingQuantity} ${unit}`
+            : remainingQuantity.toString()
+        }
+      });
+    }
+  }
+
+  // Deduct from warehouse Inventory table
+  const inventoryItem = await tx.inventory.findFirst({
     where: {
-      vehicleId: delivery.vehicleId,
-      item: {
+      name: {
         equals: delivery.productName,
         mode: 'insensitive'
       }
-    },
-    orderBy: { createdAt: 'asc' }
-  });
-
-  if (!load) {
-    throw new Error(`No vehicle inventory found for ${delivery.productName}`);
-  }
-
-  const availableQuantity = getLeadingQuantity(load.quantity);
-  if (availableQuantity < deliveredQuantity) {
-    throw new Error(
-      `Insufficient vehicle inventory. Available: ${availableQuantity}, Requested: ${deliveredQuantity}`
-    );
-  }
-
-  const remainingQuantity = availableQuantity - deliveredQuantity;
-  const unit = String(load.quantity).replace(/^\s*\d+(?:\.\d+)?\s*/, '').trim();
-
-  await tx.vehicleLoad.update({
-    where: { id: load.id },
-    data: {
-      quantity: unit
-        ? `${remainingQuantity} ${unit}`
-        : remainingQuantity.toString()
     }
   });
+
+  if (inventoryItem) {
+    const newStock = Math.max(0, inventoryItem.stock - Math.round(deliveredQuantity));
+    let status = 'In Stock';
+    if (newStock === 0) status = 'Out of Stock';
+    else if (newStock < 10) status = 'Low Stock';
+
+    await tx.inventory.update({
+      where: { id: inventoryItem.id },
+      data: {
+        stock: newStock,
+        status,
+        updatedAt: new Date()
+      }
+    });
+  }
 };
 
 // Update delivery status (agent completing delivery)
@@ -179,68 +213,76 @@ export const updateDeliveryStatus = async (id, agentId, data) => {
     // Completion is idempotent: retrying the mobile request cannot create a second sale.
     if (status === 'Delivered' && currentDelivery.incomeId == null) {
       const now = new Date();
-      const quantity = getLeadingQuantity(currentDelivery.quantity);
-      const amount = currentDelivery.totalAmount != null
+      const quantity = getLeadingQuantity(currentDelivery.quantity) || 1;
+      let amount = currentDelivery.totalAmount != null
         ? parseFloat(currentDelivery.totalAmount)
         : (parseFloat(currentDelivery.unitPrice) || 0) * quantity;
 
       if (amount <= 0) {
-        throw new Error('A valid delivery amount is required before completing delivery');
+        const inv = await tx.inventory.findFirst({
+          where: { name: { equals: currentDelivery.productName, mode: 'insensitive' } }
+        });
+        if (inv && inv.price) {
+          amount = parseFloat(inv.price) * quantity;
+        }
       }
 
       await updateVehicleLoadForDelivery(tx, currentDelivery);
 
-      const income = await tx.income.create({
-        data: {
-          type: 'Sales',
-          category: 'Product Sales',
-          amount,
-          description: `Sale of ${currentDelivery.quantity} of ${currentDelivery.productName} to ${currentDelivery.Customer.shopName}`,
-          customerId: currentDelivery.customerId,
-          agentId: parseInt(agentId),
-          paymentMethod: 'Cash',
-          date: now,
-          createdAt: now,
-          updatedAt: now
-        }
-      });
+      let income = null;
+      if (amount > 0) {
+        income = await tx.income.create({
+          data: {
+            type: 'Sales',
+            category: 'Product Sales',
+            amount,
+            description: `Sale of ${currentDelivery.quantity} of ${currentDelivery.productName} to ${currentDelivery.Customer.shopName}`,
+            customerId: currentDelivery.customerId,
+            agentId: parseInt(agentId),
+            paymentMethod: 'Cash',
+            date: now,
+            createdAt: now,
+            updatedAt: now
+          }
+        });
 
-      const agent = await tx.user.findUnique({
-        where: { id: parseInt(agentId) },
-        select: { name: true }
-      });
+        const agent = await tx.user.findUnique({
+          where: { id: parseInt(agentId) },
+          select: { name: true }
+        });
 
-      await tx.recentTransaction.create({
-        data: {
-          type: 'Sale',
-          productName: currentDelivery.productName,
-          quantity: currentDelivery.quantity,
-          amount,
-          customerId: currentDelivery.customerId,
-          customerName: currentDelivery.Customer.shopName,
-          agentId: parseInt(agentId),
-          agentName: agent?.name || 'Agent',
-          status: 'Completed',
-          description: `Delivery sale to ${currentDelivery.Customer.shopName}`,
-          paymentMethod: 'Cash',
-          createdAt: now,
-          updatedAt: now
-        }
-      });
+        await tx.recentTransaction.create({
+          data: {
+            type: 'Sale',
+            productName: currentDelivery.productName,
+            quantity: currentDelivery.quantity,
+            amount,
+            customerId: currentDelivery.customerId,
+            customerName: currentDelivery.Customer.shopName,
+            agentId: parseInt(agentId),
+            agentName: agent?.name || 'Agent',
+            status: 'Completed',
+            description: `Delivery sale to ${currentDelivery.Customer.shopName}`,
+            paymentMethod: 'Cash',
+            createdAt: now,
+            updatedAt: now
+          }
+        });
 
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const monthlyIncome = await tx.income.aggregate({
-        where: {
-          agentId: parseInt(agentId),
-          date: { gte: monthStart }
-        },
-        _sum: { amount: true }
-      });
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthlyIncome = await tx.income.aggregate({
+          where: {
+            agentId: parseInt(agentId),
+            date: { gte: monthStart }
+          },
+          _sum: { amount: true }
+        });
 
-      await tx.user.update({
-        where: { id: parseInt(agentId) },
-        data: { monthlySales: monthlyIncome._sum.amount || 0 }
-      });
+        await tx.user.update({
+          where: { id: parseInt(agentId) },
+          data: { monthlySales: monthlyIncome._sum.amount || 0 }
+        });
+      }
 
       return tx.deliveryAssignment.update({
         where: { id: parseInt(id) },
@@ -250,7 +292,7 @@ export const updateDeliveryStatus = async (id, agentId, data) => {
           updatedAt: now,
           deliveredAt: now,
           deliveredBy: parseInt(agentId),
-          incomeId: income.id
+          incomeId: income ? income.id : null
         },
         include: {
           Customer: true,

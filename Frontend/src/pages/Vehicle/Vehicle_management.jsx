@@ -58,7 +58,10 @@ export default function VehicleManagement() {
     try {
       const response = await userAPI.getAll();
       // Filter only agent role users
-      const agentUsers = response.data.data.filter(user => user.role === 'agent');
+      const usersList = response.data?.data || response.data || [];
+      const agentUsers = Array.isArray(usersList)
+        ? usersList.filter(user => user.role?.toLowerCase() === 'agent')
+        : [];
       setDrivers(agentUsers);
     } catch (err) {
       console.error('Failed to fetch drivers:', err);

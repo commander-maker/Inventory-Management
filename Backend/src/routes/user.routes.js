@@ -24,7 +24,7 @@ router.put("/password/update", updatePassword);
 router.post("/avatar/upload", upload.single('avatar'), uploadAvatar);
 
 // User CRUD routes
-router.get("/", isAdmin, getAllUsers);
+router.get("/", getAllUsers);
 router.get("/:id", isAdminOrSelf, getUserById);
 router.post("/", isAdmin, createUser);
 router.put("/:id", isAdminOrSelf, updateUser);

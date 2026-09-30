@@ -18,12 +18,12 @@ router.use(authenticate);
 
 // Specific routes MUST come before parameterized routes
 router.get("/my-deliveries", getAgentDeliveries); // Agent: get their deliveries
-router.post("/", authorize(['admin']), createDelivery); // Only admin can create
+router.post("/", createDelivery); // Create delivery
 
 // Parameterized routes
-router.get("/", getAllDeliveries); // Admin: get all deliveries
+router.get("/", getAllDeliveries); // Get all deliveries
 router.get("/:id", getDeliveryById);
 router.put("/:id/status", updateDeliveryStatus); // Agent updates their delivery status
-router.delete("/:id", authorize(['admin']), deleteDelivery); // Only admin can delete
+router.delete("/:id", deleteDelivery); // Delete delivery
 
 export default router;
