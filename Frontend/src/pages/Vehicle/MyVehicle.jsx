@@ -333,12 +333,12 @@ export default function MyVehicle() {
                     <table className='w-full'>
                         <thead className='bg-gray-50/50 dark:bg-gray-900/50'>
                             <tr>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Item Name</th>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Quantity</th>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Unit Price</th>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Category</th>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Loaded At</th>
-                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Actions</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Item Name</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Quantity</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Unit Price</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Category</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Loaded At</th>
+                                <th className='px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Actions</th>
                             </tr>
                         </thead>
                         <tbody className='divide-y divide-gray-50 dark:divide-gray-700'>
@@ -355,23 +355,23 @@ export default function MyVehicle() {
                                         </td>
                                         <td className='px-6 py-4 whitespace-nowrap'>
                                             <div className='flex flex-col items-start gap-1'>
-                                                <span className='px-2.5 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg'>
+                                                <span className='px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg'>
                                                     {load.quantity}
                                                 </span>
-                                                <span className='text-[11px] text-gray-500'>
+                                                <span className='text-[11px] text-gray-500 dark:text-gray-400'>
                                                     {load.reservedQuantity} reserved · {load.sellableQuantity} sellable
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700'>
+                                        <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700 dark:text-gray-300'>
                                             {load.unitPrice != null
                                                 ? `LKR ${Number(load.unitPrice).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                                                 : 'Price unavailable'}
                                         </td>
-                                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400'>
+                                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300'>
                                             {load.category || 'Product'}
                                         </td>
-                                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-400 dark:text-gray-500'>
+                                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-400 dark:text-gray-400'>
                                             {new Date(load.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className='px-6 py-4 whitespace-nowrap'>
