@@ -353,7 +353,7 @@ export default function AgentDashboard() {
 
                     </div>
 
-                    <div className="themed-list-scroll min-h-0 max-h-[55vh] flex-1 space-y-3 overflow-y-auto pr-1 sm:max-h-[60vh] lg:max-h-none">
+                    <div className="themed-list-scroll h-[55vh] min-h-[220px] flex-none space-y-3 overflow-y-scroll pr-1 sm:h-[60vh] lg:h-auto lg:min-h-0 lg:flex-1">
 
                         {loading ? (
                             <div className="py-8 text-center text-gray-500 dark:text-gray-400">
