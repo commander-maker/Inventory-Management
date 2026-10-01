@@ -157,11 +157,11 @@ export default function Navbar({ onMenuToggle }) {
       </div>
 
       {/* Right Side Icons */}
-      <div className='flex items-center gap-4'>
+      <div className='flex items-center gap-1 sm:gap-3'>
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
-          className='p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors duration-200'
+          className='p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200'
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
           {isDark ? (
@@ -187,7 +187,7 @@ export default function Navbar({ onMenuToggle }) {
 
           {/* Notifications Dropdown */}
           {showDropdown && (
-            <div className='absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 animate-in fade-in zoom-in duration-200'>
+            <div className='fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-16 sm:top-auto sm:mt-2 sm:w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 animate-in fade-in zoom-in duration-200'>
               <div className='p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 transition-colors duration-200'>
                 <h3 className='font-bold text-gray-800 dark:text-white flex items-center gap-2'>
                   Notifications
@@ -265,7 +265,7 @@ export default function Navbar({ onMenuToggle }) {
         {/* Fullscreen Icon */}
         <button
           onClick={handleFullscreenToggle}
-          className='hover:bg-gray-100 dark:hover:bg-gray-800 rounded p-1 box-content transition-colors duration-200'
+          className='hidden sm:flex p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200'
           title='Toggle fullscreen'
         >
           <Maximize className='w-5 h-5 text-gray-600 dark:text-gray-400' />
@@ -274,7 +274,7 @@ export default function Navbar({ onMenuToggle }) {
         {/* Calendar Icon */}
         <button
           onClick={handleCalendarClick}
-          className='hover:bg-gray-100 dark:hover:bg-gray-800 rounded p-1 box-content transition-colors duration-200'
+          className='hidden sm:flex p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200'
           title='Open calendar'
         >
           <Calendar className='w-5 h-5 text-gray-600 dark:text-gray-400' />
@@ -283,7 +283,7 @@ export default function Navbar({ onMenuToggle }) {
         {/* User Profile - Dynamic */}
         <div
           onClick={() => navigate('/settings')}
-          className='flex items-center gap-2 cursor-pointer pl-2 ml-2 border-l border-gray-200 dark:border-gray-700'
+          className='flex items-center gap-2 cursor-pointer pl-2 ml-1 sm:ml-2 border-l border-gray-200 dark:border-gray-700'
           title='Profile settings'
         >
           <div className={`w-9 h-9 rounded-full ${getAvatarColor(user?.role)} flex items-center justify-center overflow-hidden border-2 border-white dark:border-gray-900 shadow-sm`}>

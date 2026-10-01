@@ -244,19 +244,19 @@ export default function MyDeliveries() {
                                             </div>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
-                                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
+                                                <div className="flex items-start sm:items-center gap-2 text-gray-600 dark:text-gray-300">
                                                     <MapPin size={16} className="dark:text-gray-400 flex-shrink-0 mt-0.5 sm:mt-0" />
                                                     <span>{delivery.Customer?.address}, {delivery.Customer?.city}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-gray-600">
+                                                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                                                     <Phone size={16} className="dark:text-gray-400 flex-shrink-0" />
                                                     <span>{delivery.Customer?.phone}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-gray-600">
+                                                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                                                     <Package size={16} className="dark:text-gray-400 flex-shrink-0" />
                                                     <span>{delivery.productName} - {delivery.quantity}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-gray-600">
+                                                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                                                     <Calendar size={16} className="dark:text-gray-400 flex-shrink-0" />
                                                     <span>{new Date(delivery.createdAt).toLocaleDateString()}</span>
                                                 </div>
