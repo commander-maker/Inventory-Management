@@ -59,10 +59,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Fetch recent finance transactions & income
       List<Map<String, dynamic>> txList = [];
       List<Map<String, dynamic>> incomeList = [];
+      final now = DateTime.now();
 
       try {
         txList = await FinanceAPI.getRecentTransactions(limit: 5);
-        incomeList = await FinanceAPI.getAllIncome();
+        incomeList = await FinanceAPI.getAllIncome(
+          month: now.month,
+          year: now.year,
+        );
       } catch (e) {
         debugPrint('Finance API call silent fail: $e');
       }
@@ -293,17 +297,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.access_time_rounded,
                     color: Colors.white,
                     size: 14,
                   ),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text(
-                    'Monday, August 17, 2026',
+                    _formatDashboardDate(DateTime.now()),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -317,6 +321,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ],
     );
+  }
+
+  String _formatDashboardDate(DateTime date) {
+    const weekdays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   Widget _buildWebStyleStatGrid() {

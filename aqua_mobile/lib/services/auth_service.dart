@@ -2,6 +2,13 @@ import 'api_service.dart';
 import '../models/model.dart';
 
 class AuthService {
+  static String _messageFromError(Object error) {
+    return error
+        .toString()
+        .replaceFirst(RegExp(r'^(Exception|Error):\s*'), '')
+        .trim();
+  }
+
   /// Sign in with email and password for Agent role
   static Future<AuthResponse> signIn({
     required String email,
@@ -24,7 +31,7 @@ class AuthService {
         );
       }
     } catch (e) {
-      return AuthResponse(success: false, message: 'Error: $e');
+      return AuthResponse(success: false, message: _messageFromError(e));
     }
   }
 
@@ -52,7 +59,7 @@ class AuthService {
         );
       }
     } catch (e) {
-      return AuthResponse(success: false, message: 'Error: $e');
+      return AuthResponse(success: false, message: _messageFromError(e));
     }
   }
 
