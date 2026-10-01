@@ -404,7 +404,7 @@ export default function FinanceDashboard() {
         <>
           {/* Stats Cards */}
           <div className="px-4 xs:px-5 md:px-8 py-4 xs:py-5 md:py-6">
-            <div className="grid grid-cols-3 gap-2 xs:gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               <div className="bg-white dark:bg-gray-900 rounded-lg p-4 xs:p-5 md:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
                 <p className="text-gray-600 dark:text-gray-400 text-xs xs:text-sm mb-2 xs:mb-3">Total Income</p>
                 <div className="flex justify-between items-center">
