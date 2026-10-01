@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }) {
       />
       <div className='flex-1 flex flex-col overflow-auto bg-white dark:bg-gray-950'>
         <Navbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
-        <div className='p-3 xs:p-4 md:p-6 flex-1 overflow-auto'>{children}</div>
+        <div className='dashboard-page-content p-3 xs:p-4 md:p-6 flex-1 overflow-auto'>{children}</div>
       </div>
     </div>
   );
