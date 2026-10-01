@@ -20,6 +20,8 @@ export default function AgentDashboard() {
 
     const [deliveries, setDeliveries] = useState([]);
     const [vehicle, setVehicle] = useState(null);
+    const [todayPageSize, setTodayPageSize] = useState('10');
+    const [activityPageSize, setActivityPageSize] = useState('5');
     const [deliveryStats, setDeliveryStats] = useState({
         total: 0,
         completed: 0,
@@ -222,7 +224,12 @@ export default function AgentDashboard() {
     };
 
     // Get recent deliveries
-    const recentDeliveries = deliveries.slice(0, 5);
+    const visibleTodayDeliveries = todayPageSize === 'All'
+        ? deliveries
+        : deliveries.slice(0, Number(todayPageSize));
+    const visibleRecentDeliveries = activityPageSize === 'All'
+        ? deliveries
+        : deliveries.slice(0, Number(activityPageSize));
 
     return (
         <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
@@ -309,10 +316,10 @@ export default function AgentDashboard() {
             </div>
 
             {/* ================= MAIN CONTENT ================= */}
-            <div className="grid w-full grid-cols-1 gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:grid-cols-3 lg:gap-6 lg:px-8">
+            <div className="grid w-full grid-cols-1 items-stretch gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:grid-cols-3 lg:gap-6 lg:px-8">
 
                 {/* ================= TODAY'S DELIVERIES ================= */}
-                <div className="min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-5 lg:col-span-2 lg:p-6">
+                <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-5 lg:col-span-2 lg:h-[min(90vh,56rem)] lg:min-h-[28rem] lg:p-6">
 
                     <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
@@ -326,13 +333,27 @@ export default function AgentDashboard() {
                             </p>
                         </div>
 
-                        <span className="w-fit shrink-0 rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                            {deliveryStats.total} Total
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="w-fit shrink-0 rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                {deliveryStats.total} Total
+                            </span>
+                            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                Show
+                                <select
+                                    value={todayPageSize}
+                                    onChange={(e) => setTodayPageSize(e.target.value)}
+                                    className="rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                >
+                                    <option value="All">All</option>
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </label>
+                        </div>
 
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="themed-list-scroll min-h-0 max-h-[55vh] flex-1 space-y-3 overflow-y-auto pr-1 sm:max-h-[60vh] lg:max-h-none">
 
                         {loading ? (
                             <div className="py-8 text-center text-gray-500 dark:text-gray-400">
@@ -347,7 +368,7 @@ export default function AgentDashboard() {
                                 No deliveries assigned yet
                             </div>
                         ) : (
-                            deliveries.map((delivery) => {
+                            visibleTodayDeliveries.map((delivery) => {
 
                                 const statusColor =
                                     delivery.status === 'Delivered'
@@ -460,7 +481,7 @@ export default function AgentDashboard() {
                 </div>
 
                 {/* ================= VEHICLE STATUS ================= */}
-                <div className="min-w-0 space-y-5 lg:space-y-6">
+                <div className="min-w-0 space-y-5 lg:flex lg:h-[min(90vh,56rem)] lg:min-h-[28rem] lg:flex-col lg:space-y-6 lg:overflow-hidden">
 
                     <div className="min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-5 lg:p-6">
 
@@ -576,17 +597,31 @@ export default function AgentDashboard() {
                     </div>
 
                     {/* ================= RECENT ACTIVITY ================= */}
-                    <div className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 p-4 text-white shadow-lg sm:p-5 lg:p-6">
+                    <div className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 p-4 text-white shadow-lg sm:p-5 lg:flex lg:flex-1 lg:flex-col lg:p-6">
 
-                        <h2 className="mb-4 flex items-center gap-2 text-lg font-bold sm:text-xl">
-                            <Clock size={22} />
-                            Recent Activity
-                        </h2>
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                            <h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl">
+                                <Clock size={22} />
+                                Recent Activity
+                            </h2>
+                            <label className="flex items-center gap-2 text-sm text-white">
+                                Show
+                                <select
+                                    value={activityPageSize}
+                                    onChange={(e) => setActivityPageSize(e.target.value)}
+                                    className="rounded-lg border border-white/30 bg-gray-900/20 px-2 py-1.5 text-white focus:ring-2 focus:ring-white"
+                                >
+                                    <option className="text-gray-900" value="All">All</option>
+                                    <option className="text-gray-900" value="5">5</option>
+                                    <option className="text-gray-900" value="10">10</option>
+                                </select>
+                            </label>
+                        </div>
 
-                        <div className="space-y-3">
+                        <div className="themed-list-scroll min-h-32 max-h-[45vh] flex-1 space-y-3 overflow-y-auto pr-1 lg:min-h-0 lg:max-h-none">
 
-                            {recentDeliveries.length > 0 ? (
-                                recentDeliveries.map((delivery) => (
+                            {visibleRecentDeliveries.length > 0 ? (
+                                visibleRecentDeliveries.map((delivery) => (
 
                                     <div
                                         key={delivery.id}
