@@ -24,12 +24,15 @@ export const register = async ({ name, email, password, role, phone }) => {
   return userWithoutPassword;
 };
 
-export const login = async ({ email, password }) => {
+export const login = async ({ email, password, role }) => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) throw new Error("Invalid credentials");
 
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) throw new Error("Invalid credentials");
+  if (role && user.role.toLowerCase() !== String(role).toLowerCase()) {
+    throw new Error(`This account cannot sign in to the ${role} app`);
+  }
 
   const token = generateToken({ 
     id: user.id, 

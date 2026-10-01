@@ -26,14 +26,42 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  Future<void> _handleSignIn() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter email and password'),
-          backgroundColor: AppColors.badgeRedIcon,
+  void _showSignInError(String message) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFFB42318),
+          duration: const Duration(seconds: 4),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: Row(
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
         ),
       );
+  }
+
+  Future<void> _handleSignIn() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showSignInError('Enter your email address and password to continue.');
       return;
     }
 
@@ -51,6 +79,13 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
 
       if (response.success && response.user != null && response.token != null) {
+        if (response.user!.role.toLowerCase() != 'agent') {
+          _showSignInError(
+            'This app is for agent accounts. Use an agent login.',
+          );
+          return;
+        }
+
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', response.token!);
         await prefs.setString('user_id', response.user!.id);
@@ -63,21 +98,11 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: AppColors.badgeRedIcon,
-          ),
-        );
+        _showSignInError(response.message);
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: AppColors.badgeRedIcon,
-        ),
-      );
+      _showSignInError('Unable to sign in right now. Please try again.');
     } finally {
       if (mounted) {
         setState(() {
@@ -107,7 +132,10 @@ class _AuthScreenState extends State<AuthScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 32.0,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -127,7 +155,11 @@ class _AuthScreenState extends State<AuthScreen> {
                     ],
                   ),
                   child: const Center(
-                    child: Icon(Icons.water_drop_rounded, color: Colors.white, size: 48),
+                    child: Icon(
+                      Icons.water_drop_rounded,
+                      color: Colors.white,
+                      size: 48,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -190,7 +222,11 @@ class _AuthScreenState extends State<AuthScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
                           hintText: 'agent@aqua.com',
-                          prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted, size: 20),
+                          prefixIcon: Icon(
+                            Icons.email_outlined,
+                            color: AppColors.textMuted,
+                            size: 20,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -209,10 +245,16 @@ class _AuthScreenState extends State<AuthScreen> {
                         obscureText: _obscurePassword,
                         decoration: InputDecoration(
                           hintText: '••••••••',
-                          prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textMuted, size: 20),
+                          prefixIcon: const Icon(
+                            Icons.lock_outline_rounded,
+                            color: AppColors.textMuted,
+                            size: 20,
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                               color: AppColors.textMuted,
                               size: 20,
                             ),
