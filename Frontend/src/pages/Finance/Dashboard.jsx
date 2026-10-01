@@ -815,30 +815,30 @@ export default function FinanceDashboard() {
             <div className="flex-1 overflow-y-auto">
               <form onSubmit={handleAddRevenue} className="p-4 xs:p-5 md:p-6 space-y-4 xs:space-y-5">
                 {/* Info Section */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div className="flex items-start gap-2">
-                  <div className="text-blue-600 mt-0.5">
+                  <div className="text-blue-600 dark:text-blue-400 mt-0.5">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-blue-900">Distribution to customer</p>
-                    <p className="text-xs text-blue-700 mt-1">Record sale transaction and payment</p>
+                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-300">Distribution to customer</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">Record sale transaction and payment</p>
                   </div>
                 </div>
               </div>
 
               {/* Select Customer */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   <User size={16} />
                   Select Customer*
                 </label>
                 <select
                   value={revenueForm.customerId}
                   onChange={(e) => setRevenueForm({ ...revenueForm, customerId: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition text-sm"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white dark:focus:bg-gray-700 transition text-sm"
                   required
                 >
                   <option value="">Choose a customer...</option>
@@ -852,7 +852,7 @@ export default function FinanceDashboard() {
 
               {/* Select Inventory Item */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   <Package size={16} />
                   Select Product*
                 </label>
@@ -863,11 +863,10 @@ export default function FinanceDashboard() {
                     setRevenueForm({ 
                       ...revenueForm, 
                       inventoryId: e.target.value,
-                      // Auto-calculate amount if quantity is already entered
                       amount: revenueForm.quantity && selectedItem ? (parseFloat(revenueForm.quantity) * parseFloat(selectedItem.price)).toString() : revenueForm.amount
                     });
                   }}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition text-sm"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white dark:focus:bg-gray-700 transition text-sm"
                   required
                 >
                   <option value="">Choose a product...</option>
@@ -881,7 +880,7 @@ export default function FinanceDashboard() {
 
               {/* Quantity */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Quantity*
                 </label>
                 <input
@@ -893,17 +892,16 @@ export default function FinanceDashboard() {
                     setRevenueForm({ 
                       ...revenueForm, 
                       quantity: quantity,
-                      // Auto-calculate amount
                       amount: quantity && selectedItem ? (parseFloat(quantity) * parseFloat(selectedItem.price)).toString() : ''
                     });
                   }}
                   placeholder="Enter quantity"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition text-sm"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white dark:focus:bg-gray-700 transition text-sm"
                   required
                   min="1"
                   step="1"
                 />
-                <p className="text-xs text-gray-500 mt-1.5">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                   {revenueForm.inventoryId && inventoryItems.find(i => i.id === parseInt(revenueForm.inventoryId)) 
                     ? `Available: ${inventoryItems.find(i => i.id === parseInt(revenueForm.inventoryId)).stock} ${inventoryItems.find(i => i.id === parseInt(revenueForm.inventoryId)).unit}`
                     : 'Select a product first'}
@@ -912,7 +910,7 @@ export default function FinanceDashboard() {
 
               {/* Sale Amount */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   <DollarSign size={16} />
                   Sale Amount (LKR)*
                 </label>
@@ -921,23 +919,23 @@ export default function FinanceDashboard() {
                   value={revenueForm.amount}
                   onChange={(e) => setRevenueForm({ ...revenueForm, amount: e.target.value })}
                   placeholder="Enter cash received"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition text-sm"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white dark:focus:bg-gray-700 transition text-sm"
                   required
                   min="0"
                   step="0.01"
                 />
-                <p className="text-xs text-gray-500 mt-1.5">Total amount received from customer</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Total amount received from customer</p>
               </div>
 
               {/* Payment Method */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Payment Method
                 </label>
                 <select
                   value={revenueForm.paymentMethod}
                   onChange={(e) => setRevenueForm({ ...revenueForm, paymentMethod: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition text-sm"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white dark:focus:bg-gray-700 transition text-sm"
                 >
                   <option value="Cash">Cash</option>
                   <option value="Card">Card</option>
