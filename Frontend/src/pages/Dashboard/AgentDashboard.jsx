@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Truck, TrendingUp, Clock, MapPin, Fuel, CheckCircle, AlertCircle, X } from 'lucide-react';
+import {
+    Package,
+    Truck,
+    TrendingUp,
+    Clock,
+    MapPin,
+    Fuel,
+    CheckCircle,
+    AlertCircle,
+    X
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { deliveryAPI, userAPI } from '../../utils/api';
+import { deliveryAPI, userAPI, vehicleAPI } from '../../utils/api';
 
 export default function AgentDashboard() {
     const { user, setUser } = useAuth();
     const navigate = useNavigate();
+
     const [deliveries, setDeliveries] = useState([]);
+    const [vehicle, setVehicle] = useState(null);
     const [deliveryStats, setDeliveryStats] = useState({
         total: 0,
         completed: 0,
@@ -15,14 +27,17 @@ export default function AgentDashboard() {
         pending: 0,
         failed: 0
     });
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showReportIssueModal, setShowReportIssueModal] = useState(false);
+
     const [issueForm, setIssueForm] = useState({
         type: 'Vehicle',
         description: '',
         priority: 'Medium'
     });
+
     const [submittingIssue, setSubmittingIssue] = useState(false);
 
     // Fetch agent deliveries
@@ -30,18 +45,29 @@ export default function AgentDashboard() {
         const fetchDeliveries = async () => {
             try {
                 setLoading(true);
+
                 const response = await deliveryAPI.getMyDeliveries();
                 const deliveryData = response.data.data || [];
+
                 setDeliveries(deliveryData);
 
                 // Calculate statistics
                 const stats = {
                     total: deliveryData.length,
-                    completed: deliveryData.filter(d => d.status === 'Delivered').length,
-                    inProgress: deliveryData.filter(d => d.status === 'In Transit').length,
-                    pending: deliveryData.filter(d => d.status === 'Pending').length,
-                    failed: deliveryData.filter(d => d.status === 'Failed').length
+                    completed: deliveryData.filter(
+                        d => d.status === 'Delivered'
+                    ).length,
+                    inProgress: deliveryData.filter(
+                        d => d.status === 'In Transit'
+                    ).length,
+                    pending: deliveryData.filter(
+                        d => d.status === 'Pending'
+                    ).length,
+                    failed: deliveryData.filter(
+                        d => d.status === 'Failed'
+                    ).length
                 };
+
                 setDeliveryStats(stats);
                 setError(null);
             } catch (err) {
@@ -55,19 +81,43 @@ export default function AgentDashboard() {
         fetchDeliveries();
     }, []);
 
+    // Fetch agent assigned vehicle
+    useEffect(() => {
+        const fetchAssignedVehicle = async () => {
+            try {
+                const response = await vehicleAPI.getMyVehicle();
+                if (response.data.success && response.data.data) {
+                    setVehicle(response.data.data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch assigned vehicle:', err);
+            }
+        };
+
+        fetchAssignedVehicle();
+    }, []);
+
     useEffect(() => {
         if (!user?.id) return;
 
         const refreshAgentProfile = async () => {
             try {
                 const response = await userAPI.getById(user.id);
+
                 if (response.data.success && response.data.data) {
                     const updatedUser = response.data.data;
+
                     setUser(updatedUser);
-                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    localStorage.setItem(
+                        'user',
+                        JSON.stringify(updatedUser)
+                    );
                 }
             } catch (err) {
-                console.error('Failed to refresh agent profile:', err);
+                console.error(
+                    'Failed to refresh agent profile:',
+                    err
+                );
             }
         };
 
@@ -94,18 +144,19 @@ export default function AgentDashboard() {
     const handleSubmitIssue = async (e) => {
         e.preventDefault();
         setSubmittingIssue(true);
-        
+
         try {
             // Here you would call an API to submit the issue
             // For now, we'll just simulate it
             await new Promise(resolve => setTimeout(resolve, 1000));
-            
+
             // Reset form and close modal
             setIssueForm({
                 type: 'Vehicle',
                 description: '',
                 priority: 'Medium'
             });
+
             setShowReportIssueModal(false);
             alert('Issue reported successfully!');
         } catch (err) {
@@ -118,6 +169,7 @@ export default function AgentDashboard() {
 
     const handleCloseIssueModal = () => {
         setShowReportIssueModal(false);
+
         setIssueForm({
             type: 'Vehicle',
             description: '',
@@ -127,260 +179,701 @@ export default function AgentDashboard() {
 
     // Agent stats
     const agentStats = [
-        { label: 'Assigned Vehicle', value: user?.vehicle || 'GJ-01-AB-1234', icon: Truck, color: 'text-blue-500', bgColor: 'bg-blue-100' },
-        { label: 'Monthly Sales', value: `Rs ${Number(user?.monthlySales ?? 0).toLocaleString()}`, icon: TrendingUp, color: 'text-green-500', bgColor: 'bg-green-100' },
-        { label: 'Deliveries Today', value: deliveryStats.total.toString(), icon: Package, color: 'text-purple-500', bgColor: 'bg-purple-100' },
-        { label: 'Completed Today', value: deliveryStats.completed.toString(), icon: CheckCircle, color: 'text-orange-500', bgColor: 'bg-orange-100' }
+        {
+            label: 'Assigned Vehicle',
+            value: vehicle?.id || user?.vehicle || 'None',
+            icon: Truck,
+            color: 'text-blue-500',
+            bgColor: 'bg-blue-100'
+        },
+        {
+            label: 'Monthly Sales',
+            value: `Rs ${Number(
+                user?.monthlySales ?? 0
+            ).toLocaleString()}`,
+            icon: TrendingUp,
+            color: 'text-green-500',
+            bgColor: 'bg-green-100'
+        },
+        {
+            label: 'Deliveries Today',
+            value: deliveryStats.total.toString(),
+            icon: Package,
+            color: 'text-purple-500',
+            bgColor: 'bg-purple-100'
+        },
+        {
+            label: 'Completed Today',
+            value: deliveryStats.completed.toString(),
+            icon: CheckCircle,
+            color: 'text-orange-500',
+            bgColor: 'bg-orange-100'
+        }
     ];
 
     // Vehicle status
     const vehicleStatus = {
-        registrationNo: user?.vehicle || 'GJ-01-AB-1234',
-        type: 'Tata Ace',
-        fuelLevel: 75,
-        location: 'Colombo 07',
-        status: 'Active',
-        lastService: '5 days ago'
+        registrationNo: vehicle?.id || user?.vehicle || 'Not Assigned',
+        type: vehicle?.vehicleType || 'Standard',
+        fuelLevel: vehicle?.fuelLevel !== undefined ? vehicle.fuelLevel : 0,
+        location: vehicle?.location || 'Main warehouse',
+        status: vehicle?.status || 'Active',
+        lastService: vehicle?.updatedAt ? new Date(vehicle.updatedAt).toLocaleDateString() : 'Recent'
     };
 
-    // Get recent deliveries (last 5)
+    // Get recent deliveries
     const recentDeliveries = deliveries.slice(0, 5);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-            {/* Header */}
-            <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 shadow-sm">
-                <div className="px-8 py-6">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+        <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+
+            {/* ================= HEADER ================= */}
+            <div className="w-full bg-white dark:bg-gray-900 border-b dark:border-gray-800 shadow-sm">
+                <div className="w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
+                        {/* Title */}
+                        <div className="min-w-0">
+                            <h1 className="text-2xl font-bold leading-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent sm:text-3xl">
                                 Agent Dashboard
                             </h1>
-                            <p className="text-gray-600 dark:text-gray-400 mt-1">Welcome back, {user?.name || 'Agent'}!</p>
+
+                            <p className="mt-2 break-words text-sm text-gray-600 dark:text-gray-400 sm:text-base">
+                                Welcome back, {user?.name || 'Agent'}!
+                            </p>
                         </div>
-                        <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg shadow-md">
-                            <Clock size={20} />
-                            <span className="font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+
+                        {/* Date */}
+                        <div className="flex w-full max-w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 px-3 py-3 text-white shadow-md sm:w-auto sm:min-w-[220px] sm:px-4 sm:py-2">
+                            <Clock
+                                size={18}
+                                className="shrink-0 sm:h-5 sm:w-5"
+                            />
+
+                            <span className="text-center text-sm font-medium leading-5 sm:text-base">
+                                {new Date().toLocaleDateString(
+                                    'en-US',
+                                    {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    }
+                                )}
+                            </span>
                         </div>
+
                     </div>
                 </div>
             </div>
 
-            {/* Stats Section */}
-            <div className="px-8 py-6">
-                <div className="grid grid-cols-4 gap-6">
+            {/* ================= STATS SECTION ================= */}
+            <div className="w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+
+                <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-5 xl:grid-cols-4">
+
                     {agentStats.map((stat, index) => {
                         const Icon = stat.icon;
+
                         return (
-                            <div key={index} className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition">
-                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{stat.label}</p>
-                                <div className="flex justify-between items-center">
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                                    <div className={`p-3 rounded-lg ${stat.bgColor} dark:bg-opacity-20`}>
-                                        <Icon className={`${stat.color}`} size={24} />
+                            <div
+                                key={index}
+                                className="min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-900 sm:p-5 lg:p-6"
+                            >
+                                <p className="mb-3 break-words text-sm text-gray-600 dark:text-gray-400">
+                                    {stat.label}
+                                </p>
+
+                                <div className="flex min-w-0 items-center justify-between gap-3">
+
+                                    <p className="min-w-0 flex-1 break-all text-xl font-bold leading-tight text-gray-900 dark:text-white sm:text-2xl">
+                                        {stat.value}
+                                    </p>
+
+                                    <div
+                                        className={`shrink-0 rounded-lg p-2.5 ${stat.bgColor} dark:bg-opacity-20 sm:p-3`}
+                                    >
+                                        <Icon
+                                            className={stat.color}
+                                            size={22}
+                                        />
                                     </div>
+
                                 </div>
                             </div>
                         );
                     })}
+
                 </div>
             </div>
 
-            <div className="px-8 py-6 grid grid-cols-3 gap-6">
+            {/* ================= MAIN CONTENT ================= */}
+            <div className="grid w-full grid-cols-1 gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:grid-cols-3 lg:gap-6 lg:px-8">
 
-                {/* Today's Deliveries */}
-                <div className="col-span-2 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Today's Deliveries</h2>
-                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Your scheduled deliveries for today</p>
+                {/* ================= TODAY'S DELIVERIES ================= */}
+                <div className="min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-5 lg:col-span-2 lg:p-6">
+
+                    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+                        <div className="min-w-0">
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white sm:text-xl">
+                                Today's Deliveries
+                            </h2>
+
+                            <p className="mt-1 break-words text-sm text-gray-600 dark:text-gray-400">
+                                Your scheduled deliveries for today
+                            </p>
                         </div>
-                        <span className="px-4 py-2 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg font-semibold text-sm">
+
+                        <span className="w-fit shrink-0 rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
                             {deliveryStats.total} Total
                         </span>
+
                     </div>
 
                     <div className="space-y-3">
+
                         {loading ? (
-                            <div className="py-8 text-center text-gray-500 dark:text-gray-400">Loading your deliveries...</div>
+                            <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                                Loading your deliveries...
+                            </div>
                         ) : error ? (
-                            <div className="py-8 text-center text-red-600 dark:text-red-400">Error loading deliveries: {error}</div>
+                            <div className="break-words py-8 text-center text-red-600 dark:text-red-400">
+                                Error loading deliveries: {error}
+                            </div>
                         ) : deliveries.length === 0 ? (
-                            <div className="py-8 text-center text-gray-500 dark:text-gray-400">No deliveries assigned yet</div>
+                            <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                                No deliveries assigned yet
+                            </div>
                         ) : (
                             deliveries.map((delivery) => {
-                                const statusColor = 
-                                    delivery.status === 'Delivered' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' :
-                                    delivery.status === 'In Transit' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300' :
-                                    delivery.status === 'Pending' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300' :
-                                    'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300';
+
+                                const statusColor =
+                                    delivery.status === 'Delivered'
+                                        ? 'bg-green-100 text-green-800 border-green-200 dark:bg-[#142717] dark:text-green-400 dark:border-[#385d2e]'
+                                        : delivery.status === 'In Transit'
+                                            ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-[#101c3a] dark:text-blue-400 dark:border-[#37507d]'
+                                            : delivery.status === 'Pending'
+                                                ? 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-[#302617] dark:text-yellow-400 dark:border-[#69591f]'
+                                                : 'bg-red-100 text-red-800 border-red-200 dark:bg-[#2f1417] dark:text-red-400 dark:border-[#7d343e]';
 
                                 return (
                                     <div
                                         key={delivery.id}
-                                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition group cursor-pointer bg-white dark:bg-gray-800"
+                                        className="min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white p-3 transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800 sm:p-4"
                                     >
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                                                        {delivery.Customer?.ownerName || delivery.Customer?.shopName || 'Unknown Customer'}
+
+                                        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+
+                                            <div className="min-w-0 flex-1">
+
+                                                <div className="flex min-w-0 flex-wrap items-center gap-2 mb-2">
+
+                                                    <h3 className="min-w-0 max-w-full break-words font-semibold text-gray-900 transition group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                                                        {delivery.Customer?.ownerName ||
+                                                            delivery.Customer?.shopName ||
+                                                            'Unknown Customer'}
                                                     </h3>
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+
+                                                    <span
+                                                        className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${statusColor}`}
+                                                    >
                                                         {delivery.status}
                                                     </span>
+
                                                 </div>
-                                                <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                                                    <div className="flex items-center gap-1">
-                                                        <MapPin size={14} />
-                                                        <span>{delivery.Customer?.address || 'No address'}</span>
+
+                                                <div className="flex min-w-0 flex-col gap-2 text-sm text-gray-600 dark:text-gray-400 sm:flex-row sm:flex-wrap sm:gap-4">
+
+                                                    <div className="flex min-w-0 items-start gap-1">
+                                                        <MapPin
+                                                            size={14}
+                                                            className="mt-0.5 shrink-0"
+                                                        />
+
+                                                        <span className="min-w-0 break-words">
+                                                            {delivery.Customer?.address ||
+                                                                'No address'}
+                                                        </span>
                                                     </div>
+
                                                     {delivery.createdAt && (
-                                                        <div className="flex items-center gap-1">
+                                                        <div className="flex shrink-0 items-center gap-1">
                                                             <Clock size={14} />
-                                                            <span>{new Date(delivery.createdAt).toLocaleTimeString()}</span>
+
+                                                            <span>
+                                                                {new Date(
+                                                                    delivery.createdAt
+                                                                ).toLocaleTimeString()}
+                                                            </span>
                                                         </div>
                                                     )}
+
                                                 </div>
-                                                <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
-                                                    <span className="font-medium">Status:</span> {delivery.status}
+
+                                                <p className="mt-2 break-words text-sm text-gray-700 dark:text-gray-300">
+                                                    <span className="font-medium">
+                                                        Status:
+                                                    </span>{' '}
+                                                    {delivery.status}
                                                 </p>
+
                                             </div>
 
-                                            {delivery.status === 'Delivered' && (
-                                                <CheckCircle className="text-green-500 flex-shrink-0" size={24} />
-                                            )}
-                                            {delivery.status === 'In Transit' && (
-                                                <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                            )}
-                                            {delivery.status === 'Pending' && (
-                                                <AlertCircle className="text-yellow-500 flex-shrink-0" size={24} />
-                                            )}
-                                            {delivery.status === 'Failed' && (
-                                                <AlertCircle className="text-red-500 flex-shrink-0" size={24} />
-                                            )}
+                                            <div className="shrink-0">
+
+                                                {delivery.status === 'Delivered' && (
+                                                    <CheckCircle
+                                                        className="text-green-500"
+                                                        size={24}
+                                                    />
+                                                )}
+
+                                                {delivery.status === 'In Transit' && (
+                                                    <div className="h-6 w-6 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+                                                )}
+
+                                                {delivery.status === 'Pending' && (
+                                                    <AlertCircle
+                                                        className="text-yellow-500"
+                                                        size={24}
+                                                    />
+                                                )}
+
+                                                {delivery.status === 'Failed' && (
+                                                    <AlertCircle
+                                                        className="text-red-500"
+                                                        size={24}
+                                                    />
+                                                )}
+
+                                            </div>
+
                                         </div>
                                     </div>
                                 );
                             })
                         )}
+
                     </div>
                 </div>
 
-                {/* Vehicle Status & Performance */}
-                <div className="space-y-6">
-                    {/* Vehicle Status */}
-                    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Truck className="text-blue-600" size={24} />
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Vehicle Status</h2>
+                {/* ================= VEHICLE STATUS ================= */}
+                <div className="min-w-0 space-y-5 lg:space-y-6">
+
+                    <div className="min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-5 lg:p-6">
+
+                        <div className="mb-4 flex items-center gap-2">
+                            <Truck
+                                className="shrink-0 text-blue-600"
+                                size={22}
+                            />
+
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white sm:text-xl">
+                                Vehicle Status
+                            </h2>
                         </div>
 
                         <div className="space-y-4">
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">Registration</span>
-                                    <span className="font-semibold text-gray-900 dark:text-white">{vehicleStatus.registrationNo}</span>
+
+                            <div className="space-y-3">
+
+                                {/* Registration */}
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                                    <span className="shrink-0 text-sm text-gray-600 dark:text-gray-400">
+                                        Registration
+                                    </span>
+
+                                    <span className="min-w-0 break-all font-semibold text-gray-900 dark:text-white sm:text-right">
+                                        {vehicleStatus.registrationNo}
+                                    </span>
                                 </div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">Type</span>
-                                    <span className="font-medium text-gray-900 dark:text-white">{vehicleStatus.type}</span>
+
+                                {/* Type */}
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                                    <span className="shrink-0 text-sm text-gray-600 dark:text-gray-400">
+                                        Type
+                                    </span>
+
+                                    <span className="min-w-0 break-words font-medium text-gray-900 dark:text-white sm:text-right">
+                                        {vehicleStatus.type}
+                                    </span>
                                 </div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">Location</span>
-                                    <div className="flex items-center gap-1 text-gray-900 dark:text-white">
-                                        <MapPin size={14} className="text-blue-600" />
-                                        <span className="font-medium">{vehicleStatus.location}</span>
+
+                                {/* Location */}
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                                    <span className="shrink-0 text-sm text-gray-600 dark:text-gray-400">
+                                        Location
+                                    </span>
+
+                                    <div className="flex min-w-0 items-start gap-1 text-gray-900 dark:text-white sm:justify-end">
+                                        <MapPin
+                                            size={14}
+                                            className="mt-1 shrink-0 text-blue-600"
+                                        />
+
+                                        <span className="min-w-0 break-words font-medium sm:text-right">
+                                            {vehicleStatus.location}
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">Status</span>
-                                    <span className="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-full text-xs font-semibold">
+
+                                {/* Status */}
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                                    <span className="shrink-0 text-sm text-gray-600 dark:text-gray-400">
+                                        Status
+                                    </span>
+
+                                    <span className="w-fit rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300 sm:ml-auto">
                                         {vehicleStatus.status}
                                     </span>
                                 </div>
+
                             </div>
 
                             {/* Fuel Level */}
                             <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
+
+                                <div className="mb-2 flex items-center justify-between gap-3">
+
+                                    <span className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                                         <Fuel size={14} />
                                         Fuel Level
                                     </span>
-                                    <span className="font-semibold text-gray-900 dark:text-white">{vehicleStatus.fuelLevel}%</span>
+
+                                    <span className="shrink-0 font-semibold text-gray-900 dark:text-white">
+                                        {vehicleStatus.fuelLevel}%
+                                    </span>
+
                                 </div>
-                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+
+                                <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+
                                     <div
-                                        className="bg-gradient-to-r from-green-500 to-emerald-500 h-full rounded-full transition-all duration-500"
-                                        style={{ width: `${vehicleStatus.fuelLevel}%` }}
+                                        className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500"
+                                        style={{
+                                            width: `${vehicleStatus.fuelLevel}%`
+                                        }}
                                     ></div>
+
                                 </div>
+
                             </div>
 
-                            <div className="pt-4 border-t dark:border-gray-800">
+                            <div className="border-t pt-4 dark:border-gray-800">
+
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    Last Service: <span className="font-medium text-gray-700 dark:text-gray-300">{vehicleStatus.lastService}</span>
+                                    Last Service:{' '}
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                                        {vehicleStatus.lastService}
+                                    </span>
                                 </p>
+
                             </div>
+
                         </div>
                     </div>
 
-                    {/* Recent Activity */}
-                    <div className="bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <Clock size={24} />
+                    {/* ================= RECENT ACTIVITY ================= */}
+                    <div className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 p-4 text-white shadow-lg sm:p-5 lg:p-6">
+
+                        <h2 className="mb-4 flex items-center gap-2 text-lg font-bold sm:text-xl">
+                            <Clock size={22} />
                             Recent Activity
                         </h2>
 
                         <div className="space-y-3">
+
                             {recentDeliveries.length > 0 ? (
                                 recentDeliveries.map((delivery) => (
-                                    <div key={delivery.id} className="bg-white bg-opacity-20 rounded-lg p-3 backdrop-blur-sm">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className="text-sm font-medium text-white">
-                                                {delivery.Customer?.ownerName || delivery.Customer?.shopName || 'Unknown Customer'}
+
+                                    <div
+                                        key={delivery.id}
+                                        className="min-w-0 overflow-hidden rounded-lg bg-white bg-opacity-20 p-3 backdrop-blur-sm"
+                                    >
+
+                                        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+
+                                            <span className="min-w-0 break-words text-sm font-medium text-white">
+                                                {delivery.Customer?.ownerName ||
+                                                    delivery.Customer?.shopName ||
+                                                    'Unknown Customer'}
                                             </span>
-                                            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                                                delivery.status === 'Delivered' ? 'bg-green-400 text-green-900' :
-                                                delivery.status === 'In Transit' ? 'bg-blue-400 text-blue-900' :
-                                                delivery.status === 'Pending' ? 'bg-yellow-400 text-yellow-900' :
-                                                'bg-red-400 text-red-900'
-                                            }`}>
+
+                                            <span
+                                                className={`w-fit shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${delivery.status === 'Delivered'
+                                                    ? 'bg-green-400 text-green-900'
+                                                    : delivery.status === 'In Transit'
+                                                        ? 'bg-blue-400 text-blue-900'
+                                                        : delivery.status === 'Pending'
+                                                            ? 'bg-yellow-400 text-yellow-900'
+                                                            : 'bg-red-400 text-red-900'
+                                                    }`}
+                                            >
                                                 {delivery.status}
                                             </span>
+
                                         </div>
-                                        <div className="flex items-center gap-2 text-xs text-indigo-100">
-                                            <MapPin size={12} />
-                                            <span>{delivery.Customer?.address || 'No address'}</span>
+
+                                        <div className="mt-2 flex min-w-0 items-start gap-2 text-xs text-indigo-100">
+                                            <MapPin
+                                                size={12}
+                                                className="mt-0.5 shrink-0"
+                                            />
+
+                                            <span className="min-w-0 break-words">
+                                                {delivery.Customer?.address ||
+                                                    'No address'}
+                                            </span>
                                         </div>
+
                                     </div>
                                 ))
                             ) : (
-                                <div className="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur-sm text-center">
-                                    <p className="text-sm text-indigo-100">No recent activity</p>
+                                <div className="rounded-lg bg-white bg-opacity-20 p-4 text-center backdrop-blur-sm">
+                                    <p className="text-sm text-indigo-100">
+                                        No recent activity
+                                    </p>
                                 </div>
                             )}
+
                         </div>
 
-                        <div className="mt-6 pt-4 border-t border-white border-opacity-30">
+                        <div className="mt-6 border-t border-white border-opacity-30 pt-4">
+
                             <div className="grid grid-cols-2 gap-4">
+
                                 <div>
-                                    <p className="text-xs text-indigo-100 mb-1">Total Today</p>
-                                    <p className="text-2xl font-bold">{deliveryStats.total}</p>
+                                    <p className="mb-1 text-xs text-indigo-100">
+                                        Total Today
+                                    </p>
+
+                                    <p className="text-2xl font-bold">
+                                        {deliveryStats.total}
+                                    </p>
                                 </div>
+
                                 <div>
-                                    <p className="text-xs text-indigo-100 mb-1">Completed</p>
-                                    <p className="text-2xl font-bold">{deliveryStats.completed}</p>
+                                    <p className="mb-1 text-xs text-indigo-100">
+                                        Completed
+                                    </p>
+
+                                    <p className="text-2xl font-bold">
+                                        {deliveryStats.completed}
+                                    </p>
                                 </div>
+
                             </div>
+
                         </div>
+                    </div>
+
+                </div>
+            </div>
+
+            {/* ================= QUICK ACTIONS ================= */}
+            <div className="w-full px-4 py-5 pb-8 sm:px-6 sm:py-6 lg:px-8">
+
+                <div className="min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-5 lg:p-6">
+
+                    <h2 className="mb-4 text-lg font-bold text-gray-900 dark:text-white sm:text-xl">
+                        Quick Actions
+                    </h2>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+                        <button
+                            onClick={handleUpdateDelivery}
+                            className="flex min-h-[120px] flex-col items-center justify-center rounded-lg border-2 border-gray-200 bg-white p-4 transition hover:border-blue-500 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-500 sm:min-h-[140px] sm:p-6"
+                        >
+                            <Package
+                                className="mb-3 text-gray-600 dark:text-gray-400"
+                                size={30}
+                            />
+
+                            <span className="text-center text-sm font-medium text-gray-900 dark:text-white">
+                                Update Delivery
+                            </span>
+                        </button>
+
+                        <button
+                            onClick={handleReportIssue}
+                            className="flex min-h-[120px] flex-col items-center justify-center rounded-lg border-2 border-gray-200 bg-white p-4 transition hover:border-blue-500 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-500 sm:min-h-[140px] sm:p-6"
+                        >
+                            <Truck
+                                className="mb-3 text-gray-600 dark:text-gray-400"
+                                size={30}
+                            />
+
+                            <span className="text-center text-sm font-medium text-gray-900 dark:text-white">
+                                Report Issue
+                            </span>
+                        </button>
+
+                        <button
+                            onClick={handleViewRoute}
+                            className="flex min-h-[120px] flex-col items-center justify-center rounded-lg border-2 border-gray-200 bg-white p-4 transition hover:border-blue-500 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-500 sm:min-h-[140px] sm:p-6"
+                        >
+                            <MapPin
+                                className="mb-3 text-gray-600 dark:text-gray-400"
+                                size={30}
+                            />
+
+                            <span className="text-center text-sm font-medium text-gray-900 dark:text-white">
+                                View Route
+                            </span>
+                        </button>
+
+                        <button
+                            onClick={handleViewSales}
+                            className="flex min-h-[120px] flex-col items-center justify-center rounded-lg border-2 border-gray-200 bg-white p-4 transition hover:border-blue-500 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-500 sm:min-h-[140px] sm:p-6"
+                        >
+                            <TrendingUp
+                                className="mb-3 text-gray-600 dark:text-gray-400"
+                                size={30}
+                            />
+
+                            <span className="text-center text-sm font-medium text-gray-900 dark:text-white">
+                                View Sales
+                            </span>
+                        </button>
+
                     </div>
                 </div>
             </div>
 
-            
-            
+            {/* ================= REPORT ISSUE MODAL ================= */}
+            {showReportIssueModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50 p-4">
+
+                    <div className="my-4 w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-900">
+
+                        <div className="flex items-center justify-between border-b p-4 dark:border-gray-800 sm:p-6">
+
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white sm:text-xl">
+                                Report an Issue
+                            </h3>
+
+                            <button
+                                onClick={handleCloseIssueModal}
+                                className="shrink-0 text-gray-400 transition hover:text-gray-600 dark:hover:text-gray-300"
+                            >
+                                <X size={24} />
+                            </button>
+
+                        </div>
+
+                        <form
+                            onSubmit={handleSubmitIssue}
+                            className="space-y-4 p-4 sm:p-6"
+                        >
+
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Issue Type
+                                </label>
+
+                                <select
+                                    value={issueForm.type}
+                                    onChange={(e) =>
+                                        setIssueForm({
+                                            ...issueForm,
+                                            type: e.target.value
+                                        })
+                                    }
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    required
+                                >
+                                    <option value="Vehicle">
+                                        Vehicle Issue
+                                    </option>
+                                    <option value="Delivery">
+                                        Delivery Issue
+                                    </option>
+                                    <option value="Customer">
+                                        Customer Issue
+                                    </option>
+                                    <option value="Route">
+                                        Route Issue
+                                    </option>
+                                    <option value="Other">
+                                        Other
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Priority
+                                </label>
+
+                                <select
+                                    value={issueForm.priority}
+                                    onChange={(e) =>
+                                        setIssueForm({
+                                            ...issueForm,
+                                            priority: e.target.value
+                                        })
+                                    }
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    required
+                                >
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Description
+                                </label>
+
+                                <textarea
+                                    value={issueForm.description}
+                                    onChange={(e) =>
+                                        setIssueForm({
+                                            ...issueForm,
+                                            description: e.target.value
+                                        })
+                                    }
+                                    className="w-full resize-none rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    rows="4"
+                                    placeholder="Describe the issue in detail..."
+                                    required
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-3 pt-4 sm:flex-row">
+
+                                <button
+                                    type="button"
+                                    onClick={handleCloseIssueModal}
+                                    className="w-full rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-50 sm:flex-1"
+                                    disabled={submittingIssue}
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400 sm:flex-1"
+                                    disabled={submittingIssue}
+                                >
+                                    {submittingIssue
+                                        ? 'Submitting...'
+                                        : 'Submit Issue'}
+                                </button>
+
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
