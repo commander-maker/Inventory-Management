@@ -3,8 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-
-  static const String baseUrl = 'http://192.168.194.184:5000/api';
+  static const String baseUrl = 'http://192.168.101.184:5000/api';
 
   // Get authorization header
   static Future<Map<String, String>> _getHeaders() async {
@@ -157,6 +156,24 @@ class VehicleAPI {
   }
 }
 
+// Inventory API
+class InventoryAPI {
+  static Future<List<Map<String, dynamic>>> getAll() async {
+    try {
+      final response = await ApiService.get("inventory");
+      if (response != null && response['success'] == true) {
+        final data = response['data'];
+        if (data is List) {
+          return List<Map<String, dynamic>>.from(data);
+        }
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to fetch inventory: $e');
+    }
+  }
+}
+
 // Delivery API
 class DeliveryAPI {
   static Future<List<Map<String, dynamic>>> getMyDeliveries() async {
@@ -248,9 +265,18 @@ class FinanceAPI {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getAllIncome() async {
+  static Future<List<Map<String, dynamic>>> getAllIncome({
+    int? month,
+    int? year,
+  }) async {
     try {
-      final response = await ApiService.get("finance/income");
+      final queryParameters = <String>[];
+      if (month != null) queryParameters.add('month=$month');
+      if (year != null) queryParameters.add('year=$year');
+      final query = queryParameters.isEmpty
+          ? ''
+          : '?${queryParameters.join('&')}';
+      final response = await ApiService.get("finance/income$query");
       if (response != null && response['success'] == true) {
         final data = response['data'];
         if (data is List) {

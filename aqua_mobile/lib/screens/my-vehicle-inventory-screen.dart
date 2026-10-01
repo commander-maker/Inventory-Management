@@ -24,6 +24,7 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
   Map<String, dynamic>? vehicle;
   List<Map<String, dynamic>> inventory = [];
   List<Map<String, dynamic>> customers = [];
+  bool _deliveryReservationsLoaded = false;
   bool isLoading = true;
   String? errorMessage;
 
@@ -116,10 +117,60 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
         final loads = await VehicleAPI.getVehicleLoads(
           vehicleData['id'].toString(),
         );
+        final reservedByItem = <String, int>{};
+        var reservationsLoaded = false;
+        try {
+          final deliveries = await DeliveryAPI.getMyDeliveries();
+          for (final delivery in deliveries) {
+            final status = (delivery['status'] ?? '').toString().toLowerCase();
+            if (status != 'pending' && status != 'in transit') continue;
+            final itemName = (delivery['productName'] ?? '')
+                .toString()
+                .trim()
+                .toLowerCase();
+            final quantity = _leadingQuantity(delivery['quantity']);
+            reservedByItem[itemName] =
+                (reservedByItem[itemName] ?? 0) + quantity;
+          }
+          reservationsLoaded = true;
+        } catch (e) {
+          debugPrint('Failed to load delivery reservations: $e');
+        }
+
+        var catalogByName = <String, Map<String, dynamic>>{};
+        try {
+          final catalog = await InventoryAPI.getAll();
+          catalogByName = {
+            for (final product in catalog)
+              product['name'].toString().trim().toLowerCase(): product,
+          };
+        } catch (e) {
+          debugPrint('Failed to load inventory prices: $e');
+        }
+
+        final enrichedLoads = loads.map((load) {
+          final itemName = (load['item'] ?? '').toString().trim().toLowerCase();
+          final loadedQuantity = _leadingQuantity(load['quantity']);
+          final reservedQuantity = reservedByItem[itemName] ?? 0;
+          final product = catalogByName[itemName];
+          return {
+            ...load,
+            'unitPrice': product?['price'],
+            'category': product?['category'] ?? load['category'],
+            'reservedQuantity': reservationsLoaded ? reservedQuantity : null,
+            'sellableQuantity': reservationsLoaded
+                ? (loadedQuantity - reservedQuantity)
+                      .clamp(0, loadedQuantity)
+                      .toInt()
+                : null,
+          };
+        }).toList();
+
         if (mounted) {
           setState(() {
             vehicle = vehicleData;
-            inventory = loads;
+            inventory = enrichedLoads;
+            _deliveryReservationsLoaded = reservationsLoaded;
             isLoading = false;
           });
         }
@@ -139,6 +190,18 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
         });
       }
     }
+  }
+
+  int _leadingQuantity(dynamic value) {
+    final match = RegExp(r'^\s*(\d+)').firstMatch(value?.toString() ?? '');
+    return int.tryParse(match?.group(1) ?? '') ?? 0;
+  }
+
+  String _formatPrice(dynamic value) {
+    final price = double.tryParse(value?.toString() ?? '');
+    return price == null
+        ? 'Price unavailable'
+        : 'LKR ${price.toStringAsFixed(2)}';
   }
 
   List<Map<String, dynamic>> get filteredInventory {
@@ -785,6 +848,8 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
     final date = item['createdAt'] != null
         ? item['createdAt'].toString().split('T')[0]
         : '8/17/2026';
+    final reservedQuantity = item['reservedQuantity'] as int?;
+    final sellableQuantity = item['sellableQuantity'] as int?;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -856,8 +921,17 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                         color: AppColors.primary,
                       ),
                     ),
-                    tooltip: 'Record Sale',
-                    onPressed: () => _showRecordSaleModal(item),
+                    tooltip: !_deliveryReservationsLoaded
+                        ? 'Refresh to verify assigned delivery quantities'
+                        : sellableQuantity == null || sellableQuantity <= 0
+                        ? 'All stock is reserved for assigned deliveries'
+                        : 'Record Sale',
+                    onPressed:
+                        !_deliveryReservationsLoaded ||
+                            sellableQuantity == null ||
+                            sellableQuantity <= 0
+                        ? null
+                        : () => _showRecordSaleModal(item),
                   ),
                   IconButton(
                     icon: Container(
@@ -888,7 +962,25 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Available Load Quantity:',
+                'Unit price:',
+                style: TextStyle(fontSize: 13, color: _secondaryTextColor),
+              ),
+              Text(
+                _formatPrice(item['unitPrice']),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryTextColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Loaded quantity:',
                 style: TextStyle(fontSize: 13, color: _secondaryTextColor),
               ),
               Container(
@@ -901,12 +993,51 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text(
-                  '$qty',
+                  qty.toString(),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: AppColors.badgeBlueIcon,
                   ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Reserved for deliveries:',
+                style: TextStyle(fontSize: 13, color: _secondaryTextColor),
+              ),
+              Text(
+                reservedQuantity == null ? 'Unavailable' : '$reservedQuantity',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: _primaryTextColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Available for separate sale:',
+                style: TextStyle(fontSize: 13, color: _secondaryTextColor),
+              ),
+              Text(
+                sellableQuantity == null
+                    ? 'Refresh to verify'
+                    : '$sellableQuantity ${qty.toString().replaceFirst(RegExp(r'^\s*\d+\s*'), '')}'
+                          .trim(),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.badgeGreenIcon,
                 ),
               ),
             ],
@@ -918,6 +1049,15 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
 
   // Record Sale Modal Dialog matching Web Screenshot 2
   void _showRecordSaleModal(Map<String, dynamic> item) {
+    if (!_deliveryReservationsLoaded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Refresh to verify assigned delivery quantities.'),
+        ),
+      );
+      return;
+    }
+
     final itemName = item['item'] ?? item['name'] ?? 'Pepsi 300ml';
     final rawQty = item['quantity']?.toString() ?? '0';
 
@@ -932,12 +1072,36 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
     } else {
       currentQtyNum = int.tryParse(rawQty) ?? 0;
     }
+    final reservedQuantity = item['reservedQuantity'] as int? ?? 0;
+    final sellableQuantity = item['sellableQuantity'] as int? ?? 0;
+    final unitPrice = double.tryParse(item['unitPrice']?.toString() ?? '');
+    if (sellableQuantity <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'All remaining stock is reserved for assigned deliveries.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    String? suggestedSaleAmount(int remainingQuantity) {
+      if (unitPrice == null || remainingQuantity < reservedQuantity) {
+        return null;
+      }
+      return (unitPrice * (currentQtyNum - remainingQuantity)).toStringAsFixed(
+        2,
+      );
+    }
 
     int? selectedCustomerId;
     final remainingQtyController = TextEditingController(
       text: currentQtyNum.toString(),
     );
-    final saleAmountController = TextEditingController();
+    final saleAmountController = TextEditingController(
+      text: suggestedSaleAmount(currentQtyNum) ?? '',
+    );
     String selectedPaymentMethod = 'Cash';
 
     bool isSubmitting = false;
@@ -1035,6 +1199,29 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                                 color: AppColors.textSecondary,
                               ),
                             ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Reserved for assigned deliveries: $reservedQuantity $unitStr',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            Text(
+                              'Available for separate sale: $sellableQuantity $unitStr',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.badgeGreenIcon,
+                              ),
+                            ),
+                            Text(
+                              'Unit price: ${_formatPrice(item['unitPrice'])}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -1115,7 +1302,22 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                       TextField(
                         controller: remainingQtyController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
+                        onChanged: (value) {
+                          final remaining = int.tryParse(value);
+                          if (remaining == null || unitPrice == null) return;
+                          final suggested = suggestedSaleAmount(remaining);
+                          if (suggested == null) return;
+                          setModalState(() {
+                            saleAmountController.text = suggested;
+                            saleAmountController.selection =
+                                TextSelection.collapsed(
+                                  offset: saleAmountController.text.length,
+                                );
+                          });
+                        },
+                        decoration: InputDecoration(
+                          helperText:
+                              'Keep at least $reservedQuantity $unitStr reserved for deliveries',
                           contentPadding: EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 12,
@@ -1169,9 +1371,11 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Total amount received from customer',
-                        style: TextStyle(
+                      Text(
+                        unitPrice == null
+                            ? 'Unit price unavailable; enter the sale total manually.'
+                            : 'Suggested total updates from the sale quantity. You can adjust it.',
+                        style: const TextStyle(
                           fontSize: 11,
                           color: AppColors.textMuted,
                         ),
@@ -1267,14 +1471,14 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                                         remainingQtyController.text.trim(),
                                       );
                                       if (remQty == null ||
-                                          remQty < 0 ||
+                                          remQty < reservedQuantity ||
                                           remQty > currentQtyNum) {
                                         ScaffoldMessenger.of(
                                           dialogContext,
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              'Remaining quantity must be between 0 and $currentQtyNum',
+                                              'Remaining quantity must be between $reservedQuantity and $currentQtyNum',
                                             ),
                                             backgroundColor:
                                                 AppColors.badgeRedIcon,
@@ -1287,13 +1491,28 @@ class _MyVehicleInventoryScreenState extends State<MyVehicleInventoryScreen> {
                                       final amount = double.tryParse(
                                         saleAmountController.text.trim(),
                                       );
-                                      if (amount == null || amount < 0) {
+                                      if (amount == null || amount <= 0) {
                                         ScaffoldMessenger.of(
                                           dialogContext,
                                         ).showSnackBar(
                                           const SnackBar(
                                             content: Text(
                                               'Please enter a valid sale amount',
+                                            ),
+                                            backgroundColor:
+                                                AppColors.badgeRedIcon,
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      if (remQty >= currentQtyNum) {
+                                        ScaffoldMessenger.of(
+                                          dialogContext,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Sale quantity must be greater than zero',
                                             ),
                                             backgroundColor:
                                                 AppColors.badgeRedIcon,
