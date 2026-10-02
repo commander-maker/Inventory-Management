@@ -33,6 +33,8 @@ export default function FinanceDashboard() {
   const [loading, setLoading] = useState(true);
   const [expandedExpense, setExpandedExpense] = useState(null);
   const [expandedIncome, setExpandedIncome] = useState(null);
+  const [expensePageSize, setExpensePageSize] = useState('10');
+  const [incomePageSize, setIncomePageSize] = useState('10');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddRevenueModal, setShowAddRevenueModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -328,6 +330,12 @@ export default function FinanceDashboard() {
     ...b,
     percentage: totalExpenseAmount > 0 ? ((parseFloat(b.amount) / totalExpenseAmount) * 100).toFixed(1) : 0
   }));
+  const visibleExpenses = expensePageSize === 'All'
+    ? breakdownWithPercentage
+    : breakdownWithPercentage.slice(0, Number(expensePageSize));
+  const visibleIncome = incomePageSize === 'All'
+    ? income
+    : income.slice(0, Number(incomePageSize));
 
   const formatAmount = (amount) => {
     return `LKR ${parseFloat(amount || 0).toLocaleString()}`;
@@ -453,14 +461,33 @@ export default function FinanceDashboard() {
                 {filterLabel} expense distribution by category
               </p>
 
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  Showing <span className="font-semibold">{visibleExpenses.length}</span> of{' '}
+                  <span className="font-semibold">{breakdownWithPercentage.length}</span> categories
+                </p>
+                <label className="flex items-center gap-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                  Show
+                  <select
+                    value={expensePageSize}
+                    onChange={(e) => setExpensePageSize(e.target.value)}
+                    className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-gray-900 focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  >
+                    <option value="All">All</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                  </select>
+                </label>
+              </div>
+
               {breakdownWithPercentage.length === 0 ? (
                 <div className="text-center py-8 md:py-12 text-gray-400 dark:text-gray-600">
                   <DollarSign size={36} className="mx-auto mb-3 md:w-12 md:h-12" />
                   <p className="text-sm md:text-base">No expenses for this period</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {breakdownWithPercentage.map((item) => {
+                <div className="themed-list-scroll max-h-[500px] overflow-y-auto space-y-4 pr-1">
+                  {visibleExpenses.map((item) => {
                     const meta = getCategoryMeta(item.category);
                     const IconComponent = meta.icon;
                     return (
@@ -497,7 +524,7 @@ export default function FinanceDashboard() {
                               <span className="font-medium">Number of entries:</span> {item.count}
                             </p>
                             {/* Show individual expenses for this category */}
-                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                            <div className="themed-list-scroll space-y-2 max-h-48 overflow-y-auto">
                               {expenses
                                 .filter(e => e.category === item.category)
                                 .map(exp => (
@@ -546,14 +573,33 @@ export default function FinanceDashboard() {
               <h2 className="text-lg xs:text-xl font-bold text-gray-900 dark:text-white mb-2">Income Breakdown</h2>
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">Income records for {filterLabel.toLowerCase()}</p>
 
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  Showing <span className="font-semibold">{visibleIncome.length}</span> of{' '}
+                  <span className="font-semibold">{income.length}</span> records
+                </p>
+                <label className="flex items-center gap-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                  Show
+                  <select
+                    value={incomePageSize}
+                    onChange={(e) => setIncomePageSize(e.target.value)}
+                    className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-gray-900 focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  >
+                    <option value="All">All</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                  </select>
+                </label>
+              </div>
+
               {income.length === 0 ? (
                 <div className="text-center py-8 text-gray-400 dark:text-gray-600">
                   <FileText size={36} className="mx-auto mb-2" />
                   <p className="text-sm">No income for this period</p>
                 </div>
               ) : (
-                <div className="space-y-4 max-h-[500px] overflow-y-auto">
-                  {income.map((transaction) => {
+                <div className="themed-list-scroll space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                  {visibleIncome.map((transaction) => {
                     return (
                       <div
                         key={transaction.id}

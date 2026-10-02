@@ -27,6 +27,7 @@ export default function AdminDeliveries() {
     const [statusFilter, setStatusFilter] = useState('All');
     const [agentFilter, setAgentFilter] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
+    const [pageSize, setPageSize] = useState('10');
 
     // Assign Delivery Modal
     const [showAssignModal, setShowAssignModal] = useState(false);
@@ -189,6 +190,9 @@ export default function AdminDeliveries() {
             d.Vehicle?.driver?.name?.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesStatus && matchesAgent && matchesSearch;
     });
+    const visibleDeliveries = pageSize === 'All'
+        ? filteredDeliveries
+        : filteredDeliveries.slice(0, Number(pageSize));
 
     const stats = {
         total: deliveries.length,
@@ -344,6 +348,25 @@ export default function AdminDeliveries() {
                                 ))}
                             </select>
                         </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
+                            <p className="text-xs xs:text-sm text-gray-600 dark:text-gray-400">
+                                Showing <span className="font-semibold">{visibleDeliveries.length}</span> of{' '}
+                                <span className="font-semibold">{filteredDeliveries.length}</span> matching deliveries
+                            </p>
+                            <label className="flex items-center gap-2 text-xs xs:text-sm text-gray-700 dark:text-gray-300">
+                                Show
+                                <select
+                                    value={pageSize}
+                                    onChange={(e) => setPageSize(e.target.value)}
+                                    className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-gray-900 focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                >
+                                    <option value="All">All</option>
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -367,10 +390,11 @@ export default function AdminDeliveries() {
                     </div>
                 ) : (
                     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+                        <div className="themed-list-scroll max-h-[70vh] overflow-auto">
                         {/* Desktop Table */}
                         <div className="overflow-x-auto hidden md:block">
                             <table className="w-full">
-                                <thead>
+                                <thead className="sticky top-0 z-10">
                                     <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                                         <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Agent</th>
                                         <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Customer</th>
@@ -383,7 +407,7 @@ export default function AdminDeliveries() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                    {filteredDeliveries.map((delivery) => (
+                                    {visibleDeliveries.map((delivery) => (
                                         <tr key={delivery.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
                                             {/* Agent */}
                                             <td className="px-6 py-4">
@@ -460,7 +484,7 @@ export default function AdminDeliveries() {
 
                         {/* Mobile Card View */}
                         <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
-                            {filteredDeliveries.map((delivery) => (
+                            {visibleDeliveries.map((delivery) => (
                                 <div key={delivery.id} className="p-3 xs:p-4">
                                     {/* Card Header: Agent + Status */}
                                     <div className="flex items-start justify-between gap-2 mb-2 xs:mb-3">
@@ -515,11 +539,12 @@ export default function AdminDeliveries() {
                                 </div>
                             ))}
                         </div>
+                        </div>
 
                         {/* Table Footer */}
                         <div className="px-3 xs:px-4 md:px-6 py-3 xs:py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                             <p className="text-xs xs:text-sm text-gray-600 dark:text-gray-400">
-                                Showing <span className="font-semibold">{filteredDeliveries.length}</span> of{' '}
+                                Showing <span className="font-semibold">{visibleDeliveries.length}</span> of{' '}
                                 <span className="font-semibold">{deliveries.length}</span> deliveries
                             </p>
                         </div>

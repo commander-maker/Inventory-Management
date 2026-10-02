@@ -22,6 +22,7 @@ export default function MyDeliveries() {
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [notes, setNotes] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [pageSize, setPageSize] = useState('10');
     const [updating, setUpdating] = useState(false);
     const [updateError, setUpdateError] = useState(null);
 
@@ -121,6 +122,9 @@ export default function MyDeliveries() {
     const filteredDeliveries = statusFilter === 'All'
         ? deliveries
         : deliveries.filter(d => d.status === statusFilter);
+    const visibleDeliveries = pageSize === 'All'
+        ? filteredDeliveries
+        : filteredDeliveries.slice(0, Number(pageSize));
 
     const stats = {
         total: deliveries.length,
@@ -212,6 +216,24 @@ export default function MyDeliveries() {
                             </button>
                         ))}
                     </div>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            Showing <span className="font-semibold">{visibleDeliveries.length}</span> of{' '}
+                            <span className="font-semibold">{filteredDeliveries.length}</span> matching deliveries
+                        </p>
+                        <label className="flex items-center gap-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                            Show
+                            <select
+                                value={pageSize}
+                                onChange={(e) => setPageSize(e.target.value)}
+                                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-gray-900 focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            >
+                                <option value="All">All</option>
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                            </select>
+                        </label>
+                    </div>
                 </div>
 
                 {/* Deliveries List */}
@@ -226,8 +248,9 @@ export default function MyDeliveries() {
                         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">You don't have any {statusFilter.toLowerCase()} deliveries.</p>
                     </div>
                 ) : (
+                    <div className="themed-list-scroll max-h-[70vh] overflow-y-auto pr-1">
                     <div className="grid gap-4">
-                        {filteredDeliveries.map((delivery) => (
+                        {visibleDeliveries.map((delivery) => (
                             <div key={delivery.id} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 sm:p-6 hover:shadow-md transition">
                                 <div className="flex flex-col lg:flex-row lg:items-center items-start justify-between gap-4">
                                     <div className="flex items-start gap-3 sm:gap-4 flex-1 w-full">
@@ -313,6 +336,7 @@ export default function MyDeliveries() {
                                 </div>
                             </div>
                         ))}
+                    </div>
                     </div>
                 )}
             </div>
